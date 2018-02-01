@@ -1,0 +1,153 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+require __DIR__.'/config.php';
+
+if($argc < 2) {
+	fprintf(STDERR, "Usage: %s <jsonstr1> <jsonstr2> <jsonstr3>...\n", $argv[0]);
+	die(1);
+}
+
+array_shift($argv);
+
+$eproc = proc_open(ENGINE, [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $epipes);
+assert($eproc !== false);
+
+$gproc = proc_open(GUMBLE, [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $gpipes);
+assert($gproc !== false);
+
+function san(array $gpipes, string $moves, string $lan): string {
+	fprintf($gpipes[0], "position startpos %s\nsan %s\n", $moves, $lan);
+	fflush($gpipes[0]);
+	while($line = fgets($gpipes[1])) {
+		if(preg_match('%^info san (?<ret>.+)$%', $line, $m)) return $m['ret'];
+	}
+	assert(0);
+}
+
+function lan(array $gpipes, string $moves, string $san): string {
+	fprintf($gpipes[0], "position startpos %s\nlan %s\n", $moves, $san);
+	fflush($gpipes[0]);
+	while($line = fgets($gpipes[1])) {
+		if(preg_match('%^info lan (?<ret>.+)$%', $line, $m)) return $m['ret'];
+	}
+	assert(0);
+}
+
+function fen(array $gpipes, string $moves): string {
+	fprintf($gpipes[0], "position startpos %s\nfen\n", $moves);
+	fflush($gpipes[0]);
+	while($line = fgets($gpipes[1])) {
+		if(preg_match('%^info fen (?<ret>.+)$%', $line, $m)) //return explode(' ', $m['ret'], 2)[0];
+			return $m['ret'];
+	}
+	assert(0);
+}
+
+/* XXX: also find mates in N */
+function build_puzzle(array $gpipes, array $epipes, string $moves): ?array {
+	fprintf($epipes[0], "position startpos %s\ngo %s\n", $moves, ENGINE_LIMITER);
+	fflush($epipes[0]);
+	$evals = [];
+
+	while($line = fgets($epipes[1])) {
+		if(preg_match('%^bestmove\s%', $line)) break;
+		if(!preg_match('%^info\s%', $line)) continue;
+		assert(preg_match('%\smultipv\s+(?<mpv>[0-9]+)(\s|$)%', $line, $match));
+		$mpv = (int)$match['mpv'];
+		if(!preg_match('%\sscore\s+cp\s+(?<eval>-?[0-9]+)(\s|$)%', $line, $me)) continue;
+		if(!preg_match('%\spv\s+(?<move>([a-h][1-8]){2}[qrbn]?)(\s|$)%', $line, $mp)) continue;
+		$evals[$mpv] = [ (int)$me['eval'], $mp['move'] ];
+	}
+	assert($line !== false);
+
+	usort($evals, function(array $a, array $b) {
+		return $b[0] - $a[0];
+	});
+
+	$goodnext = [];
+	$cutoff = false;
+	$stop = count($evals);
+	for($i = 0; $i < $stop; ++$i) {
+		$diff = $evals[0][0] - $evals[$i][0];
+		if($diff < VARIATIONS_MAX_DIFF) {
+			$goodnext[$evals[$i][1]] = $evals[$i][0];
+		}
+		if($diff > EVAL_CUTOFF) {
+			$cutoff = $evals[$i][0];
+			break;
+		}
+	}
+	if($cutoff === false) return null;
+
+	$ret = [];
+	foreach($goodnext as $move => $eval) {
+		fprintf($epipes[0], "position startpos %s\ngo %s\n", $moves.' '.$move, ENGINE_LIMITER);
+		fflush($epipes[0]);
+
+		$reply = null;
+		while($line = fgets($epipes[1])) {
+			if(!preg_match('%^bestmove\s+(?<move>([a-h][1-8]){2}[qrbn]?)(\s|$)%', $line, $match)) continue;
+			$reply = $match['move'];
+			break;
+		}
+		assert($line !== false && $reply !== null);
+
+		print_r($move, $reply);
+
+		$ret[$move] = [
+			san($gpipes, $moves, $move),
+			fen($gpipes, $moves.' '.$move),
+			$reply,
+			san($gpipes, $moves.' '.$move, $reply),
+			fen($gpipes, $moves.' '.$move.' '.$reply),
+			build_puzzle($gpipes, $epipes, $moves.' '.$move.' '.$reply),
+		];
+	}
+
+	return $ret;
+}
+
+fprintf($epipes[0], "uci\nsetoption name MultiPV value %d\n", MAX_VARIATIONS + 1);
+
+$puzzles = [];
+
+while($json = array_shift($argv)) {
+	$game = json_decode($json, true);
+	fputs($epipes[0], "ucinewgame");
+	fflush($epipes[0]);
+
+	$moves = 'moves';
+	$ply = 0;
+
+	preg_match_all('%(?<san>(O-O|O-O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $game['MoveList'], $matches);
+	foreach($matches['san'] as $san) {
+		$moves .= ' '.($lan = lan($gpipes, $moves, $san));
+		++$ply;
+		if($ply < MIN_PLY_CUTOFF) continue;
+
+		$puz = build_puzzle($gpipes, $epipes, $moves);
+		if($puz !== null) {
+			$puzzles[] = [ $ply, $lan, $san, fen($gpipes, $moves), $puz ];
+		}
+	}
+}
+
+fputs($epipes[0], "quit\n");
+fputs($gpipes[0], "quit\n");
+
+echo json_encode($puzzles, JSON_PRETTY_PRINT);
