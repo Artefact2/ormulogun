@@ -1,14 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ormulogun is released under the Apache License, version 2.0.
+     View the full source code here: https://gitlab.com/artefact2/ormulogun -->
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 		<link rel="stylesheet" href="./deps/css/bootstrap.min.css" />
+		<link rel="stylesheet" href="./ormulogun.css" />
 		<script src="./deps/js/jquery-3.3.1.min.js" />
 		<script src="./deps/js/bootstrap.min.js" />
+		<script src="./ormulogun.js" />
 		<title>Ormulogun</title>
 	</head>
 	<body>
-		<h1>Ormulogun</h1>
+		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark bg-dark" id="mainnav">
+			<span class="navbar-brand">Ormulogun<sup class="text-uppercase badge badge-danger">Alpha</sup></span>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse">
+				<span class="navbar-toggler-icon" />
+			</button>
+			<div class="collapse navbar-collapse" id="navbar-collapse">
+				<ul class="navbar-nav navbar-left">
+					<li class="nav-item"><a class="nav-link" href="#0">Preferences</a></li>
+					<li class="nav-item"><a class="nav-link" href="#0">Save progress</a></li>
+					<li class="nav-item"><a class="nav-link" href="#0">Load progress</a></li>
+				</ul>
+				<ul class="navbar-nav ml-auto">
+					<li class="nav-item"><a class="nav-link" href="https://gitlab.com/artefact2/ormulogun">Source code</a></li>
+				</ul>
+			</div>
+		</nav>
+		<p class="alert alert-danger" id="enable-js">
+			<strong>Ormulogun requires Javascript to work properly.</strong> Please enable scripts (and XHR) for the top-level domain.
+		</p>
+		<div id="intro" class="container">
+			<h1>What is Ormulogun?</h1>
+			<p><strong>Ormulogun is a tactics trainer for chess.</strong> It is completely free and libre. Progress is kept in your browser ; it can be saved and restored later in other browsers or computers.</p>
+			<p>Puzzles are arranged using the Leitner system, a simple way of doing spaced repetition. You will be prompted puzzles that you have failed in the past at regular intervals until you consistently get correct answers.</p>
+			<p>Puzzles are generated from classical games of high-rated players on Lichess.</p>
+			<p><button type="button" id="start" class="btn btn-primary btn-lg">Start training</button></p>
+		</div>
+		<div id="select-puzzleset" class="tab container">
+			<h1>Choose a puzzle set</h1>
+			<p class="alert alert-primary">Loading the puzzle set manifest…</p>
+			<ul />
+		</div>
+		<div id="play-puzzle" class="tab container">
+			<div class="row">
+				<div class="col-sm-auto text-center">
+					<div id="board"><span id="boardpad" /></div>
+				</div>
+				<div class="col-sm-3">
+					<div class="row">
+						<button type="button" id="flip-board" class="btn btn-secondary btn-sm">Flip board</button>
+					</div>
+					<div class="row">
+						<table id="movelist">
+							<tbody />
+						</table>
+					</div>
+					<div class="row">
+						<span id="puzzle-prompt" />
+						<button type="button" id="puzzle-next" class="btn btn-block"></button>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="preferences" class="tab container">
+			<h1>Preferences</h1>
+		</div>
 	</body>
 </html>
