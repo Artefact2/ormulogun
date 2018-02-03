@@ -66,13 +66,38 @@ div#board > div.back.dark {
 	background-color: hsla(0, 0%, 100%, .5);
 }
 
+div#board > div.back.drag-source:before {
+	content: " ";
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: hsla(60, 100%, 50%, .5);
+}
+
 div#board > div.piece {
 	background-size: cover;
 	background-repeat: no-repeat;
-	transition: opacity .4s ease .1s, left .5s, top .5s;
+}
+
+div#board > div.piece.draggable {
+	cursor: grab;
+	transition: all 0s;
+}
+
+div#board > div.piece.dragging {
+	z-index: 2;
+	cursor: grabbing;
+}
+
+div#board > div.piece.moving {
+	z-index: 1;
+	transition: left .5s, top .5s;
 }
 
 div#board > div.piece.captured {
+	transition: opacity .25s ease .25s;
 	opacity: 0;
 }
 

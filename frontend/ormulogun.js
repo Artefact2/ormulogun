@@ -158,12 +158,17 @@ orm_load_fen = function(fen, move, done) {
 
 		p = $(document.createElement('div'));
 		p.addClass(cl + " f" + f + " r" + r);
+		p.data('ofile', f).data('orank', r);
 		b.append(p);
 
 		++f;
 	}
 
-	if(!move) return;
+	if(!move) {
+		if(done) done();
+		return;
+	}
+
 	var sf, sr, ef, er, cl;
 	sf = move.charCodeAt(0) - "a".charCodeAt(0) + 1;
 	sr = move.charCodeAt(1) - "1".charCodeAt(0) + 1;
@@ -174,15 +179,20 @@ orm_load_fen = function(fen, move, done) {
 	var psrc = $("div#board > div.piece.f" + sf + ".r" + sr);
 	var pdest = $("div#board > div.piece.f" + ef + ".r" + er);
 	setTimeout(function() {
-		psrc.addClass("f" + ef + " r" + er).css('z-index', 1);
+		psrc.addClass("moving f" + ef + " r" + er);
 		pdest.addClass('captured');
-		setTimeout(done, 500);
+		setTimeout(function() {
+			psrc.removeClass("moving");
+			if(done) done();
+		}, 500);
 	}, 500);
 };
 
 orm_load_puzzle = function(m_idx, puz) {
 	orm_load_fen(puz.board, puz.reply.lan, function() {
-		orm_load_fen(puz.reply.fen);
+		orm_load_fen(puz.reply.fen, false, function() {
+			$("div#board").children("div.piece." + ((puz.ply % 2) ? "black" : "white")).addClass('draggable');
+		});
 	});
 
 	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
@@ -202,6 +212,45 @@ $(function() {
 
 	$("button#flip-board").click(function() {
 		$("div#board").toggleClass('flipped');
+	});
+
+	/* XXX not touch-friendly */
+	$("div#board").on("mousedown", "> div.piece.draggable", function(e) {
+		var p = $(this);
+		var bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
+		bg.addClass("drag-source");
+		p.data("origx", e.pageX);
+		p.data("origy", e.pageY);
+		p.data("origtop", p.position().top);
+		p.data("origleft", p.position().left);
+		p.addClass("dragging");
+	}).on("mousemove", function(e) {
+		var p = $("div#board > div.piece.dragging");
+		if(!p) return;
+
+		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
+		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
+	}).on("mouseup", "> div.piece.dragging", function(e) {
+		var p = $(this);
+		var b = $("div#board"), pos = p.position();
+		var file = 1 + Math.round(8 * pos.left / b.width());
+		var rank = 9 - Math.round(1 + 8 * pos.top / b.height());
+
+		if($("div#board").hasClass('flipped')) {
+			file = 9 - file;
+			rank = 9 - rank;
+		}
+
+		if(file >= 1 && file <= 8 && rank >= 1 && rank <= 8) {
+			/* XXX: promotion */
+			p.removeClass("r1 r2 r3 r4 r5 r6 r7 r8 f1 f2 f3 f4 f5 f6 f7 f8");
+			p.addClass("r" + rank + " f" + file);
+			p.data("orank", rank);
+			p.data("ofile", file);
+		}
+		p.removeAttr('style');
+		p.removeClass('dragging');
+		$("div#board > div.drag-source").removeClass("drag-source");
 	});
 
 	orm_load_puzzle_manifest(function() {
