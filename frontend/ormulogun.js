@@ -89,7 +89,6 @@ orm_restore_tab = function() {
 			}).fail(function() {
 				orm_error("Could not load the puzzle set.");
 			}).done(function(data) {
-				console.log(data[parseInt(h[2])]);
 				orm_load_puzzle(manifest_idx, data[parseInt(h[2])]);
 				$("div#play-puzzle").show();
 			});
@@ -112,12 +111,12 @@ orm_init_board = function() {
 	}
 };
 
-orm_load_fen = function(fen) {
+orm_load_fen = function(fen, move, done) {
 	var b = $("div#board");
 	var p, r = 8, f = 1, cl;
-	b.children("div.black, div.white").remove();
+	b.children("div.piece").remove();
 
-	for(var i = 0; i < fen.length; ++i) {
+	for(var i = 0; i < fen.length && fen[i] != " "; ++i) {
 		switch(fen[i]) {
 		case '/':
 			f = 1;
@@ -135,21 +134,20 @@ orm_load_fen = function(fen) {
 			f += parseInt(fen[i]);
 			continue;
 
-		case 'p': cl = 'black pawn'; break;
-		case 'n': cl = 'black knight'; break;
-		case 'b': cl = 'black bishop'; break;
-		case 'r': cl = 'black rook'; break;
-		case 'q': cl = 'black queen'; break;
-		case 'k': cl = 'black king'; break;
+		case 'p': cl = 'piece black pawn'; break;
+		case 'n': cl = 'piece black knight'; break;
+		case 'b': cl = 'piece black bishop'; break;
+		case 'r': cl = 'piece black rook'; break;
+		case 'q': cl = 'piece black queen'; break;
+		case 'k': cl = 'piece black king'; break;
 
-		case 'P': cl = 'white pawn'; break;
-		case 'N': cl = 'white knight'; break;
-		case 'B': cl = 'white bishop'; break;
-		case 'R': cl = 'white rook'; break;
-		case 'Q': cl = 'white queen'; break;
-		case 'K': cl = 'white king'; break;
+		case 'P': cl = 'piece white pawn'; break;
+		case 'N': cl = 'piece white knight'; break;
+		case 'B': cl = 'piece white bishop'; break;
+		case 'R': cl = 'piece white rook'; break;
+		case 'Q': cl = 'piece white queen'; break;
+		case 'K': cl = 'piece white king'; break;
 
-		case ' ': return;
 		default: cl = false; break;
 		}
 
@@ -164,13 +162,31 @@ orm_load_fen = function(fen) {
 
 		++f;
 	}
+
+	if(!move) return;
+	var sf, sr, ef, er, cl;
+	sf = move.charCodeAt(0) - "a".charCodeAt(0) + 1;
+	sr = move.charCodeAt(1) - "1".charCodeAt(0) + 1;
+	ef = move.charCodeAt(2) - "a".charCodeAt(0) + 1;
+	er = move.charCodeAt(3) - "1".charCodeAt(0) + 1;
+	/* XXX: promotion */
+
+	var psrc = $("div#board > div.piece.f" + sf + ".r" + sr);
+	var pdest = $("div#board > div.piece.f" + ef + ".r" + er);
+	setTimeout(function() {
+		psrc.addClass("f" + ef + " r" + er).css('z-index', 1);
+		pdest.addClass('captured');
+		setTimeout(done, 500);
+	}, 500);
 };
 
 orm_load_puzzle = function(m_idx, puz) {
-	orm_load_fen(puz[3]);
+	orm_load_fen(puz.board, puz.reply.lan, function() {
+		orm_load_fen(puz.reply.fen);
+	});
 
-	//$("div#board").toggleClass('flipped', puz[0] % 2);
-	$("span#puzzle-prompt").text(orm_manifest[m_idx].prompt.replace("{%side}", puz[0] % 2 ? "Black" : "White"));
+	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
+	$("span#puzzle-prompt").text(orm_manifest[m_idx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
 	$("button#puzzle-next").addClass('btn-danger').text('Give up');
 };
 

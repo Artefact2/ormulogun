@@ -110,12 +110,16 @@ function build_puzzle(array $gpipes, array $epipes, string $moves): ?array {
 		print_r($move, $reply);
 
 		$ret[$move] = [
-			san($gpipes, $moves, $move),
-			fen($gpipes, $moves.' '.$move),
-			$reply,
-			san($gpipes, $moves.' '.$move, $reply),
-			fen($gpipes, $moves.' '.$move.' '.$reply),
-			build_puzzle($gpipes, $epipes, $moves.' '.$move.' '.$reply),
+			'move' => [
+				'san' => san($gpipes, $moves, $move),
+				'fen' => fen($gpipes, $moves.' '.$move),
+			],
+			'reply' => [
+				'lan' => $reply,
+				'san' => san($gpipes, $moves.' '.$move, $reply),
+				'fen' => fen($gpipes, $moves.' '.$move.' '.$reply),
+			],
+			'next' => build_puzzle($gpipes, $epipes, $moves.' '.$move.' '.$reply),
 		];
 	}
 
@@ -132,17 +136,28 @@ while($json = array_shift($argv)) {
 	fflush($epipes[0]);
 
 	$moves = 'moves';
+	$prevmoves = null;
 	$ply = 0;
 
 	preg_match_all('%(?<san>(O-O|O-O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $game['MoveList'], $matches);
 	foreach($matches['san'] as $san) {
+		$prevmoves = $moves;
 		$moves .= ' '.($lan = lan($gpipes, $moves, $san));
 		++$ply;
 		if($ply < MIN_PLY_CUTOFF) continue;
 
 		$puz = build_puzzle($gpipes, $epipes, $moves);
 		if($puz !== null) {
-			$puzzles[] = [ $ply, $lan, $san, fen($gpipes, $moves), $puz ];
+			$puzzles[] = [
+				'board' => fen($gpipes, $prevmoves),
+				'reply' => [
+					'lan' => $lan,
+					'san' => $san,
+					'fen' => fen($gpipes, $moves),
+				],
+				'ply' => $ply,
+				'next' => $puz,
+			];
 		}
 	}
 }
