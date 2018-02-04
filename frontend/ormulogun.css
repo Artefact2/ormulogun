@@ -91,6 +91,35 @@ div#board.black > div.piece.black, div#board.white > div.piece.white {
 	transition: all 0s;
 }
 
+div#board:before {
+	content: " ";
+	display: block;
+	width: 3%;
+	height: 3%;
+	position: absolute;
+	left: -4%;
+	background-color: transparent;
+}
+
+div#board.black:before {
+	background-color: black;
+	top: 0;
+}
+
+div#board.flipped.black:before {
+	bottom: 0;
+}
+
+div#board.white:before {
+	background-color: white;
+	border: .1rem solid black;
+	bottom: 0;
+}
+
+div#board.flipped.white:before {
+	top: 0;
+}
+
 div#board > div.piece.dragging {
 	z-index: 2;
 	cursor: grabbing;
