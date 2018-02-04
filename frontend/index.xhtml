@@ -60,7 +60,16 @@
 					</div>
 					<div class="row">
 						<p id="puzzle-prompt"></p>
-						<button type="button" id="puzzle-retry" class="btn btn-block btn-link">Retry this puzzle</button>
+						<div class="container" id="puzzle-actions-after">
+							<div class="row">
+								<div class="col pl-0 pr-1">
+									<a role="button" target="_blank" id="puzzle-analysis" class="btn btn-block btn-secondary">Analysis board</a>
+								</div>
+								<div class="col pr-0 pl-1">
+									<button type="button" id="puzzle-retry" class="btn btn-block btn-secondary">Retry</button>
+								</div>
+							</div>
+						</div>
 						<button type="button" id="puzzle-abandon" class="btn btn-lg btn-block btn-warning">Give up</button>
 						<button type="button" id="puzzle-next" class="btn btn-lg btn-block btn-primary">Next puzzle</button>
 					</div>

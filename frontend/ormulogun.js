@@ -285,6 +285,7 @@ orm_load_puzzle = function(idx) {
 	orm_movelist = orm_movelist_idx = null;
 	var puz = orm_puzzle = orm_puzzle_set[idx];
 	$("table#movelist > tbody").empty();
+	$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + orm_puzzle.reply.fen.replace(/\s/g, '_'));
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
 
 	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
@@ -295,7 +296,7 @@ orm_load_puzzle = function(idx) {
 	$("p#puzzle-prompt")
 		.removeClass("text-success text-danger")
 		.text(orm_manifest[orm_puzzle_midx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
-	$("button#puzzle-retry").removeClass("visible");
+	$("div#puzzle-actions-after").removeClass("visible");
 	$("button#puzzle-abandon").show();
 	$("button#puzzle-next").hide();
 	$("nav#mainnav").removeClass("bg-success bg-danger");
@@ -303,7 +304,7 @@ orm_load_puzzle = function(idx) {
 };
 
 orm_puzzle_over = function() {
-	$("button#puzzle-retry").addClass("visible");
+	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
 	$("button#puzzle-next").show();
 	orm_puzzle_next = null;
