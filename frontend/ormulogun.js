@@ -54,14 +54,44 @@ orm_load_puzzle_manifest = function(done) {
 
 			var btn = $(document.createElement('button'));
 			btn.text('Start training');
-			btn.addClass('btn btn-primary col');
-			btn.data('src', pset.src).data('id', pset.id);
+			btn.addClass('btn btn-primary col start-training');
+			btn.data('idx', i);
 			li.append(btn);
 
 			ul.append(li);
 		}
 
+		ul.find("button.start-training").click(function() {
+			var t = $(this);
+			t.prop('disabled', 'disabled');
+			t.addClass('disabled');
+			orm_load_puzzle_set(t.data('idx'), null, null, function() {
+				$("div#select-puzzleset").fadeOut(250, function() {
+					orm_load_puzzle(0);
+					$("div#play-puzzle").fadeIn(250);
+				});
+			});
+		});
+
 		done();
+	});
+};
+
+orm_load_puzzle_set = function(m_idx, always, fail, done) {
+	var p = $(document.createElement('p'));
+	p.addClass("alert alert-primary").text("Loading the puzzle set…");
+	$("nav#mainnav").after(p);
+
+	$.getJSON("./puzzles/" + orm_manifest[m_idx].src).always(function() {
+		p.remove();
+		if(always) always();
+	}).fail(function() {
+		orm_error("Could not load the puzzle set : " + orm_manifest[m_idx].id + ".");
+		if(fail) fail();
+	}).done(function(data) {
+		orm_puzzle_set = data;
+		orm_puzzle_midx = m_idx;
+		if(done) done();
 	});
 };
 
@@ -75,31 +105,22 @@ orm_restore_tab = function() {
 
 	case "#puzzle":
 		/* XXX */
-		if(h.length === 3) {
-			var manifest_idx = null;
-			for(var i in orm_manifest) {
-				if(orm_manifest[i].id === h[1]) {
-					manifest_idx = i;
-					break;
-				}
+		if(h.length !== 3) break;
+		var manifest_idx = null;
+		for(var i in orm_manifest) {
+			if(orm_manifest[i].id === h[1]) {
+				manifest_idx = i;
+				break;
 			}
-			if(manifest_idx === null) break;
-
-			var p = $(document.createElement('p'));
-			p.addClass("alert alert-primary").text("Loading the puzzle set…");
-			$("nav#mainnav").after(p);
-
-			$.getJSON("./puzzles/" + orm_manifest[manifest_idx].src).always(function() {
-				p.remove();
-			}).fail(function() {
-				orm_error("Could not load the puzzle set.");
-			}).done(function(data) {
-				orm_puzzle_set = data;
-				var idx = parseInt(h[2]);
-				orm_load_puzzle(manifest_idx, idx);
-				$("div#play-puzzle").show();
-			});
 		}
+		if(manifest_idx === null) break;
+		orm_load_puzzle_set(manifest_idx, null, function() {
+			$("div#intro").show();
+		}, function() {
+			var idx = parseInt(h[2]);
+			orm_load_puzzle(manifest_idx, idx);
+			$("div#play-puzzle").show();
+		});
 		return;
 	}
 
@@ -198,11 +219,10 @@ orm_animate_move = function(move, done) {
 	}, 750);
 };
 
-orm_load_puzzle = function(m_idx, idx) {
-	orm_puzzle_midx = m_idx;
+orm_load_puzzle = function(idx) {
 	orm_puzzle_idx = idx;
 	var puz = orm_puzzle = orm_puzzle_set[idx];
-	history.replaceState(null, null, "#puzzle-" + orm_manifest[m_idx].id + "-" + idx);
+	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
 
 	orm_load_fen(puz.board);
 	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
@@ -214,7 +234,7 @@ orm_load_puzzle = function(m_idx, idx) {
 
 	$("p#puzzle-prompt")
 		.removeClass("text-success text-danger")
-		.text(orm_manifest[m_idx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
+		.text(orm_manifest[orm_puzzle_midx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
 	$("button#puzzle-retry").removeClass("visible");
 	$("button#puzzle-abandon").show();
 	$("button#puzzle-next").hide();
