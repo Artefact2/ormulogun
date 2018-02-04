@@ -118,7 +118,7 @@ orm_restore_tab = function() {
 			$("div#intro").show();
 		}, function() {
 			var idx = parseInt(h[2]);
-			orm_load_puzzle(manifest_idx, idx);
+			orm_load_puzzle(idx);
 			$("div#play-puzzle").show();
 		});
 		return;
@@ -257,7 +257,7 @@ $(function() {
 	});
 
 	$("button#puzzle-retry").click(function() {
-		orm_load_puzzle(orm_puzzle_midx, orm_puzzle_idx);
+		orm_load_puzzle(orm_puzzle_idx);
 	});
 
 	$("button#puzzle-abandon").click(function() {
@@ -268,7 +268,7 @@ $(function() {
 
 	$("button#puzzle-next").click(function() {
 		/* XXX */
-		orm_load_puzzle(orm_puzzle_midx, orm_puzzle_idx + 1);
+		orm_load_puzzle(orm_puzzle_idx + 1);
 	});
 
 	/* XXX not touch-friendly */
