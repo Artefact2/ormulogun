@@ -1,5 +1,11 @@
 <?php
 
+assert_options(ASSERT_BAIL, true);
+
+
+
+/* ---------- Game filtering ---------- */
+
 /* Only consider games where both players have a rating above this
  * value */
 const RATING_CUTOFF = 2000;
@@ -8,12 +14,15 @@ const RATING_CUTOFF = 2000;
  * (base + 40 * increment) */
 const TIME_CUTOFF = 900;
 
+
+
+/* ---------- Puzzle filtering ---------- */
+
 /* Minimum gap between best moves to consider tactics */
 const EVAL_CUTOFF = 280;
 
 /* Skip puzzle probing for these first plies */
 const MIN_PLY_CUTOFF = 4;
-
 
 /* Maximum number of possible moves above EVAL_CUTOFF compared to the
  * next best to consider tactics */
@@ -25,6 +34,8 @@ const VARIATIONS_MAX_DIFF = 20;
 
 
 
+/* ---------- Other settings ---------- */
+
 /* Must be UCI compliant and have the MultiPV option */
 const ENGINE = 'stockfish';
 
@@ -33,7 +44,3 @@ const ENGINE_LIMITER = 'depth 16';
 
 /* Path to gumble */
 const GUMBLE = 'gumble';
-
-
-
-assert_options(ASSERT_BAIL, true);
