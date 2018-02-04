@@ -86,7 +86,7 @@ div#board > div.piece {
 	background-repeat: no-repeat;
 }
 
-div#board > div.piece.draggable {
+div#board.black > div.piece.black, div#board.white > div.piece.white {
 	cursor: grab;
 	transition: all 0s;
 }
@@ -98,7 +98,7 @@ div#board > div.piece.dragging {
 
 div#board > div.piece.moving {
 	z-index: 1;
-	transition: left .5s, top .5s;
+	transition: left .5s, top .5s !important;
 }
 
 div#board > div.piece.captured {
