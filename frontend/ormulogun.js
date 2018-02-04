@@ -30,7 +30,7 @@ orm_error = function(str) {
 };
 
 orm_load_puzzle_manifest = function(done) {
-	$.getJSON("./puzzles/manifest.json").always(function() {
+	$.getJSON("./puzzles/manifest.js").always(function() {
 		$("div#select-puzzleset > p.alert").remove();
 	}).fail(function() {
 		orm_error('Could not load the puzzle set manifest, make sure no extension is blocking XHR.');
@@ -84,7 +84,7 @@ orm_load_puzzle_set = function(m_idx, always, fail, done) {
 	p.addClass("alert alert-primary").text("Loading the puzzle set…");
 	$("nav#mainnav").after(p);
 
-	$.getJSON("./puzzles/" + orm_manifest[m_idx].src).always(function() {
+	$.getJSON("./puzzles/" + orm_manifest[m_idx].src.replace(/\.json$/, '.js')).always(function() {
 		p.remove();
 		if(always) always();
 	}).fail(function() {

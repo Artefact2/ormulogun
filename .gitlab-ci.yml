@@ -8,6 +8,8 @@ pages:
     script:
     - make
     - cp -R frontend public
+    - find public/puzzles -name "*.json" -delete
+    - rm public/index.xhtml
     - find public -type f -exec gzip --best --keep '{}' ';'
     artifacts:
         paths:

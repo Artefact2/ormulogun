@@ -1,4 +1,6 @@
-default: frontend/deps frontend/index.html
+DEFAULTS=frontend/index.html $(patsubst %.json, %.js, $(shell find frontend/puzzles -name "*.json"))
+
+default: frontend/deps $(DEFAULTS)
 
 frontend/deps:
 	mkdir $@ || exit 1
@@ -9,7 +11,13 @@ frontend/index.html: frontend/index.xhtml
 	echo '<!DOCTYPE html>' > $@
 	tail -n +2 $< >> $@
 
+frontend/puzzles/%.js: frontend/puzzles/%.json
+	cp $< $@
+
 clean:
+	rm -f $(DEFAULTS)
+
+dist-clean: clean
 	rm -Rf frontend/deps
 
-.PHONY: clean
+.PHONY: clean dist-clean
