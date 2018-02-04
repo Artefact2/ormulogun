@@ -19,6 +19,8 @@ orm_puzzle_midx = null;
 orm_puzzle_idx = null;
 orm_puzzle = null;
 orm_puzzle_next = null;
+orm_movelist = null;
+orm_movelist_idx = null;
 
 orm_error = function(str) {
 	var err = $(document.createElement('p'));
@@ -200,7 +202,7 @@ orm_load_fen = function(fen, move, done) {
 	}
 }
 
-orm_animate_move = function(startfen, movelan, endfen) {
+orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
 	orm_load_fen(startfen);
 
 	var sf, sr, ef, er, cl;
@@ -218,19 +220,77 @@ orm_animate_move = function(startfen, movelan, endfen) {
 		psrc.addClass("moving f" + ef + " r" + er);
 		pdest.addClass('captured');
 		setTimeout(function() {
-			psrc.removeClass("moving");
 			orm_load_fen(endfen);
+			if(done) done();
 		}, 500);
-	}, 750);
+		if(start) start();
+	}, typeof(delay) === "undefined" ? 750 : delay);
+};
+
+orm_push_move = function(startfen, movesan, movelan, endfen) {
+	if(orm_movelist !== null && orm_movelist_idx !== orm_movelist.length - 1) {
+		orm_error("Can't push a move in this position.");
+		return;
+	}
+
+	if(orm_movelist === null) {
+		orm_movelist = [];
+		orm_movelist_idx = -1;
+	}
+
+	++orm_movelist_idx;
+	orm_movelist.push([ startfen, movesan, movelan, endfen ]);
+
+	$("table#movelist button.btn-primary").removeClass("btn-primary").addClass("btn-light");
+
+	var btn = $(document.createElement('button'));
+	btn.text(movesan);
+	btn.data('idx', orm_movelist_idx);
+	btn.attr("id", "ply" + orm_movelist_idx);
+	btn.addClass('btn btn-sm btn-block btn-primary');
+
+	var tb = $("table#movelist > tbody");
+	var tr = tb.children('tr').last();
+	var td;
+	if(tr.length === 0 || tr.find('button').length === 2) {
+		tr = $(document.createElement("tr"));
+		tb.append(tr);
+
+		var th = $(document.createElement("th"));
+		th.text(Math.floor((orm_puzzle.ply + orm_movelist.length) / 2) + ".");
+		tr.append(th);
+
+		td = $(document.createElement("td"));
+		tr.append(td);
+		var td2 = $(document.createElement("td"));
+		tr.append(td2);
+
+		if((orm_puzzle.ply  + orm_movelist.length) % 2) {
+			var dummy = $(document.createElement("button"));
+			dummy.text("...");
+			dummy.addClass("btn btn-sm btn-block btn-light disabled");
+			dummy.prop("disabled", "disabled");
+			td.append(dummy);
+			td = td2;
+		}
+	} else {
+		td = tr.children("td").last();
+	}
+
+	td.append(btn);
 };
 
 orm_load_puzzle = function(idx) {
 	orm_puzzle_idx = idx;
+	orm_movelist = orm_movelist_idx = null;
 	var puz = orm_puzzle = orm_puzzle_set[idx];
+	$("table#movelist > tbody").empty();
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
 
 	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
-	orm_animate_move(puz.board, puz.reply.lan, puz.reply.fen);
+	orm_animate_move(puz.board, puz.reply.lan, puz.reply.fen, function() {
+		orm_push_move(puz.board, puz.reply.san, puz.reply.lan, puz.reply.fen);
+	});
 
 	$("p#puzzle-prompt")
 		.removeClass("text-success text-danger")
@@ -256,6 +316,22 @@ orm_puzzle_success = function() {
 };
 
 orm_puzzle_fail = function() {
+	var oldidx = orm_movelist_idx;
+	var oldbtn = $("table#movelist button.btn-primary");
+	while(orm_puzzle_next !== null) {
+		for(var lan in orm_puzzle_next) {
+			var puz = orm_puzzle_next[lan];
+			orm_push_move(orm_movelist[orm_movelist_idx][3], puz.move.san, lan, puz.move.fen); /* XXX */
+			orm_push_move(puz.move.fen, puz.reply.san, puz.reply.lan, puz.reply.fen);
+			orm_puzzle_next = puz.next;
+			break;
+		}
+	}
+	/* XXX */
+	orm_movelist_idx = oldidx;
+	$("table#movelist button.btn-primary").removeClass("btn-primary").addClass("btn-light");
+	oldbtn.removeClass("btn-light").addClass("btn-primary");
+
 	$("p#puzzle-prompt").addClass("text-danger").text("Puzzle failed.");
 	$("nav#mainnav").addClass("bg-danger");
 	orm_puzzle_over();
@@ -280,14 +356,21 @@ $(function() {
 	});
 
 	$("button#puzzle-abandon").click(function() {
-		/* XXX */
-		$("button#puzzle-abandon").hide();
-		$("button#puzzle-next").show();
+		orm_puzzle_fail();
 	});
 
 	$("button#puzzle-next").click(function() {
 		/* XXX */
 		orm_load_puzzle(orm_puzzle_idx + 1);
+	});
+
+	$("table#movelist").on("click", "button", function() {
+		var b = $(this);
+		orm_movelist_idx = b.data("idx");
+		var m = orm_movelist[orm_movelist_idx];
+		$("table#movelist button.btn-primary").removeClass("btn-primary").addClass("btn-light");
+		b.removeClass("btn-light").addClass("btn-primary");
+		orm_animate_move(m[0], m[2], m[3], null, null, 100);
 	});
 
 	/* XXX not touch-friendly */
@@ -296,6 +379,7 @@ $(function() {
 		var b = $("div#board");
 		if(p.hasClass("white") !== b.hasClass("white") || p.hasClass("black") !== b.hasClass("black")) return;
 		if(orm_puzzle !== null && orm_puzzle_next !== null && p.hasClass("black") !== !!(orm_puzzle.ply % 2)) return;
+		if(orm_puzzle_next !== null && orm_movelist_idx !== orm_movelist.length - 1) return;
 
 		var bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
 		bg.addClass("drag-source");
@@ -332,7 +416,10 @@ $(function() {
 
 			if(orm_puzzle_next !== null && lan in orm_puzzle_next) {
 				var puz = orm_puzzle_next[lan];
-				orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen);
+				orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen, function() {
+					orm_push_move(puz.move.fen, puz.reply.san, puz.reply.lan, puz.reply.fen);
+				});
+				orm_push_move(orm_movelist[orm_movelist_idx][3], puz.move.san, lan, puz.move.fen); /* XXX */
 				orm_puzzle_next = puz.next;
 				if(puz.next === null) {
 					orm_puzzle_success();
