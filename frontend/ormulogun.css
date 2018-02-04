@@ -137,10 +137,12 @@ div#board > div.piece.captured {
 
 button#puzzle-retry {
 	opacity: 0;
+	visibility: hidden;
 	transition: opacity .25s;
 }
 
 button#puzzle-retry.visible {
+	visibility: visible;
 	opacity: 1;
 }
 
