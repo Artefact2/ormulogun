@@ -7,8 +7,10 @@ pages:
     stage: deploy
     script:
     - make
+    - cp -R frontend public
+    - find public -type f -exec gzip --best --keep '{}' ';'
     artifacts:
         paths:
-        - frontend
+        - public
     only:
-    - live
+    - master
