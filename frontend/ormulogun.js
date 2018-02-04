@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
-orm_manifest = null;
-orm_puzzle_set = null;
-orm_puzzle_midx = null;
-orm_puzzle_idx = null;
-orm_puzzle = null;
-orm_puzzle_next = null;
-orm_movelist = null;
-orm_movelist_idx = null;
+"use strict";
 
-orm_error = function(str) {
+var orm_manifest = null;
+var orm_puzzle_set = null;
+var orm_puzzle_midx = null;
+var orm_puzzle_idx = null;
+var orm_puzzle = null;
+var orm_puzzle_next = null;
+var orm_movelist = null;
+var orm_movelist_idx = null;
+
+var orm_error = function(str) {
 	var err = $(document.createElement('p'));
 	err.addClass('alert alert-danger');
 	err.text(str);
 	$("nav#mainnav").after(err);
 };
 
-orm_load_puzzle_manifest = function(done) {
+var orm_load_puzzle_manifest = function(done) {
 	$.getJSON("./puzzles/manifest.js").always(function() {
 		$("div#select-puzzleset > p.alert").remove();
 	}).fail(function() {
@@ -79,7 +81,7 @@ orm_load_puzzle_manifest = function(done) {
 	});
 };
 
-orm_load_puzzle_set = function(m_idx, always, fail, done) {
+var orm_load_puzzle_set = function(m_idx, always, fail, done) {
 	var p = $(document.createElement('p'));
 	p.addClass("alert alert-primary").text("Loading the puzzle set…");
 	$("nav#mainnav").after(p);
@@ -97,7 +99,7 @@ orm_load_puzzle_set = function(m_idx, always, fail, done) {
 	});
 };
 
-orm_restore_tab = function() {
+var orm_restore_tab = function() {
 	$("div#intro").hide();
 	var h = location.hash.split("-", 3);
 	switch(h[0]) {
@@ -129,7 +131,7 @@ orm_restore_tab = function() {
 	$("div#intro").show();
 };
 
-orm_init_board = function() {
+var orm_init_board = function() {
 	var b = $("div#board");
 	var d;
 	for(var f = 1; f <= 8; ++f) {
@@ -141,7 +143,7 @@ orm_init_board = function() {
 	}
 };
 
-orm_load_fen = function(fen, move, done) {
+var orm_load_fen = function(fen, move, done) {
 	var b = $("div#board");
 	var p, r = 8, f = 1, cl;
 	b.children("div.piece").remove();
@@ -202,7 +204,7 @@ orm_load_fen = function(fen, move, done) {
 	}
 }
 
-orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
+var orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
 	orm_load_fen(startfen);
 
 	var sf, sr, ef, er, cl;
@@ -227,7 +229,7 @@ orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
 	}, typeof(delay) === "undefined" ? 750 : delay);
 };
 
-orm_push_move = function(startfen, movesan, movelan, endfen) {
+var orm_push_move = function(startfen, movesan, movelan, endfen) {
 	if(orm_movelist !== null && orm_movelist_idx !== orm_movelist.length - 1) {
 		orm_error("Can't push a move in this position.");
 		return;
@@ -280,7 +282,7 @@ orm_push_move = function(startfen, movesan, movelan, endfen) {
 	td.append(btn);
 };
 
-orm_load_puzzle = function(idx) {
+var orm_load_puzzle = function(idx) {
 	orm_puzzle_idx = idx;
 	orm_movelist = orm_movelist_idx = null;
 	var puz = orm_puzzle = orm_puzzle_set[idx];
@@ -303,20 +305,20 @@ orm_load_puzzle = function(idx) {
 	orm_puzzle_next = puz.next;
 };
 
-orm_puzzle_over = function() {
+var orm_puzzle_over = function() {
 	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
 	$("button#puzzle-next").show();
 	orm_puzzle_next = null;
 };
 
-orm_puzzle_success = function() {
+var orm_puzzle_success = function() {
 	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
 	$("nav#mainnav").addClass("bg-success");
 	orm_puzzle_over();
 };
 
-orm_puzzle_fail = function() {
+var orm_puzzle_fail = function() {
 	var oldidx = orm_movelist_idx;
 	var oldbtn = $("table#movelist button.btn-primary");
 	while(orm_puzzle_next !== null) {
