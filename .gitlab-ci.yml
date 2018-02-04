@@ -1,0 +1,14 @@
+image: php:alpine
+
+before_script:
+- apk add --no-cache coreutils make wget
+
+pages:
+    stage: deploy
+    script:
+    - make
+    artifacts:
+        paths:
+        - frontend
+    only:
+    - live
