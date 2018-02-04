@@ -1,7 +1,7 @@
 image: php:alpine
 
 before_script:
-- apk add --no-cache coreutils make wget
+- apk add --no-cache coreutils make wget gzip
 
 pages:
     stage: deploy
