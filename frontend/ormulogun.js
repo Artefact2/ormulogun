@@ -14,6 +14,11 @@
  */
 
 orm_manifest = null;
+orm_puzzle_set = null;
+orm_puzzle_midx = null;
+orm_puzzle_idx = null;
+orm_puzzle = null;
+orm_puzzle_next = null;
 
 orm_error = function(str) {
 	var err = $(document.createElement('p'));
@@ -89,7 +94,9 @@ orm_restore_tab = function() {
 			}).fail(function() {
 				orm_error("Could not load the puzzle set.");
 			}).done(function(data) {
-				orm_load_puzzle(manifest_idx, data[parseInt(h[2])]);
+				orm_puzzle_set = data;
+				var idx = parseInt(h[2]);
+				orm_load_puzzle(manifest_idx, idx);
 				$("div#play-puzzle").show();
 			});
 		}
@@ -152,7 +159,7 @@ orm_load_fen = function(fen, move, done) {
 		}
 
 		if(cl === false || r < 1 || f > 8) {
-			console.log("error parsing fen", fen);
+			orm_error("Error parsing FEN: " + fen);
 			return;
 		}
 
@@ -163,7 +170,9 @@ orm_load_fen = function(fen, move, done) {
 
 		++f;
 	}
+}
 
+orm_animate_move = function(move, done) {
 	if(!move) {
 		if(done) done();
 		return;
@@ -179,25 +188,38 @@ orm_load_fen = function(fen, move, done) {
 	var psrc = $("div#board > div.piece.f" + sf + ".r" + sr);
 	var pdest = $("div#board > div.piece.f" + ef + ".r" + er);
 	setTimeout(function() {
+		psrc.removeClass("f" + sf + " r" + sr);
 		psrc.addClass("moving f" + ef + " r" + er);
 		pdest.addClass('captured');
 		setTimeout(function() {
 			psrc.removeClass("moving");
 			if(done) done();
 		}, 500);
-	}, 500);
+	}, 750);
 };
 
-orm_load_puzzle = function(m_idx, puz) {
-	orm_load_fen(puz.board, puz.reply.lan, function() {
-		orm_load_fen(puz.reply.fen, false, function() {
-			$("div#board").children("div.piece." + ((puz.ply % 2) ? "black" : "white")).addClass('draggable');
-		});
+orm_load_puzzle = function(m_idx, idx) {
+	orm_puzzle_midx = m_idx;
+	orm_puzzle_idx = idx;
+	var puz = orm_puzzle = orm_puzzle_set[idx];
+	history.replaceState(null, null, "#puzzle-" + orm_manifest[m_idx].id + "-" + idx);
+
+	orm_load_fen(puz.board);
+	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
+
+	orm_animate_move(puz.reply.lan, function() {
+		orm_load_fen(puz.reply.fen);
+		$("div#board").children("div.piece." + ((puz.ply % 2) ? "black" : "white")).addClass('draggable');
 	});
 
-	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
-	$("span#puzzle-prompt").text(orm_manifest[m_idx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
-	$("button#puzzle-next").addClass('btn-danger').text('Give up');
+	$("p#puzzle-prompt")
+		.removeClass("text-success text-danger")
+		.text(orm_manifest[m_idx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
+	$("button#puzzle-retry").removeClass("visible");
+	$("button#puzzle-abandon").show();
+	$("button#puzzle-next").hide();
+	$("nav#mainnav").removeClass("bg-success bg-danger");
+	orm_puzzle_next = puz.next;
 };
 
 $(function() {
@@ -212,6 +234,21 @@ $(function() {
 
 	$("button#flip-board").click(function() {
 		$("div#board").toggleClass('flipped');
+	});
+
+	$("button#puzzle-retry").click(function() {
+		orm_load_puzzle(orm_puzzle_midx, orm_puzzle_idx);
+	});
+
+	$("button#puzzle-abandon").click(function() {
+		/* XXX */
+		$("button#puzzle-abandon").hide();
+		$("button#puzzle-next").show();
+	});
+
+	$("button#puzzle-next").click(function() {
+		/* XXX */
+		orm_load_puzzle(orm_puzzle_midx, orm_puzzle_idx + 1);
 	});
 
 	/* XXX not touch-friendly */
@@ -241,13 +278,51 @@ $(function() {
 			rank = 9 - rank;
 		}
 
-		if(file >= 1 && file <= 8 && rank >= 1 && rank <= 8) {
+		if(file >= 1 && file <= 8 && rank >= 1 && rank <= 8 && (p.data("ofile") !== file || p.data("orank") !== rank)) {
 			/* XXX: promotion */
-			p.removeClass("r1 r2 r3 r4 r5 r6 r7 r8 f1 f2 f3 f4 f5 f6 f7 f8");
-			p.addClass("r" + rank + " f" + file);
-			p.data("orank", rank);
-			p.data("ofile", file);
+			var lan = String.fromCharCode(
+				"a".charCodeAt(0) + p.data("ofile") - 1,
+				"1".charCodeAt(0) + p.data("orank") - 1,
+				"a".charCodeAt(0) + file - 1,
+				"1".charCodeAt(0) + rank - 1
+			);
+
+			if(orm_puzzle_next !== null && lan in orm_puzzle_next) {
+				var puz = orm_puzzle_next[lan];
+				orm_load_fen(puz.move.fen);
+				orm_animate_move(puz.reply.lan, function() {
+					/* XXX refactor this */
+					orm_load_fen(puz.reply.fen);
+					$("div#board").children("div.piece." + ((orm_puzzle.ply % 2) ? "black" : "white")).addClass('draggable');
+				});
+
+				orm_puzzle_next = puz.next;
+				if(puz.next === null) {
+					/* XXX refactor this */
+					$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
+					$("button#puzzle-retry").addClass("visible");
+					$("button#puzzle-abandon").hide();
+					$("button#puzzle-next").show();
+					$("nav#mainnav").addClass("bg-success");
+				} else {
+					$("p#puzzle-prompt").text("Good move! Keep going…");
+				}
+			} else {
+				if(orm_puzzle_next === null) {
+					p.removeClass("r1 r2 r3 r4 r5 r6 r7 r8 f1 f2 f3 f4 f5 f6 f7 f8");
+					p.addClass("r" + rank + " f" + file);
+					p.data("orank", rank);
+					p.data("ofile", file);
+				} else {
+					$("p#puzzle-prompt").addClass("text-danger").text("Puzzle failed.");
+					$("button#puzzle-retry").addClass("visible");
+					$("button#puzzle-abandon").hide();
+					$("button#puzzle-next").show();
+					$("nav#mainnav").addClass("bg-danger");
+				}
+			}
 		}
+
 		p.removeAttr('style');
 		p.removeClass('dragging');
 		$("div#board > div.drag-source").removeClass("drag-source");

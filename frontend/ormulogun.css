@@ -6,6 +6,11 @@ body > div.tab {
 	display: none;
 }
 
+nav#mainnav {
+	background-color: #343a40;
+	transition: background-color 1s;
+}
+
 div#board {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAQAAAAnZu5uAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gICEQQVU8RjagAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAADklEQVQI12NggIH/pDAAhrAE/LwPpvYAAAAASUVORK5CYII=);
 	display: inline-block;
@@ -99,6 +104,15 @@ div#board > div.piece.moving {
 div#board > div.piece.captured {
 	transition: opacity .25s ease .25s;
 	opacity: 0;
+}
+
+button#puzzle-retry {
+	opacity: 0;
+	transition: opacity .25s;
+}
+
+button#puzzle-retry.visible {
+	opacity: 1;
 }
 
 

@@ -13,7 +13,7 @@
 		<title>Ormulogun</title>
 	</head>
 	<body>
-		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark bg-dark" id="mainnav">
+		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark" id="mainnav">
 			<span class="navbar-brand"><a href="./index.xhtml"><span class="ormulogun-brand" /><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse">
 				<span class="navbar-toggler-icon" />
@@ -59,8 +59,10 @@
 						</table>
 					</div>
 					<div class="row">
-						<span id="puzzle-prompt" />
-						<button type="button" id="puzzle-next" class="btn btn-block"></button>
+						<p id="puzzle-prompt" />
+						<button type="button" id="puzzle-retry" class="btn btn-block btn-link">Retry this puzzle</button>
+						<button type="button" id="puzzle-abandon" class="btn btn-lg btn-block btn-warning">Give up</button>
+						<button type="button" id="puzzle-next" class="btn btn-lg btn-block btn-primary">Next puzzle</button>
 					</div>
 				</div>
 			</div>
