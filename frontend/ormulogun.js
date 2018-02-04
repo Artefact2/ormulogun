@@ -252,7 +252,7 @@ orm_puzzle_over = function() {
 orm_puzzle_success = function() {
 	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
 	$("nav#mainnav").addClass("bg-success");
-	orm_ouzzle_over();
+	orm_puzzle_over();
 };
 
 orm_puzzle_fail = function() {
