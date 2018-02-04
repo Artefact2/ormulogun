@@ -107,6 +107,7 @@ div#board.black:before {
 }
 
 div#board.flipped.black:before {
+	top: unset;
 	bottom: 0;
 }
 
@@ -117,6 +118,7 @@ div#board.white:before {
 }
 
 div#board.flipped.white:before {
+	bottom: unset;
 	top: 0;
 }
 
