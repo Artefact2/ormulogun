@@ -1,0 +1,3 @@
+[submodule "gumble"]
+	path = gumble
+	url = https://gitlab.com/artefact2/gumble

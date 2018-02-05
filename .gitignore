@@ -1,3 +1,4 @@
 frontend/deps
+frontend/gumble.js
 frontend/index.html
 puzzlegen/*.jz
