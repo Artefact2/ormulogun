@@ -133,7 +133,7 @@ div#board > div.piece.moving {
 }
 
 div#board > div.piece.captured {
-	transition: opacity .25s ease .25s;
+	transition: opacity .25s ease .25s !important;
 	opacity: 0;
 }
 

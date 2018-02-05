@@ -23,6 +23,7 @@ var orm_puzzle = null;
 var orm_puzzle_next = null;
 var orm_movelist = null;
 var orm_movelist_idx = null;
+var orm_candidate_move = null;
 
 var orm_error = function(str) {
 	var err = $(document.createElement('p'));
@@ -138,6 +139,8 @@ var orm_init_board = function() {
 		for(var r = 1; r <= 8; ++r) {
 			d = $(document.createElement('div'));
 			d.addClass("back r" + r + " f" + f + " " + ((f + r) % 2 ? 'light' : 'dark'));
+			d.data("ofile", f);
+			d.data("orank", r);
 			b.append(d);
 		}
 	}
@@ -205,7 +208,7 @@ var orm_load_fen = function(fen, move, done) {
 }
 
 var orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
-	orm_load_fen(startfen);
+	if(startfen) orm_load_fen(startfen);
 
 	var sf, sr, ef, er, cl;
 	sf = movelan.charCodeAt(0) - "a".charCodeAt(0) + 1;
@@ -220,9 +223,12 @@ var orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
 	setTimeout(function() {
 		psrc.removeClass("f" + sf + " r" + sr);
 		psrc.addClass("moving f" + ef + " r" + er);
+		psrc.data("ofile", ef).data("orank", er);
 		pdest.addClass('captured');
 		setTimeout(function() {
-			orm_load_fen(endfen);
+			pdest.remove();
+			psrc.removeClass("moving");
+			if(endfen) orm_load_fen(endfen);
 			if(done) done();
 		}, 500);
 		if(start) start();
@@ -340,6 +346,66 @@ var orm_puzzle_fail = function() {
 	orm_puzzle_over();
 };
 
+var orm_can_move_piece = function(p) {
+	var b = $("div#board");
+	if(p.hasClass("white") !== b.hasClass("white") || p.hasClass("black") !== b.hasClass("black")) return false;
+	if(orm_puzzle !== null && orm_puzzle_next !== null && p.hasClass("black") !== !!(orm_puzzle.ply % 2)) return false;
+	if(orm_puzzle_next !== null && orm_movelist_idx !== orm_movelist.length - 1) return false;
+	return true;
+};
+
+var orm_do_user_move = function(lan, animate) {
+	orm_candidate_move = null;
+
+	/* XXX: promote */
+
+	var sf, sr, tf, tr;
+	sf = lan.charCodeAt(0) - "a".charCodeAt(0) + 1;
+	sr = lan.charCodeAt(1) - "1".charCodeAt(0) + 1;
+	tf = lan.charCodeAt(2) - "a".charCodeAt(0) + 1;
+	tr = lan.charCodeAt(3) - "1".charCodeAt(0) + 1;
+
+	if(sf < 1 || sf > 8 || sr < 1 || sr > 8 || tf < 1 || tf > 8 || tr < 1 || tr > 8) return false;
+	if(sf === tf && sr === tr) return false;
+
+	var b = $("div#board");
+	b.toggleClass("white black");
+
+	var after = function() {
+		if(orm_puzzle_next === null) return true;
+		if(lan in orm_puzzle_next) {
+			var puz = orm_puzzle_next[lan];
+			orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen, function() {
+				orm_push_move(puz.move.fen, puz.reply.san, puz.reply.lan, puz.reply.fen);
+			});
+			orm_push_move(orm_movelist[orm_movelist_idx][3], puz.move.san, lan, puz.move.fen); /* XXX */
+			orm_puzzle_next = puz.next;
+			if(puz.next === null) {
+				orm_puzzle_success();
+			} else {
+				$("p#puzzle-prompt").text("Good move! Keep going…");
+			}
+		} else {
+			orm_puzzle_fail();
+		}
+	};
+
+	if(animate) {
+		orm_animate_move(null, lan, null, null, after, 0);
+	} else {
+		b.children("div.piece.r" + tr + ".f" + tf).remove();
+
+		var p = b.children("div.piece.r" + sr + ".f" + sf);
+		p.removeClass("r" + sr + " f" + sf);
+		p.addClass("r" + tr + " f" + tf);
+		p.data("orank", tr).data("ofile", tf);
+
+		after();
+	}
+
+	return true;
+};
+
 $(function() {
 	$("p#enable-js").remove();
 
@@ -379,10 +445,7 @@ $(function() {
 	/* XXX not touch-friendly */
 	$("div#board").on("mousedown", "> div.piece", function(e) {
 		var p = $(this);
-		var b = $("div#board");
-		if(p.hasClass("white") !== b.hasClass("white") || p.hasClass("black") !== b.hasClass("black")) return;
-		if(orm_puzzle !== null && orm_puzzle_next !== null && p.hasClass("black") !== !!(orm_puzzle.ply % 2)) return;
-		if(orm_puzzle_next !== null && orm_movelist_idx !== orm_movelist.length - 1) return;
+		if(!orm_can_move_piece(p)) return;
 
 		var bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
 		bg.addClass("drag-source");
@@ -395,6 +458,7 @@ $(function() {
 		var p = $("div#board > div.piece.dragging");
 		if(!p) return;
 
+		p.addClass("dragged");
 		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
 	}).on("mouseup", "> div.piece.dragging", function(e) {
@@ -408,44 +472,47 @@ $(function() {
 			rank = 9 - rank;
 		}
 
-		if(file >= 1 && file <= 8 && rank >= 1 && rank <= 8 && (p.data("ofile") !== file || p.data("orank") !== rank)) {
-			/* XXX: promotion */
-			var lan = String.fromCharCode(
-				"a".charCodeAt(0) + p.data("ofile") - 1,
-				"1".charCodeAt(0) + p.data("orank") - 1,
-				"a".charCodeAt(0) + file - 1,
-				"1".charCodeAt(0) + rank - 1
-			);
-
-			if(orm_puzzle_next !== null && lan in orm_puzzle_next) {
-				var puz = orm_puzzle_next[lan];
-				orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen, function() {
-					orm_push_move(puz.move.fen, puz.reply.san, puz.reply.lan, puz.reply.fen);
-				});
-				orm_push_move(orm_movelist[orm_movelist_idx][3], puz.move.san, lan, puz.move.fen); /* XXX */
-				orm_puzzle_next = puz.next;
-				if(puz.next === null) {
-					orm_puzzle_success();
-				} else {
-					$("p#puzzle-prompt").text("Good move! Keep going…");
-				}
-			} else {
-				if(orm_puzzle_next === null) {
-					p.removeClass("r1 r2 r3 r4 r5 r6 r7 r8 f1 f2 f3 f4 f5 f6 f7 f8");
-					b.children("div.piece.r" + rank + ".f" + file).addClass("captured");
-					p.addClass("r" + rank + " f" + file);
-					p.data("orank", rank);
-					p.data("ofile", file);
-					b.toggleClass("white black");
-				} else {
-					orm_puzzle_fail();
-				}
-			}
-		}
+		/* XXX: promotion */
+		orm_do_user_move(String.fromCharCode(
+			"a".charCodeAt(0) + p.data("ofile") - 1,
+			"1".charCodeAt(0) + p.data("orank") - 1,
+			"a".charCodeAt(0) + file - 1,
+			"1".charCodeAt(0) + rank - 1
+		), false);
 
 		p.removeAttr('style');
 		p.removeClass('dragging');
 		$("div#board > div.drag-source").removeClass("drag-source");
+	}).on("click", "> div", function() {
+		var p = $(this);
+		if(p.hasClass("dragged")) {
+			p.removeClass("dragged");
+			return;
+		}
+		if(orm_candidate_move === null && (p.hasClass("back") || (p.hasClass("piece") && !orm_can_move_piece(p)))) return;
+
+		if(orm_candidate_move === null) {
+			var bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
+			bg.addClass("drag-source");
+			orm_candidate_move = String.fromCharCode(
+				"a".charCodeAt(0) + p.data("ofile") - 1,
+				"1".charCodeAt(0) + p.data("orank") - 1,
+			);
+			p.addClass("moving");
+		} else {
+			$("div#board > div.drag-source").removeClass("drag-source");
+
+			var tgt = String.fromCharCode(
+				"a".charCodeAt(0) + p.data("ofile") - 1,
+				"1".charCodeAt(0) + p.data("orank") - 1,
+			);
+
+			if(tgt !== orm_candidate_move) {
+				orm_do_user_move(orm_candidate_move + tgt, true);
+			}
+
+			orm_candidate_move = null;
+		}
 	});
 
 	orm_load_puzzle_manifest(function() {
