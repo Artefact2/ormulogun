@@ -20,4 +20,8 @@ clean:
 dist-clean: clean
 	rm -Rf frontend/deps
 
-.PHONY: clean dist-clean
+host:
+	@echo "Browse to http://127.0.0.1:8080/index.xhtml in your browser..."
+	php -S 0.0.0.0:8080 -t frontend
+
+.PHONY: clean dist-clean host
