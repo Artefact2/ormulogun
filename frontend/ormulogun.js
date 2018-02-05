@@ -362,8 +362,6 @@ var orm_can_move_piece = function(p) {
 };
 
 var orm_do_user_move = function(lan, animate) {
-	orm_candidate_move = null;
-
 	/* XXX: promote */
 
 	var sf, sr, tf, tr;
@@ -515,6 +513,7 @@ $(function() {
 	}).on("click", "> div", function() {
 		var p = $(this);
 		if(p.hasClass("dragged")) {
+			orm_candidate_move = null;
 			p.removeClass("dragged");
 			return;
 		}
@@ -527,7 +526,6 @@ $(function() {
 				"a".charCodeAt(0) + p.data("ofile") - 1,
 				"1".charCodeAt(0) + p.data("orank") - 1,
 			);
-			p.addClass("moving");
 		} else {
 			$("div#board > div.drag-source").removeClass("drag-source");
 
