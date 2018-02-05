@@ -7,13 +7,11 @@ trainer. Released under the Apache License 2.0.
 Dependencies
 ============
 
-For the frontend, any modern browser should work.
-
-For generating puzzle lists:
-
 * PHP (CLI)
-* [Gumble](https://gitlab.com/Artefact2/gumble)
-* Another (good) UCI engine (eg stockfish)
+* Any UCI engine (eg stockfish)
+* CMake
+* LLVM, clang
+* Emscripten
 
 Data structures
 ===============
