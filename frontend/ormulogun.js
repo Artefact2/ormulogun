@@ -15,6 +15,11 @@
 
 "use strict";
 
+var gumble_board = null;
+var gumble_fen_str = null;
+var gumble_move_str = null;
+var gumble_move = null;
+
 var orm_manifest = null;
 var orm_puzzle_set = null;
 var orm_puzzle_midx = null;
@@ -146,7 +151,7 @@ var orm_init_board = function() {
 	}
 };
 
-var orm_load_fen = function(fen, move, done) {
+var orm_load_fen = function(fen) {
 	var b = $("div#board");
 	var p, r = 8, f = 1, cl;
 	b.children("div.piece").remove();
@@ -201,10 +206,12 @@ var orm_load_fen = function(fen, move, done) {
 
 	var side = fen.split(" ", 3)[1];
 	if(side === "w") {
-		$("div#board").removeClass("black").addClass("white");
+		b.removeClass("black").addClass("white");
 	} else {
-		$("div#board").removeClass("white").addClass("black");
+		b.removeClass("white").addClass("black");
 	}
+
+	b.data('fen', fen);
 }
 
 var orm_animate_move = function(startfen, movelan, endfen, start, done, delay) {
@@ -369,10 +376,25 @@ var orm_do_user_move = function(lan, animate) {
 	if(sf === tf && sr === tr) return false;
 
 	var b = $("div#board");
+
+	writeAsciiToMemory(b.data('fen'), gumble_fen_str);
+	writeAsciiToMemory(lan, gumble_move_str);
+	Module._cch_load_fen(gumble_board, gumble_fen_str);
+	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
+	if(!Module._cch_is_move_legal(gumble_board, gumble_move)) {
+		return false;
+	}
 	b.toggleClass("white black");
 
 	var after = function() {
-		if(orm_puzzle_next === null) return true;
+		if(orm_puzzle_next === null) {
+			Module._cch_play_legal_move(gumble_board, gumble_move, 0);
+			Module._cch_save_fen(gumble_board, gumble_fen_str, 90);
+			orm_load_fen(Pointer_stringify(gumble_fen_str));
+			/* XXX: continue pushing moves */
+			return true;
+		}
+
 		if(lan in orm_puzzle_next) {
 			var puz = orm_puzzle_next[lan];
 			orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen, function() {
@@ -409,6 +431,12 @@ var orm_do_user_move = function(lan, animate) {
 $(function() {
 	$("p#enable-js").remove();
 
+	gumble_board = Module._malloc(256); /* >= sizeof(cch_board_t) */
+	gumble_fen_str = Module._malloc(90); /* >= SAFE_FEN_LENGTH */
+	gumble_move_str = Module._malloc(10); /* >= SAFE_ALG_LENGTH */
+	gumble_move = Module._malloc(4); /* >= sizeof(cch_move_t) */
+	Module._cch_init_board(gumble_board);
+
 	$("button#start").click(function() {
 		$("div#intro").fadeOut(250, function() {
 			$("div#select-puzzleset").fadeIn(250);
@@ -443,6 +471,7 @@ $(function() {
 	});
 
 	/* XXX not touch-friendly */
+	/* XXX highlight possible targets using gumble movegen */
 	$("div#board").on("mousedown", "> div.piece", function(e) {
 		var p = $(this);
 		if(!orm_can_move_piece(p)) return;

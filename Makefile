@@ -21,7 +21,7 @@ frontend/gumble.js:
 	mkdir gumble/build gumble/build-js
 	cd gumble/build && cmake .. && make enginecore
 	cd gumble/build-js && CFLAGS="-Oz -DNDEBUG" emcmake cmake .. && emmake make enginecore
-	emcc -Oz --memory-init-file 0 -s EXPORTED_FUNCTIONS="['_cch_init_board', '_cch_load_fen', '_cch_save_fen', '_cch_play_legal_move', '_cch_parse_lan_move', '_cch_format_san_move', '_cch_generate_moves', 'cch_is_move_legal']" gumble/build-js/src/libenginecore.a -o $@
+	emcc -Oz --memory-init-file 0 -s EXPORTED_FUNCTIONS="['_cch_init_board', '_cch_load_fen', '_cch_save_fen', '_cch_play_legal_move', '_cch_parse_lan_move', '_cch_format_lan_move', '_cch_format_san_move', '_cch_generate_moves', '_cch_is_move_legal']" gumble/build-js/src/libenginecore.a -o $@
 
 clean:
 	rm -f $(DEFAULTS)
