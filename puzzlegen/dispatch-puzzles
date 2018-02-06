@@ -36,16 +36,20 @@ function depth(?array $puzzle, &$min, &$max): void {
 	}
 }
 
-$puzzles = [];
+function write_puzzle(array $puz, string $tag): void {
+	static $files = [];
+
+	if(!isset($files[$tag])) {
+		$files[$tag] = fopen($tag, 'ab');
+	}
+
+	fputs($files[$tag], json_encode($puz)."\n");
+}
 
 while(($line = fgets(STDIN)) !== false) {
 	$puz = json_decode($line, true);
 	assert(is_array($puz));
 
 	depth($puz[2], $mindepth, $maxdepth);
-	$puzzles['d'.$maxdepth][] = $puz;
-}
-
-foreach($puzzles as $k => $v) {
-	file_put_contents($argv[1].$k, json_encode($v));
+	write_puzzle($puz, $argv[1].'d'.$maxdepth.'.jl');
 }
