@@ -15,6 +15,11 @@
 
 "use strict";
 
+const GUMBLE_BOARD_SIZE = 256; /* >= sizeof(cch_board_t) */
+const GUMBLE_MOVE_SIZE = 4; /* == sizeof(cch_move_t) */
+const GUMBLE_SAFE_FEN_LENGTH = 90; /* >= SAFE_FEN_LENGTH */
+const GUMBLE_SAFE_ALG_LENGTH = 10; /* >= SAFE_ALG_LENGTH */
+
 var gumble_board = null;
 var gumble_fen_str = null;
 var gumble_move_str = null;
@@ -387,7 +392,7 @@ var orm_do_user_move = function(lan, animate) {
 	var after = function() {
 		if(orm_puzzle_next === null) {
 			Module._cch_play_legal_move(gumble_board, gumble_move, 0);
-			Module._cch_save_fen(gumble_board, gumble_fen_str, 90);
+			Module._cch_save_fen(gumble_board, gumble_fen_str, GUMBLE_SAFE_FEN_LENGTH);
 			orm_load_fen(Pointer_stringify(gumble_fen_str));
 			/* XXX: continue pushing moves */
 			return true;
@@ -429,10 +434,10 @@ var orm_do_user_move = function(lan, animate) {
 $(function() {
 	$("p#enable-js").remove();
 
-	gumble_board = Module._malloc(256); /* >= sizeof(cch_board_t) */
-	gumble_fen_str = Module._malloc(90); /* >= SAFE_FEN_LENGTH */
-	gumble_move_str = Module._malloc(10); /* >= SAFE_ALG_LENGTH */
-	gumble_move = Module._malloc(4); /* >= sizeof(cch_move_t) */
+	gumble_board = Module._malloc(GUMBLE_BOARD_SIZE);
+	gumble_fen_str = Module._malloc(GUMBLE_SAFE_FEN_LENGTH);
+	gumble_move_str = Module._malloc(GUMBLE_SAFE_ALG_LENGTH);
+	gumble_move = Module._malloc(GUMBLE_MOVE_SIZE);
 	Module._cch_init_board(gumble_board);
 
 	$("button#start").click(function() {
