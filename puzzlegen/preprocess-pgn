@@ -40,7 +40,7 @@ foreach($argv as $pgn) {
 
 	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgn, $match)) continue;
 	$moves = preg_replace('% \{[^}]*\} %', ' ', $match['moves']);
-	preg_match_all('%(?<san>(O-O|O-O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
+	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
 
 	echo json_encode($matches['san']), "\n";
 }
