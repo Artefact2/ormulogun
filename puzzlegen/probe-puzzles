@@ -26,21 +26,13 @@ array_shift($argv);
 
 $eproc = proc_open(ENGINE, [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $epipes);
 assert($eproc !== false);
+fputs($epipes[0], "uci\n");
 
-$gproc = proc_open(GUMBLE, [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $gpipes);
+$gproc = proc_open(__DIR__.'/../gumble/build/src/gumble', [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $gpipes);
 assert($gproc !== false);
 
-function san(array $gpipes, string $moves, string $lan): string {
-	fprintf($gpipes[0], "position startpos %s\nsan %s\n", $moves, $lan);
-	fflush($gpipes[0]);
-	while($line = fgets($gpipes[1])) {
-		if(preg_match('%^info san (?<ret>.+)$%', $line, $m)) return $m['ret'];
-	}
-	assert(0);
-}
-
-function lan(array $gpipes, string $moves, string $san): string {
-	fprintf($gpipes[0], "position startpos %s\nlan %s\n", $moves, $san);
+function lan(array $gpipes, string $lanmoves, string $san): string {
+	fprintf($gpipes[0], "position startpos moves %s\nlan %s\n", $lanmoves, $san);
 	fflush($gpipes[0]);
 	while($line = fgets($gpipes[1])) {
 		if(preg_match('%^info lan (?<ret>.+)$%', $line, $m)) return $m['ret'];
@@ -48,121 +40,118 @@ function lan(array $gpipes, string $moves, string $san): string {
 	assert(0);
 }
 
-function fen(array $gpipes, string $moves): string {
-	fprintf($gpipes[0], "position startpos %s\nfen\n", $moves);
+function fen(array $gpipes, string $lanmoves): string {
+	fprintf($gpipes[0], "position startpos moves %s\nfen\n", $lanmoves);
 	fflush($gpipes[0]);
 	while($line = fgets($gpipes[1])) {
-		if(preg_match('%^info fen (?<ret>.+)$%', $line, $m)) //return explode(' ', $m['ret'], 2)[0];
-			return $m['ret'];
+		if(preg_match('%^info fen (?<ret>.+)$%', $line, $m)) return $m['ret'];
 	}
 	assert(0);
 }
 
-/* XXX: also find mates in N */
-function build_puzzle(array $gpipes, array $epipes, string $moves): ?array {
-	fprintf($epipes[0], "position startpos %s\ngo %s\n", $moves, ENGINE_LIMITER);
+function evaluate_position(array $epipes, string $lanmoves, int $branches, &$evals): string {
+	fprintf($epipes[0], "setoption name MultiPV value %d\n", $branches);
+	fprintf($epipes[0], "position startpos moves %s\ngo %s\n", $lanmoves, ENGINE_LIMITER);
 	fflush($epipes[0]);
+
 	$evals = [];
 
 	while($line = fgets($epipes[1])) {
-		if(preg_match('%^bestmove\s%', $line)) break;
+		if(preg_match('%^bestmove\s+(?<lan>([a-h][1-8]){2}[qrbn]?)(\s|$)%', $line, $match)) {
+			return $match['lan'];
+		}
+
 		if(!preg_match('%^info\s%', $line)) continue;
-		assert(preg_match('%\smultipv\s+(?<mpv>[0-9]+)(\s|$)%', $line, $match));
-		$mpv = (int)$match['mpv'];
+		$mpv = preg_match('%\smultipv\s+(?<mpv>[0-9]+)(\s|$)%', $line, $match) ? (int)$match['mpv'] : 1;
+		/* XXX: also parse "score mate N" */
 		if(!preg_match('%\sscore\s+cp\s+(?<eval>-?[0-9]+)(\s|$)%', $line, $me)) continue;
 		if(!preg_match('%\spv\s+(?<move>([a-h][1-8]){2}[qrbn]?)(\s|$)%', $line, $mp)) continue;
 		$evals[$mpv] = [ (int)$me['eval'], $mp['move'] ];
 	}
-	assert($line !== false);
+	assert(0);
+}
+
+function generate_puzzle(array $epipes, string $lanmoves, ?string $bestlan = null, ?array $evals = null): ?array {
+	if($evals === null || $bestlan === null) {
+		$bestlan = evaluate_position($epipes, $lanmoves, MAX_VARIATIONS + 1, $evals);
+	}
+
+	$c = count($evals);
+	if($c === 0) {
+		/* check/stale mate */
+		return null;
+	}
+
+	if($c === 1) {
+		/* XXX: some tactics have forced moves after the start */
+		/* forced move, no tactics to consider here */
+		return null;
+	}
 
 	usort($evals, function(array $a, array $b) {
 		return $b[0] - $a[0];
 	});
 
-	$goodnext = [];
-	$cutoff = false;
-	$stop = count($evals);
-	for($i = 0; $i < $stop; ++$i) {
-		$diff = $evals[0][0] - $evals[$i][0];
-		if($diff < VARIATIONS_MAX_DIFF) {
-			$goodnext[$evals[$i][1]] = $evals[$i][0];
-		}
-		if($diff > EVAL_CUTOFF) {
-			$cutoff = $evals[$i][0];
-			break;
-		}
+	if($evals[0][0] < -POSITION_EVAL_CUTOFF || $evals[$c - 1][0] > POSITION_EVAL_CUTOFF) {
+		/* clearly lost or won position */
+		return null;
 	}
-	if($cutoff === false) return null;
+
+	$stop = 0;
+	for($i = 1; $i < $c; ++$i) {
+		if($evals[0][0] - $evals[$i][0] <= VARIATIONS_MAX_DIFF) continue;
+		if($evals[0][0] - $evals[$i][0] >= BEST_MOVE_EVAL_CUTOFF) {
+			$stop = $i;
+		}
+		break;
+	}
+
+	if($stop === 0) {
+		/* Puzzle is over, there's not one set of moves clearly better than others */
+		return null;
+	}
 
 	$ret = [];
-	foreach($goodnext as $move => $eval) {
-		fprintf($epipes[0], "position startpos %s\ngo %s\n", $moves.' '.$move, ENGINE_LIMITER);
-		fflush($epipes[0]);
+	for($i = 0; $i < $stop; ++$i) {
+		$lan = $evals[$i][1];
+		$cont = $lanmoves.' '.$lan;
+		$bestreply = evaluate_position($epipes, $cont, 1, $replyevals);
 
-		$reply = null;
-		while($line = fgets($epipes[1])) {
-			if(!preg_match('%^bestmove\s+(?<move>([a-h][1-8]){2}[qrbn]?)(\s|$)%', $line, $match)) continue;
-			$reply = $match['move'];
-			break;
+		if($bestreply === "(none)") {
+			/* XXX: is this UCI standard ? */
+			/* Game over, check/stale mate */
+			$ret[$lan] = null;
+			continue;
 		}
-		assert($line !== false && $reply !== null);
 
-		print_r($move, $reply);
+		if(($next = generate_puzzle($epipes, $cont.' '.$bestreply)) !== null) {
+			$ret[$lan] = [ $lan, $next ];
+			continue;
+		}
 
-		$ret[$move] = [
-			'move' => [
-				'san' => san($gpipes, $moves, $move),
-				'fen' => fen($gpipes, $moves.' '.$move),
-			],
-			'reply' => [
-				'lan' => $reply,
-				'san' => san($gpipes, $moves.' '.$move, $reply),
-				'fen' => fen($gpipes, $moves.' '.$move.' '.$reply),
-			],
-			'next' => build_puzzle($gpipes, $epipes, $moves.' '.$move.' '.$reply),
-		];
+		$ret[$lan] = null;
 	}
-
 	return $ret;
 }
 
-fprintf($epipes[0], "uci\nsetoption name MultiPV value %d\n", MAX_VARIATIONS + 1);
-
-$puzzles = [];
-
 while($json = array_shift($argv)) {
-	$game = json_decode($json, true);
-	fputs($epipes[0], "ucinewgame");
+	fputs($epipes[0], "ucinewgame\n");
 	fflush($epipes[0]);
 
-	$moves = 'moves';
-	$prevmoves = null;
-	$ply = 0;
+	$lanmoves = '';
+	foreach(json_decode($json, true) as $ply => $san) {
+		$lan = lan($gpipes, $lanmoves, $san);
+		$lanmoves .= ' '.$lan;
 
-	preg_match_all('%(?<san>(O-O|O-O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $game['MoveList'], $matches);
-	foreach($matches['san'] as $san) {
-		$prevmoves = $moves;
-		$moves .= ' '.($lan = lan($gpipes, $moves, $san));
-		++$ply;
 		if($ply < MIN_PLY_CUTOFF) continue;
-
-		$puz = build_puzzle($gpipes, $epipes, $moves);
-		if($puz !== null) {
-			$puzzles[] = [
-				'board' => fen($gpipes, $prevmoves),
-				'reply' => [
-					'lan' => $lan,
-					'san' => $san,
-					'fen' => fen($gpipes, $moves),
-				],
-				'ply' => $ply,
-				'next' => $puz,
-			];
-		}
+		if(($puz = generate_puzzle($epipes, $lanmoves)) === null) continue;
+		echo json_encode([
+			fen($gpipes, substr($lanmoves, 0, -strlen($lan) - 1)),
+			$lan,
+			$puz
+		]), "\n";
 	}
 }
 
 fputs($epipes[0], "quit\n");
 fputs($gpipes[0], "quit\n");
-
-echo json_encode($puzzles, JSON_PRETTY_PRINT);

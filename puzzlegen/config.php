@@ -18,8 +18,11 @@ const TIME_CUTOFF = 900;
 
 /* ---------- Puzzle filtering ---------- */
 
+/* Don't probe for puzzles in clearly won or lost positons */
+const POSITION_EVAL_CUTOFF = 500;
+
 /* Minimum gap between best moves to consider tactics */
-const EVAL_CUTOFF = 280;
+const BEST_MOVE_EVAL_CUTOFF = 280;
 
 /* Skip puzzle probing for these first plies */
 const MIN_PLY_CUTOFF = 4;
@@ -41,6 +44,3 @@ const ENGINE = 'stockfish';
 
 /* Will be injected as-is in the "go" UCI command */
 const ENGINE_LIMITER = 'depth 16';
-
-/* Path to gumble */
-const GUMBLE = 'gumble';
