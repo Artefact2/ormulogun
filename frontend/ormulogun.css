@@ -71,13 +71,25 @@ div#board > div.back.dark {
 	background-color: hsla(0, 0%, 100%, .5);
 }
 
-div#board > div.back.drag-source:before {
+div#board > div.back.move-source:before {
 	content: " ";
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
+	background-color: hsla(60, 100%, 50%, .5);
+}
+
+div#board > div.back.move-target:before {
+	z-index: 5;
+	content: " ";
+	position: absolute;
+	top: 30%;
+	left: 30%;
+	width: 40%;
+	height: 40%;
+	border-radius: 50%;
 	background-color: hsla(60, 100%, 50%, .5);
 }
 
@@ -123,12 +135,12 @@ div#board.flipped.white:before {
 }
 
 div#board > div.piece.dragging {
-	z-index: 2;
+	z-index: 10;
 	cursor: grabbing;
 }
 
 div#board > div.piece.moving {
-	z-index: 1;
+	z-index: 9;
 	transition: left .5s, top .5s !important;
 }
 

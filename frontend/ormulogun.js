@@ -17,6 +17,7 @@
 
 const GUMBLE_BOARD_SIZE = 256; /* >= sizeof(cch_board_t) */
 const GUMBLE_MOVE_SIZE = 4; /* == sizeof(cch_move_t) */
+const GUMBLE_MOVELIST_LENGTH = 80; /* >= CCH_MOVELIST_LENGTH */
 const GUMBLE_SAFE_FEN_LENGTH = 90; /* >= SAFE_FEN_LENGTH */
 const GUMBLE_SAFE_ALG_LENGTH = 10; /* >= SAFE_ALG_LENGTH */
 
@@ -24,6 +25,7 @@ let gumble_board = null;
 let gumble_fen_str = null;
 let gumble_move_str = null;
 let gumble_move = null;
+let gumble_movelist = null;
 
 let orm_manifest = null;
 let orm_puzzle_set = null;
@@ -431,6 +433,23 @@ let orm_do_user_move = function(lan, animate) {
 	return true;
 };
 
+let orm_highlight_move_squares = function(sf, sr) {
+	let sq = (sf - 1) * 8 + (sr - 1);
+	let b = $("div#board");
+
+	writeAsciiToMemory(b.data('fen'), gumble_fen_str);
+	Module._cch_load_fen(gumble_board, gumble_fen_str);
+	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, sq, sq + 1);
+
+	console.log(sf, sr, sq, stop);
+	b.children('div.back.f' + sf + '.r' + sr).addClass('move-source');
+	for(let i = 0; i < stop; ++i) {
+		Module._cch_format_lan_move(gumble_movelist + 4 * i, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH);
+		let lan = Pointer_stringify(gumble_move_str);
+		b.children('div.back.f' + (lan.charCodeAt(2) - "a".charCodeAt(0) + 1) + '.r' + (lan.charCodeAt(3) - "1".charCodeAt(0) + 1)).addClass('move-target');
+	}
+};
+
 $(function() {
 	$("p#enable-js").remove();
 
@@ -438,6 +457,7 @@ $(function() {
 	gumble_fen_str = Module._malloc(GUMBLE_SAFE_FEN_LENGTH);
 	gumble_move_str = Module._malloc(GUMBLE_SAFE_ALG_LENGTH);
 	gumble_move = Module._malloc(GUMBLE_MOVE_SIZE);
+	gumble_movelist = Module._malloc(GUMBLE_MOVE_SIZE * GUMBLE_MOVELIST_LENGTH);
 	Module._cch_init_board(gumble_board);
 
 	$("button#start").click(function() {
@@ -474,13 +494,11 @@ $(function() {
 	});
 
 	/* XXX not touch-friendly */
-	/* XXX highlight possible targets using gumble movegen */
 	$("div#board").on("mousedown", "> div.piece", function(e) {
 		let p = $(this);
 		if(!orm_can_move_piece(p)) return;
 
 		let bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
-		bg.addClass("drag-source");
 		p.data("origx", e.pageX);
 		p.data("origy", e.pageY);
 		p.data("origtop", p.position().top);
@@ -488,9 +506,12 @@ $(function() {
 		p.addClass("dragging");
 	}).on("mousemove", function(e) {
 		let p = $("div#board > div.piece.dragging");
-		if(!p) return;
+		if(p.length === 0) return;
 
-		p.addClass("dragged");
+		if(!p.hasClass("dragged")) {
+			p.addClass("dragged");
+			orm_highlight_move_squares(p.data('ofile'), p.data('orank'));
+		}
 		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
 	}).on("mouseup", "> div.piece.dragging", function(e) {
@@ -514,7 +535,7 @@ $(function() {
 
 		p.removeAttr('style');
 		p.removeClass('dragging');
-		$("div#board > div.drag-source").removeClass("drag-source");
+		$("div#board > div.back").removeClass("move-source move-target");
 	}).on("click", "> div", function() {
 		let p = $(this);
 		if(p.hasClass("dragged")) {
@@ -526,13 +547,13 @@ $(function() {
 
 		if(orm_candidate_move === null) {
 			let bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
-			bg.addClass("drag-source");
 			orm_candidate_move = String.fromCharCode(
 				"a".charCodeAt(0) + p.data("ofile") - 1,
 				"1".charCodeAt(0) + p.data("orank") - 1,
 			);
+			orm_highlight_move_squares(p.data('ofile'), p.data('orank'));
 		} else {
-			$("div#board > div.drag-source").removeClass("drag-source");
+			$("div#board > div.back").removeClass("move-source move-target");
 
 			let tgt = String.fromCharCode(
 				"a".charCodeAt(0) + p.data("ofile") - 1,
