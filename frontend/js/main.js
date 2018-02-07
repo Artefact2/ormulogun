@@ -13,20 +13,6 @@
  * limitations under the License.
  */
 
-"use strict";
-
-const GUMBLE_BOARD_SIZE = 256; /* >= sizeof(cch_board_t) */
-const GUMBLE_MOVE_SIZE = 4; /* == sizeof(cch_move_t) */
-const GUMBLE_MOVELIST_LENGTH = 80; /* >= CCH_MOVELIST_LENGTH */
-const GUMBLE_SAFE_FEN_LENGTH = 90; /* >= SAFE_FEN_LENGTH */
-const GUMBLE_SAFE_ALG_LENGTH = 10; /* >= SAFE_ALG_LENGTH */
-
-let gumble_board = null;
-let gumble_fen_str = null;
-let gumble_move_str = null;
-let gumble_move = null;
-let gumble_movelist = null;
-
 let orm_manifest = null;
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
@@ -57,7 +43,7 @@ let orm_load_puzzle_manifest = function(done) {
 		for(let i in data) {
 			let pset = data[i];
 			let li = $(document.createElement('li'));
-			li.addClass('row');
+			li.addClass('row pb-2');
 
 			let h = $(document.createElement('h3'));
 			h.text(pset.name);
@@ -134,7 +120,7 @@ let orm_restore_tab = function() {
 		orm_load_puzzle_set(manifest_idx, null, function() {
 			$("div#intro").show();
 		}, function() {
-			let idx = parseInt(h[2]);
+			let idx = parseInt(h[2], 10);
 			orm_load_puzzle(idx);
 			$("div#play-puzzle").show();
 		});
@@ -178,7 +164,7 @@ let orm_load_fen = function(fen) {
 		case '6':
 		case '7':
 		case '8':
-			f += parseInt(fen[i]);
+			f += parseInt(fen[i], 10);
 			continue;
 
 		case 'p': cl = 'piece black pawn'; break;
@@ -306,23 +292,33 @@ let orm_load_puzzle = function(idx) {
 	orm_puzzle_idx = idx;
 	orm_movelist = orm_movelist_idx = null;
 	let puz = orm_puzzle = orm_puzzle_set[idx];
+
 	$("table#movelist > tbody").empty();
-	$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + orm_puzzle.reply.fen.replace(/\s/g, '_'));
+	$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + puz[0].replace(/\s/g, '_'));
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
 
-	$("div#board").toggleClass("flipped", !!(puz.ply % 2));
-	orm_animate_move(puz.board, puz.reply.lan, puz.reply.fen, function() {
-		orm_push_move(puz.board, puz.reply.san, puz.reply.lan, puz.reply.fen);
+	puz.side = puz[0].split(' ', 3)[1] === 'b';
+	$("div#board").toggleClass('flipped', !puz.side);
+
+	/* XXX: can be refactored? get rid of 1st parameter to orm_animate_move */
+	const fen = puz[0];
+	gumble_load_fen(fen);
+	const lan = puz[1];
+	const san = gumble_lan_to_san(lan);
+	gumble_play_legal_lan(lan);
+	const afterfen = gumble_save_fen();
+	orm_animate_move(fen, lan, afterfen, function() {
+		orm_push_move(fen, san, lan, afterfen);
 	});
 
 	$("p#puzzle-prompt")
 		.removeClass("text-success text-danger")
-		.text(orm_manifest[orm_puzzle_midx].prompt.replace("{%side}", puz.ply % 2 ? "Black" : "White"));
+		.text(orm_manifest[orm_puzzle_midx].prompt.replace("{%side}",  puz.side ? 'White' : 'Black'));
 	$("div#puzzle-actions-after").removeClass("visible");
 	$("button#puzzle-abandon").show();
 	$("button#puzzle-next").hide();
 	$("nav#mainnav").removeClass("bg-success bg-danger");
-	orm_puzzle_next = puz.next;
+	orm_puzzle_next = puz[2];
 };
 
 let orm_puzzle_over = function() {
@@ -363,7 +359,7 @@ let orm_puzzle_fail = function() {
 let orm_can_move_piece = function(p) {
 	let b = $("div#board");
 	if(p.hasClass("white") !== b.hasClass("white") || p.hasClass("black") !== b.hasClass("black")) return false;
-	if(orm_puzzle !== null && orm_puzzle_next !== null && p.hasClass("black") !== !!(orm_puzzle.ply % 2)) return false;
+	if(orm_puzzle !== null && orm_puzzle_next !== null && p.hasClass("white") !== orm_puzzle.side) return false;
 	if(orm_puzzle_next !== null && orm_movelist_idx !== orm_movelist.length - 1) return false;
 	return true;
 };
@@ -381,36 +377,44 @@ let orm_do_user_move = function(lan, animate) {
 	if(sf === tf && sr === tr) return false;
 
 	let b = $("div#board");
-
-	writeAsciiToMemory(b.data('fen'), gumble_fen_str);
-	writeAsciiToMemory(lan, gumble_move_str);
-	Module._cch_load_fen(gumble_board, gumble_fen_str);
-	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
-	if(!Module._cch_is_move_legal(gumble_board, gumble_move)) {
+	gumble_load_fen(b.data('fen'));
+	if(!gumble_is_move_legal(lan)) {
 		return false;
 	}
 	b.toggleClass("white black");
 
 	let after = function() {
 		if(orm_puzzle_next === null) {
-			Module._cch_play_legal_move(gumble_board, gumble_move, 0);
-			Module._cch_save_fen(gumble_board, gumble_fen_str, GUMBLE_SAFE_FEN_LENGTH);
-			orm_load_fen(Pointer_stringify(gumble_fen_str));
+			gumble_play_legal_lan(lan);
+			orm_load_fen(gumble_save_fen());
 			/* XXX: continue pushing moves */
 			return true;
 		}
 
 		if(lan in orm_puzzle_next) {
-			let puz = orm_puzzle_next[lan];
-			orm_animate_move(puz.move.fen, puz.reply.lan, puz.reply.fen, function() {
-				orm_push_move(puz.move.fen, puz.reply.san, puz.reply.lan, puz.reply.fen);
-			});
-			orm_push_move(orm_movelist[orm_movelist_idx][3], puz.move.san, lan, puz.move.fen); /* XXX */
-			orm_puzzle_next = puz.next;
-			if(puz.next === null) {
+			const puz = orm_puzzle_next[lan];
+			const fen = b.data('fen');
+			gumble_load_fen(fen);
+			const san = gumble_lan_to_san(lan);
+			gumble_play_legal_lan(lan);
+			const fen2 = gumble_save_fen();
+			b.data('fen', fen2);
+			orm_push_move(fen, san, lan, fen2);
+
+			if(puz === null) {
 				orm_puzzle_success();
 			} else {
 				$("p#puzzle-prompt").text("Good move! Keep going…");
+
+				const rlan = puz[0];
+				const rsan = gumble_lan_to_san(rlan);
+				gumble_play_legal_lan(rlan);
+				const rfen = gumble_save_fen();
+
+				orm_animate_move(fen, lan, rfen, function() {
+					orm_push_move(fen2, rsan, rlan, rfen);
+				});
+				orm_puzzle_next = puz[1];
 			}
 		} else {
 			orm_puzzle_fail();
@@ -437,11 +441,9 @@ let orm_highlight_move_squares = function(sf, sr) {
 	let sq = (sf - 1) * 8 + (sr - 1);
 	let b = $("div#board");
 
-	writeAsciiToMemory(b.data('fen'), gumble_fen_str);
-	Module._cch_load_fen(gumble_board, gumble_fen_str);
+	gumble_load_fen(b.data('fen'));
 	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, sq, sq + 1);
 
-	console.log(sf, sr, sq, stop);
 	b.children('div.back.f' + sf + '.r' + sr).addClass('move-source');
 	for(let i = 0; i < stop; ++i) {
 		Module._cch_format_lan_move(gumble_movelist + 4 * i, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH);
@@ -453,12 +455,7 @@ let orm_highlight_move_squares = function(sf, sr) {
 $(function() {
 	$("p#enable-js").remove();
 
-	gumble_board = Module._malloc(GUMBLE_BOARD_SIZE);
-	gumble_fen_str = Module._malloc(GUMBLE_SAFE_FEN_LENGTH);
-	gumble_move_str = Module._malloc(GUMBLE_SAFE_ALG_LENGTH);
-	gumble_move = Module._malloc(GUMBLE_MOVE_SIZE);
-	gumble_movelist = Module._malloc(GUMBLE_MOVE_SIZE * GUMBLE_MOVELIST_LENGTH);
-	Module._cch_init_board(gumble_board);
+	for(let i in when_ready) when_ready[i]();
 
 	$("button#start").click(function() {
 		$("div#intro").fadeOut(250, function() {

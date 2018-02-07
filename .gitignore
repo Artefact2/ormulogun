@@ -1,4 +1,6 @@
 frontend/deps
 frontend/gumble.js
 frontend/index.html
+frontend/ormulogun.js
+frontend/puzzles/*.js
 puzzlegen/*.j[lz]

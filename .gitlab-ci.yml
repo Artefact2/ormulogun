@@ -11,7 +11,7 @@ pages:
     - make
     - cp -R frontend public
     - find public/puzzles -name "*.json" -delete
-    - rm public/index.xhtml
+    - rm -R public/index.xhtml public/js
     - find public -type f -exec gzip --best --keep '{}' ';'
     artifacts:
         paths:

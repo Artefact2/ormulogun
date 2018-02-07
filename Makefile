@@ -1,4 +1,4 @@
-DEFAULTS=frontend/index.html frontend/gumble.js $(patsubst %.json, %.js, $(shell find frontend/puzzles -name "*.json"))
+DEFAULTS=frontend/index.html frontend/ormulogun.js frontend/gumble.js $(patsubst %.json, %.js, $(shell find frontend/puzzles -name "*.json"))
 
 default: frontend/deps $(DEFAULTS)
 
@@ -22,6 +22,9 @@ frontend/gumble.js:
 	cd gumble/build && cmake .. && make enginecore gumble
 	cd gumble/build-js && CFLAGS="-Oz -DNDEBUG" emcmake cmake .. && emmake make enginecore
 	emcc -Oz --memory-init-file 0 -s EXPORTED_FUNCTIONS="['_cch_init_board', '_cch_load_fen', '_cch_save_fen', '_cch_play_legal_move', '_cch_parse_lan_move', '_cch_format_lan_move', '_cch_format_san_move', '_cch_generate_moves', '_cch_is_move_legal']" gumble/build-js/src/libenginecore.a -o $@
+
+frontend/ormulogun.js: frontend/js/preamble.js frontend/js/gumble.js frontend/js/main.js
+	cat $^ > $@
 
 clean:
 	rm -f $(DEFAULTS)
