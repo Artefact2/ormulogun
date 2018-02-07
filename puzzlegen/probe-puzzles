@@ -98,6 +98,7 @@ function generate_puzzle(array $epipes, string $lanmoves, ?string $bestlan = nul
 		return null;
 	}
 
+	/* XXX: eval 0, forced draws */
 	$stop = 0;
 	for($i = 1; $i < $c; ++$i) {
 		if($evals[0][0] - $evals[$i][0] <= VARIATIONS_MAX_DIFF) continue;
@@ -125,7 +126,7 @@ function generate_puzzle(array $epipes, string $lanmoves, ?string $bestlan = nul
 		}
 
 		if(($next = generate_puzzle($epipes, $cont.' '.$bestreply)) !== null) {
-			$ret[$lan] = [ $lan, $next ];
+			$ret[$lan] = [ $bestreply, $next ];
 			continue;
 		}
 
