@@ -51,5 +51,5 @@ while(($line = fgets(STDIN)) !== false) {
 	assert(is_array($puz));
 
 	depth($puz[2], $mindepth, $maxdepth);
-	write_puzzle($puz, $argv[1].'d'.$maxdepth.'.jl');
+	write_puzzle($puz, sprintf("%sd%02d.jl", $argv[1], $maxdepth));
 }

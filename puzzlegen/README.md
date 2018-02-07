@@ -18,23 +18,23 @@ If you don't have `pv` installed, replace it by `cat`.
    zstdcat pgnlist.gz | tail -n +2000 | head -n 1000 | pv -ls 1000 | xargs...
    ~~~
 
-3. Categorize puzzles (change `root-` into any prefix you want)
+3. Categorize puzzles (change `foo` into any prefix you want)
 
    ~~~
-   pv puzzles.jz | zstdcat | ./dispatch-puzzles root-
+   pv puzzles.jz | zstdcat | ./dispatch-puzzles foo
    ~~~
 
 4. Merge puzzle sets
 
    ~~~
-   find . -maxdepth 1 -type f -name '*.jl' -print0 | xargs -0 -n 1 -P 16 ./merge-puzzles ../frontend/puzzles
+   find . -maxdepth 1 -type f -name '*.jl' -print0 | xargs -0 -n 1 -P 16 ./merge-puzzles out
 
    # Without categorizing
-   zstdcat puzzles.jz | ./merge-puzzles ../frontend/puzzles/foo.json
+   zstdcat puzzles.jz | ./merge-puzzles out/foo.json
    ~~~
 
 5. Update manifest
 
    ~~~
-   ./update-manifest ../frontend/puzzles/manifest.json
+   ./update-manifest out/manifest.json
    ~~~
