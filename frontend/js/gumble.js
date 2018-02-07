@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 
-"use strict";
-
 const GUMBLE_BOARD_SIZE = 256; /* >= sizeof(cch_board_t) */
 const GUMBLE_MOVE_SIZE = 4; /* == sizeof(cch_move_t) */
 const GUMBLE_MOVELIST_LENGTH = 80; /* >= CCH_MOVELIST_LENGTH */
@@ -56,7 +54,7 @@ const gumble_lan_to_san = function(lan) {
 	return Pointer_stringify(gumble_move_str);
 }
 
-when_ready.push(function() {
+orm_when_ready.push(function() {
 	gumble_board = Module._malloc(GUMBLE_BOARD_SIZE);
 	gumble_fen_str = Module._malloc(GUMBLE_SAFE_FEN_LENGTH);
 	gumble_move_str = Module._malloc(GUMBLE_SAFE_ALG_LENGTH);
