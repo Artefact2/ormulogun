@@ -22,7 +22,7 @@ const orm_movehist_in_rootline = function(e) {
 };
 
 const orm_movehist_current = function() {
-	return $("ul#movehist li > button.btn-primary").parent();
+	return $("ul#movehist li > button.btn-primary, ul#movehist li > button.btn-success, ul#movehist li > button.btn-danger").parent();
 };
 
 const orm_movehist_next = function(e) {
@@ -54,8 +54,24 @@ const orm_movehist_last = function() {
 }
 
 const orm_movehist_make_active = function(e) {
-	$("ul#movehist li > button.btn-primary").removeClass('btn-primary').addClass('btn-light');
-	e.children('button').removeClass('btn-light').addClass('btn-primary');
+	const prev = orm_movehist_current();
+	const prevbtn = prev.children('button');
+	prevbtn.removeClass('btn-primary btn-success btn-danger').addClass('btn-light');
+	if(prev.hasClass('good-move')) {
+		prevbtn.addClass('text-success');
+	} else if(prev.hasClass('bad-move')) {
+		prevbtn.addClass('text-danger');
+	}
+
+	const btn = e.children('button');
+	btn.removeClass('btn-light');
+	if(e.hasClass('good-move')) {
+		btn.removeClass('text-success').addClass('btn-success');
+	} else if(e.hasClass('bad-move')) {
+		btn.removeClass('text-danger').addClass('btn-danger');
+	} else {
+		btn.addClass('btn-primary');
+	}
 };
 
 const orm_movehist_push = function(startfen, lan, san) {
@@ -104,7 +120,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 	let btn = $(document.createElement('button'));
 	li.append(btn);
 	li.data('fen', startfen).data('lan', lan);
-	li.addClass('new');
+	li.addClass('new mb-1');
 	btn.addClass('btn');
 	btn.text(san);
 
@@ -142,7 +158,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 		let ul = $(document.createElement('ul'));
 		vli.append(ul);
 		ul.append(li);
-		vli.addClass('variation w-100 ml-4 mt-1 mb-1');
+		vli.addClass('variation w-100 ml-4');
 		li.addClass('mr-1');
 		btn.addClass('btn-sm');
 

@@ -54,14 +54,18 @@ const orm_puzzle_over = function() {
 };
 
 const orm_puzzle_success = function() {
-	$("ul#movehist li.new > button").addClass("text-success");
+	$("ul#movehist li.new").addClass("good-move");
+	orm_movehist_make_active(orm_movehist_current());
 	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
 	$("nav#mainnav").addClass("bg-success");
 	orm_puzzle_over();
 };
 
 const orm_puzzle_fail = function() {
-	let cur = $("ul#movehist li.new > button").addClass("text-danger");
+	let cur = $("ul#movehist li.new > button");
+	if(!cur.parent().hasClass('puzzle-reply')) {
+		cur.parent().addClass('bad-move');
+	}
 
 	/* XXX: set as main variation */
 	var prev = $("ul#movehist li.puzzle-reply").last();
@@ -74,7 +78,7 @@ const orm_puzzle_fail = function() {
 			let san = gumble_lan_to_san(lan);
 			gumble_play_legal_lan(lan);
 			orm_movehist_push(fen, lan, san);
-			orm_movehist_current().children("button").addClass('text-success');
+			orm_movehist_current().addClass('good-move');
 			if(orm_puzzle_next[lan] === null) {
 				orm_puzzle_next = null;
 				break;
@@ -120,7 +124,8 @@ const orm_puzzle_try = function(lan) {
 	const puz = orm_puzzle_next[lan];
 	orm_puzzle_next = puz[1];
 
-	current.children('button').addClass("text-success");
+	current.addClass('good-move');
+	orm_movehist_make_active(current);
 	$("p#puzzle-prompt").text("Good move! Keep going…");
 	setTimeout(function() {
 		orm_do_legal_move(puz[0], true, function() {
