@@ -67,6 +67,13 @@ const orm_puzzle_fail = function() {
 
 const orm_puzzle_try = function(lan) {
 	if(orm_puzzle_next === null) return;
+	let current = orm_movehist_current();
+	if(!current.hasClass('new')) return;
+
+	if(!orm_movehist_in_rootline(orm_movehist_current())) {
+		orm_puzzle_fail();
+		return;
+	}
 
 	if(!(lan in orm_puzzle_next)) {
 		orm_puzzle_fail();

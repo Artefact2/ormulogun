@@ -17,6 +17,22 @@ const orm_movehist_reset = function() {
 	$("ul#movehist").empty();
 };
 
+const orm_movehist_in_rootline = function(e) {
+	return e.parent().prop('id') === "movehist";
+};
+
+const orm_movehist_current = function() {
+	return $("ul#movehist li > button.btn-primary").parent();
+};
+
+const orm_movehist_next = function(e) {
+	let next = e.next();
+	while(next.hasClass('dummy') || next.hasClass('variation')) {
+		next = next.next();
+	}
+	return next;
+};
+
 const orm_movehist_push = function(startfen, lan, san) {
 	const mh = $("ul#movehist");
 	if(mh.children().length === 0 && startfen.split(' ', 3)[1] === 'b') {
@@ -33,8 +49,9 @@ const orm_movehist_push = function(startfen, lan, san) {
 		mh.append(li);
 	}
 
-	let current = mh.find("li > button.btn-primary").parent();
+	let current = orm_movehist_current();
 	current.children('button').removeClass('btn-primary').addClass('btn-light');
+	mh.find('li.new').removeClass('new');
 
 	let mainnext = current.next();
 	let variations = $();
@@ -63,6 +80,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 	let btn = $(document.createElement('button'));
 	li.append(btn);
 	li.data('fen', startfen).data('lan', lan);
+	li.addClass('new');
 	btn.addClass('btn btn-primary');
 	btn.text(san);
 
