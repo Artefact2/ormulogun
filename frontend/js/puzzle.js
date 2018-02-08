@@ -21,7 +21,6 @@ const orm_load_puzzle = function(idx) {
 	let puz = orm_puzzle = orm_puzzle_set[idx];
 
 	$("table#movelist > tbody").empty();
-	$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + puz[0].replace(/\s/g, '_'));
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
 
 	puz.side = puz[0].split(' ', 3)[1] === 'b';
@@ -31,7 +30,9 @@ const orm_load_puzzle = function(idx) {
 	gumble_load_fen(puz[0]);
 	orm_load_fen(puz[0]);
 	setTimeout(function() {
-		orm_do_legal_move(puz[1], true);
+		orm_do_legal_move(puz[1], true, function() {
+			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
+		});
 	}, 500);
 
 	$("p#puzzle-prompt")
