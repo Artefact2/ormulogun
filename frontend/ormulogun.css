@@ -160,17 +160,26 @@ div#puzzle-actions-after.visible {
 	opacity: 1;
 }
 
-table#movelist {
-	width: 100%;
-	table-layout: fixed;
+ul#movehist, ul#movehist ul {
+	list-style-type: none;
+	margin: 0;
+	padding: 0;
 }
 
-table#movelist > tbody > tr > td {
-	width: auto;
+ul#movehist li.variation, ul#movehist li.variation > ul > li > button {
+	font-size: 90%;
 }
 
-table#movelist > tbody > tr > th {
-	width: 2rem;
+ul#movehist li.variation.black:before {
+	content: "↪ … ";
+}
+
+ul#movehist li.variation > ul {
+	display: inline;
+}
+
+ul#movehist li.variation > ul > li {
+	display: inline-block;
 }
 
 

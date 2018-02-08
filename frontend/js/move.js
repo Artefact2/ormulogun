@@ -15,8 +15,7 @@
 
 let orm_candidate_move = null;
 
-const orm_do_legal_move = function(lan, animate, done) {
-	console.log(lan, animate);
+const orm_do_legal_move = function(lan, animate, done, pushhist) {
 	let psrc = orm_piece_at(lan.substring(0, 2));
 	let pdest = orm_piece_at(lan.substring(2));
 
@@ -26,7 +25,9 @@ const orm_do_legal_move = function(lan, animate, done) {
 		if(done) done();
 	};
 
-	/* XXX: push move */
+	if(typeof(pushhist) === "undefined" || pushhist) {
+		orm_movehist_push(gumble_save_fen(), lan, gumble_lan_to_san(lan));
+	}
 
 	if(animate) {
 		psrc.removeClass("f" + psrc.data("ofile") + " r" + psrc.data("orank"));

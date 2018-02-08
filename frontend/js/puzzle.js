@@ -27,6 +27,7 @@ const orm_load_puzzle = function(idx) {
 	puz.side = puz[0].split(' ', 3)[1] === 'b';
 	$("div#board").toggleClass('flipped', !puz.side);
 
+	orm_movehist_reset();
 	gumble_load_fen(puz[0]);
 	orm_load_fen(puz[0]);
 	setTimeout(function() {

@@ -50,7 +50,7 @@ const gumble_play_legal_lan = function(lan) {
 const gumble_lan_to_san = function(lan) {
 	writeAsciiToMemory(lan, gumble_move_str);
 	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
-	Module._cch_format_san_move(gumble_board, gumble_move, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH);
+	Module._cch_format_san_move(gumble_board, gumble_move, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH, 1);
 	return Pointer_stringify(gumble_move_str);
 }
 
