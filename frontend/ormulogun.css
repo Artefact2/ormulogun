@@ -170,6 +170,10 @@ ul#movehist li.variation, ul#movehist li.variation > ul > li > button {
 	font-size: 90%;
 }
 
+ul#movehist li.variation:before {
+	content: "↪ ";
+}
+
 ul#movehist li.variation.black:before {
 	content: "↪ … ";
 }

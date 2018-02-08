@@ -32,6 +32,7 @@ const orm_load_puzzle = function(idx) {
 	setTimeout(function() {
 		orm_do_legal_move(puz[1], true, function() {
 			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
+			$("ul#movehist li.new").addClass('puzzle-reply');
 		});
 	}, 500);
 
@@ -53,13 +54,44 @@ const orm_puzzle_over = function() {
 };
 
 const orm_puzzle_success = function() {
+	$("ul#movehist li.new > button").addClass("text-success");
 	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
 	$("nav#mainnav").addClass("bg-success");
 	orm_puzzle_over();
 };
 
 const orm_puzzle_fail = function() {
-	/* XXX: push remaining moves and set as main variation */
+	let cur = $("ul#movehist li.new > button").addClass("text-danger");
+
+	/* XXX: set as main variation */
+	var prev = $("ul#movehist li.puzzle-reply").last();
+	gumble_load_fen(prev.data('fen'));
+	gumble_play_legal_lan(prev.data('lan'));
+	orm_movehist_make_active(prev);
+	while(orm_puzzle_next !== null) {
+		for(let lan in orm_puzzle_next) {
+			let fen = gumble_save_fen();
+			let san = gumble_lan_to_san(lan);
+			gumble_play_legal_lan(lan);
+			orm_movehist_push(fen, lan, san);
+			orm_movehist_current().children("button").addClass('text-success');
+			if(orm_puzzle_next[lan] === null) {
+				orm_puzzle_next = null;
+				break;
+			}
+			fen = gumble_save_fen();
+			san = gumble_lan_to_san(orm_puzzle_next[lan][0]);
+			gumble_play_legal_lan(orm_puzzle_next[lan][0]);
+			orm_movehist_push(fen, orm_puzzle_next[lan][0], san);
+			orm_puzzle_next = orm_puzzle_next[lan][1];
+			break;
+		}
+	}
+
+	gumble_load_fen(cur.parent().data('fen'));
+	gumble_play_legal_lan(cur.parent().data('lan'));
+	orm_movehist_make_active(cur.parent());
+
 	$("p#puzzle-prompt").addClass("text-danger").text("Puzzle failed.");
 	$("nav#mainnav").addClass("bg-danger");
 	orm_puzzle_over();
@@ -88,9 +120,12 @@ const orm_puzzle_try = function(lan) {
 	const puz = orm_puzzle_next[lan];
 	orm_puzzle_next = puz[1];
 
+	current.children('button').addClass("text-success");
 	$("p#puzzle-prompt").text("Good move! Keep going…");
 	setTimeout(function() {
-		orm_do_legal_move(puz[0], true);
+		orm_do_legal_move(puz[0], true, function() {
+			$("ul#movehist li.new").addClass('puzzle-reply');
+		});
 	}, 500);
 };
 

@@ -26,11 +26,36 @@ const orm_movehist_current = function() {
 };
 
 const orm_movehist_next = function(e) {
-	let next = e.next();
-	while(next.hasClass('dummy') || next.hasClass('variation')) {
-		next = next.next();
+	e = e.next();
+	while(e.hasClass('dummy') || e.hasClass('variation')) {
+		e = e.next();
 	}
-	return next;
+	return e;
+};
+
+const orm_movehist_prev = function(e) {
+	e = e.prev();
+
+	while(e.hasClass('dummy') || e.hasClass('variation')) {
+		e = e.prev();
+	}
+
+	if(e.length !== 0) return e;
+
+	if(e.parent().parent().hasClass('variation')) {
+		return orm_movehist_prev(e.parent().parent());
+	} else {
+		return null;
+	}
+};
+
+const orm_movehist_last = function() {
+	return $("ul#movehist > li").last();
+}
+
+const orm_movehist_make_active = function(e) {
+	$("ul#movehist li > button.btn-primary").removeClass('btn-primary').addClass('btn-light');
+	e.children('button').removeClass('btn-light').addClass('btn-primary');
 };
 
 const orm_movehist_push = function(startfen, lan, san) {
@@ -50,7 +75,6 @@ const orm_movehist_push = function(startfen, lan, san) {
 	}
 
 	let current = orm_movehist_current();
-	current.children('button').removeClass('btn-primary').addClass('btn-light');
 	mh.find('li.new').removeClass('new');
 
 	let mainnext = current.next();
@@ -63,14 +87,14 @@ const orm_movehist_push = function(startfen, lan, san) {
 	}
 
 	if(mainnext.data('fen') === startfen && mainnext.data('lan') === lan) {
-		mainnext.children('button').addClass('btn-primary').removeClass('btn-light');
+		orm_movehist_make_active(mainnext);
 		return;
 	}
 
 	if(variations.filter(function() {
 		let li = $(this);
 		if(li.data('fen') === startfen && li.data('lan') === lan) {
-			li.children('button').addClass('btn-primary').removeClass('btn-light');
+			orm_movehist_make_active(li);
 			return true;
 		}
 		return false;
@@ -81,8 +105,10 @@ const orm_movehist_push = function(startfen, lan, san) {
 	li.append(btn);
 	li.data('fen', startfen).data('lan', lan);
 	li.addClass('new');
-	btn.addClass('btn btn-primary');
+	btn.addClass('btn');
 	btn.text(san);
+
+	orm_movehist_make_active(li);
 
 	if(startfen.split(' ', 3)[1] === 'w') {
 		li.addClass('white');
@@ -101,6 +127,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 		if(rootline) {
 			li.addClass('col-6');
 		} else {
+			li.addClass('mr-1');
 			btn.addClass('btn-sm');
 		}
 
@@ -115,8 +142,8 @@ const orm_movehist_push = function(startfen, lan, san) {
 		let ul = $(document.createElement('ul'));
 		vli.append(ul);
 		ul.append(li);
-		vli.addClass('variation w-100 ml-4');
-		li.data('fen', startfen).data('lan', lan);
+		vli.addClass('variation w-100 ml-4 mt-1 mb-1');
+		li.addClass('mr-1');
 		btn.addClass('btn-sm');
 
 		if(li.hasClass('black')) vli.addClass('black');
@@ -144,8 +171,7 @@ orm_when_ready.push(function() {
 	$("ul#movehist").on('click', 'li > button', function() {
 		let btn = $(this);
 		let li = btn.parent();
-		$("ul#movehist li > button.btn-primary").removeClass('btn-primary').addClass('btn-light');
-		btn.removeClass('btn-light').addClass('btn-primary');
+		orm_movehist_make_active(li);
 		orm_load_fen(li.data('fen'));
 		gumble_load_fen(li.data('fen'));
 		setTimeout(function() {
