@@ -199,7 +199,47 @@ const orm_movehist_push = function(startfen, lan, san) {
 };
 
 orm_when_ready.push(function() {
-	/* XXX: kb shortcuts */
+	$("body").keydown(function(e) {
+		if(!$("div#board").is(':visible')) return;
+		let tgt = null;
+
+		switch(e.which) {
+		case 37: /* Left */
+			tgt = $("button#movehist-prev");
+			break;
+
+		case 38: /* Up */
+			tgt = $("button#movehist-first");
+			break;
+
+		case 39: /* Right */
+			tgt = $("button#movehist-next");
+			break;
+
+		case 40: /* Down */
+			tgt = $("button#movehist-last");
+			break;
+
+		default: return;
+		}
+		if(tgt === null || tgt.hasClass("disabled") || tgt.prop("disabled")) return;
+		tgt.click();
+		e.preventDefault();
+	});
+
+	$("div#board").on("wheel", function(e) {
+		var tgt = null;
+		if(e.originalEvent.deltaY > 0) {
+			/* Scroll down */
+			tgt = $("button#movehist-next");
+		} else if(e.originalEvent.deltaY < 0) {
+			tgt = $("button#movehist-prev");
+		}
+		if(tgt === null || tgt.hasClass("disabled") || tgt.prop("disabled")) return;
+		tgt.click();
+		e.preventDefault();
+	});
+
 	$("button#movehist-next").click(function() {
 		orm_movehist_next(orm_movehist_current()).children('button').click();
 	});
