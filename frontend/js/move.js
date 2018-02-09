@@ -27,6 +27,9 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 
 	gumble_play_legal_lan(lan);
 	let endfen = gumble_save_fen();
+	if(reverse) {
+		gumble_load_fen(startfen); /* XXX: is it worth using cch_undo_move? */
+	}
 
 	let work = function() {
 		orm_load_fen(endfen);
@@ -39,7 +42,6 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 	}
 
 	if(reverse) {
-		gumble_load_fen(endfen);
 		orm_load_fen(endfen);
 		endfen = startfen;
 	} else {
