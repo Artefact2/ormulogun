@@ -26,6 +26,8 @@ const orm_movehist_current = function() {
 };
 
 const orm_movehist_next = function(e) {
+	if(e.length === 0) return $("ul#movehist > li > button").not(":disabled").first().parent();
+
 	e = e.next();
 	while(e.hasClass('dummy') || e.hasClass('variation')) {
 		e = e.next();
@@ -34,23 +36,24 @@ const orm_movehist_next = function(e) {
 };
 
 const orm_movehist_prev = function(e) {
-	e = e.prev();
+	let prev = e.prev();
 
-	while(e.hasClass('dummy') || e.hasClass('variation')) {
-		e = e.prev();
+	while(prev.hasClass('dummy') || prev.hasClass('variation')) {
+		prev = prev.prev();
 	}
 
-	if(e.length !== 0) return e;
+	if(prev.length !== 0) return prev;
 
 	if(e.parent().parent().hasClass('variation')) {
 		return orm_movehist_prev(e.parent().parent());
 	} else {
-		return null;
+		return $();
 	}
 };
 
-const orm_movehist_last = function() {
-	return $("ul#movehist > li").last();
+const orm_movehist_last = function(e) {
+	if(e.length === 0) return $("ul#movehist > li > button").not(":disabled").last().parent();
+	return e.parent().children('li').last();
 }
 
 const orm_movehist_make_active = function(e) {
@@ -61,6 +64,18 @@ const orm_movehist_make_active = function(e) {
 		prevbtn.addClass('text-success');
 	} else if(prev.hasClass('bad-move')) {
 		prevbtn.addClass('text-danger');
+	}
+
+	if(e.length === 0) {
+		$("button#movehist-first, button#movehist-prev").prop('disabled', 'disabled').addClass('disabled');
+		$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
+	} else {
+		$("button#movehist-first, button#movehist-prev").prop('disabled', false).removeClass('disabled');
+		if(orm_movehist_next(e).length === 0) {
+			$("button#movehist-next, button#movehist-last").prop('disabled', 'disabled').addClass('disabled');
+		} else {
+			$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
+		}
 	}
 
 	const btn = e.children('button');
@@ -184,6 +199,32 @@ const orm_movehist_push = function(startfen, lan, san) {
 };
 
 orm_when_ready.push(function() {
+	/* XXX: kb shortcuts */
+	$("button#movehist-next").click(function() {
+		orm_movehist_next(orm_movehist_current()).children('button').click();
+	});
+
+	$("button#movehist-prev").click(function() {
+		let prev = orm_movehist_prev(orm_movehist_current());
+		if(prev.length !== 0) {
+			/* XXX: play move in reverse */
+			prev.children('button').click();
+		} else {
+			$("button#movehist-first").click();
+		}
+	});
+
+	$("button#movehist-last").click(function() {
+		orm_movehist_last(orm_movehist_current()).children('button').click();
+	});
+
+	$("button#movehist-first").click(function() {
+		let first = $("ul#movehist > li > button").not(":disabled").first().parent();
+		orm_movehist_make_active($());
+		orm_load_fen(first.data('fen'));
+		gumble_load_fen(first.data('fen'));
+	});
+
 	$("ul#movehist").on('click', 'li > button', function() {
 		let btn = $(this);
 		let li = btn.parent();
