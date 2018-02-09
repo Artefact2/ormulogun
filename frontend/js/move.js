@@ -14,31 +14,61 @@
  */
 
 let orm_candidate_move = null;
+let orm_move_timeoutid = null;
 
-const orm_do_legal_move = function(lan, animate, done, pushhist) {
-	let psrc = orm_piece_at(lan.substring(0, 2));
-	let pdest = orm_piece_at(lan.substring(2));
+const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
+	pushhist = typeof(pushhist) === "undefined" || pushhist;
+	reverse = typeof(reverse) !== "undefined" && reverse;
+
+	let startfen = gumble_save_fen();
+	if(pushhist) {
+		orm_movehist_push(startfen, lan, gumble_lan_to_san(lan));
+	}
+
+	gumble_play_legal_lan(lan);
+	let endfen = gumble_save_fen();
 
 	let work = function() {
-		gumble_play_legal_lan(lan);
-		orm_load_fen(gumble_save_fen());
+		orm_load_fen(endfen);
 		if(done) done();
 	};
 
-	if(typeof(pushhist) === "undefined" || pushhist) {
-		orm_movehist_push(gumble_save_fen(), lan, gumble_lan_to_san(lan));
+	if(!animate) {
+		work();
+		return;
 	}
 
-	if(animate) {
+	if(reverse) {
+		gumble_load_fen(endfen);
+		orm_load_fen(endfen);
+		endfen = startfen;
+	} else {
+		orm_load_fen(startfen);
+	}
+
+	let psrc, pdest, df, dr;
+	if(reverse) {
+		psrc = orm_piece_at(lan.substring(2));
+		pdest = orm_piece_at(lan.substring(0, 2));
+		df = orm_file(lan.substring(0, 2));
+		dr = orm_rank(lan.substring(0, 2));
+	} else {
+		psrc = orm_piece_at(lan.substring(0, 2));
+		pdest = orm_piece_at(lan.substring(2));
+		df = orm_file(lan.substring(2));
+		dr = orm_rank(lan.substring(2));
+	}
+
+	setTimeout(function() {
 		psrc.removeClass("f" + psrc.data("ofile") + " r" + psrc.data("orank"));
-		psrc.addClass("moving f" + orm_file(lan.substring(2)) + " r" + orm_rank(lan.substring(2)));
+		psrc.addClass("moving f" + df + " r" + dr);
 		pdest.addClass("captured");
-		setTimeout(function() {
+		if(orm_move_timeoutid !== null) clearTimeout(orm_move_timeoutid);
+		orm_move_timeoutid = setTimeout(function() {
+			orm_move_timeoutid = null;
 			work();
 		}, 500);
-	} else {
-		work();
-	}
+	}, 50);
 };
 
 const orm_do_puzzle_move = function(lan, animate, done) {

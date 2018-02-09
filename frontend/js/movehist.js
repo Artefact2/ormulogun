@@ -205,13 +205,9 @@ orm_when_ready.push(function() {
 	});
 
 	$("button#movehist-prev").click(function() {
-		let prev = orm_movehist_prev(orm_movehist_current());
-		if(prev.length !== 0) {
-			/* XXX: play move in reverse */
-			prev.children('button').click();
-		} else {
-			$("button#movehist-first").click();
-		}
+		let cur = orm_movehist_current();
+		cur.data('reverse', true);
+		cur.children('button').click();
 	});
 
 	$("button#movehist-last").click(function() {
@@ -220,19 +216,17 @@ orm_when_ready.push(function() {
 
 	$("button#movehist-first").click(function() {
 		let first = $("ul#movehist > li > button").not(":disabled").first().parent();
-		orm_movehist_make_active($());
-		orm_load_fen(first.data('fen'));
-		gumble_load_fen(first.data('fen'));
+		first.data('reverse', true);
+		first.find('button').click();
 	});
 
 	$("ul#movehist").on('click', 'li > button', function() {
 		let btn = $(this);
 		let li = btn.parent();
-		orm_movehist_make_active(li);
-		orm_load_fen(li.data('fen'));
+		let reverse = li.data('reverse');
+		li.data('reverse', false);
+		orm_movehist_make_active(reverse ? orm_movehist_prev(li) : li);
 		gumble_load_fen(li.data('fen'));
-		setTimeout(function() {
-			orm_do_legal_move(li.data('lan'), true, null, false);
-		}, 50);
+		orm_do_legal_move(li.data('lan'), true, null, false, reverse);
 	});
 });
