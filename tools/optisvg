@@ -1,0 +1,10 @@
+#!/bin/php
+<?php
+
+$css = stream_get_contents(STDIN);
+
+$css = preg_replace_callback('%url\((?<data>data:image/svg\+xml;base64,[^)]+)\)%', function($match) {
+	return "url(data:image/svg+xml;base64,".trim(shell_exec($cmd = "svgo -s ".escapeshellarg($match['data'])." -o - | base64 -w 0")).")";
+}, $css);
+
+echo $css;

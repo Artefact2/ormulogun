@@ -37,4 +37,9 @@ host:
 	@echo "Browse to http://127.0.0.1:8080/index.xhtml in your browser..."
 	php -S 0.0.0.0:8080 -t frontend
 
-.PHONY: clean dist-clean host
+optisvg:
+	./tools/optisvg < frontend/ormulogun.css > min.css
+	while ! cmp -s min.css frontend/ormulogun.css; do mv min.css frontend/ormulogun.css; ./tools/optisvg < frontend/ormulogun.css > min.css; done
+	rm min.css
+
+.PHONY: clean dist-clean host optisvg
