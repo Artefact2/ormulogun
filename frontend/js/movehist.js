@@ -105,10 +105,10 @@ const orm_movehist_push = function(startfen, lan, san) {
 		mh.append(li);
 	}
 
-	let current = orm_movehist_current();
 	mh.find('li.new').removeClass('new');
 
-	let mainnext = current.next();
+	let current = orm_movehist_current();
+	let mainnext = current.length === 0 ? mh.children('li').first() : current.next();
 	let variations = $();
 	while(mainnext.hasClass('dummy') || mainnext.hasClass('variation')) {
 		if(mainnext.hasClass('variation')) {
@@ -182,7 +182,16 @@ const orm_movehist_push = function(startfen, lan, san) {
 		if(current.next().hasClass('dummy')) {
 			current.next().after(vli);
 		} else {
-			current.after(vli);
+			if(current.length === 0) {
+				let first = mh.find('> li > button').not(':disabled').first().parent();
+				if(first.length !== 0) {
+					first.before(vli);
+				} else {
+					mh.prepend(vli);
+				}
+			} else {
+				current.after(vli);
+			}
 
 			if(rootline && li.hasClass('black') && !(current.next().hasClass('dummy'))) {
 				let dummy = $(document.createElement('li'));
