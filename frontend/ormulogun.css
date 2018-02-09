@@ -93,7 +93,7 @@ div#board > div.back.move-target:before {
 	background-color: hsla(60, 100%, 50%, .5);
 }
 
-div#board > div.piece {
+div.piece {
 	background-size: cover;
 	background-repeat: no-repeat;
 }
@@ -220,6 +220,24 @@ button#movehist-next:before {
 
 button#movehist-last:before {
 	content: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2LjExIDcuMDU2IiBoZWlnaHQ9IjIwcHQiIHdpZHRoPSIyMy4wOTMiPjxwYXRoIGQ9Ik0wIDcuMDU1VjBsNi4xMSAzLjQyN3oiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjxwYXRoIHBhaW50LW9yZGVyPSJtYXJrZXJzIHN0cm9rZSBmaWxsIiBkPSJNNS40MDUgMGguNzA2djcuMDU2aC0uNzA2eiIvPjwvc3ZnPgo=);
+}
+
+div#promote-modal {
+	display: none;
+}
+
+div#promote-modal div.piece {
+	cursor: pointer;
+}
+
+div#promote-modal div.piece:hover {
+	outline: .1em solid black;
+}
+
+div#promote-modal div.piece:before {
+	content: " ";
+	display: block;
+	padding-bottom: 100%;
 }
 
 

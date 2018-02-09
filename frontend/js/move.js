@@ -15,6 +15,7 @@
 
 let orm_candidate_move = null;
 let orm_move_timeoutid = null;
+let orm_promote_context = null;
 
 const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 	pushhist = typeof(pushhist) === "undefined" || pushhist;
@@ -74,7 +75,18 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 };
 
 const orm_do_puzzle_move = function(lan, animate, done) {
-	/* XXX: promote */
+	let piece = orm_piece_at(lan.substring(0, 2));
+	if(lan.length === 4 && piece.hasClass("pawn")
+	   && ((piece.hasClass("white") && orm_rank(lan.substring(2)) === 8)
+		   || (piece.hasClass("black") && orm_rank(lan.substring(2)) === 1))) {
+		let m = $("div#promote-modal");
+
+		if(piece.hasClass("black")) m.find("div.piece").removeClass('white').addClass('black');
+		else m.find("div.piece").removeClass('black').addClass('white');
+
+		orm_promote_context = [ lan, animate, done ];
+		m.modal('show');
+	}
 	if(!gumble_is_move_legal(lan)) return;
 	orm_do_legal_move(lan, animate, function() {
 		orm_puzzle_try(lan);
@@ -164,5 +176,33 @@ orm_when_ready.push(function() {
 			}
 			orm_candidate_move = null;
 		}
+	});
+
+	$("div#promote-modal").modal({
+		backdrop: 'static',
+		keyboard: false,
+		show: false,
+		focus: false,
+	}).on('hidden.bs.modal', function() {
+		orm_do_puzzle_move(orm_promote_context[0], orm_promote_context[1], function() {
+			orm_promote_context[2]();
+			orm_promote_context = null;
+		});
+	}).on('click', 'div.piece', function() {
+		let p = $(this);
+		let append = null;
+		if(p.hasClass('queen')) {
+			append = 'q';
+		} else if(p.hasClass('rook')) {
+			append = 'r';
+		} else if(p.hasClass('bishop')) {
+			append = 'b';
+		} else if(p.hasClass('knight')) {
+			append = 'k';
+		} else return;
+		if(orm_promote_context[0].length === 4) {
+			orm_promote_context[0] += append;
+		}
+		$("div#promote-modal").modal('hide');
 	});
 });
