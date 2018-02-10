@@ -30,7 +30,7 @@ const orm_load_puzzle = function(idx) {
 	gumble_load_fen(puz[0]);
 	orm_load_fen(puz[0]);
 	setTimeout(function() {
-		orm_do_legal_move(puz[1], true, function() {
+		orm_do_legal_move(puz[1][0], true, function() {
 			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
 			$("ul#movehist li.new").addClass('puzzle-reply');
 		});
@@ -43,7 +43,7 @@ const orm_load_puzzle = function(idx) {
 	$("button#puzzle-abandon").show();
 	$("button#puzzle-next").hide();
 	$("nav#mainnav").removeClass("bg-success bg-danger");
-	orm_puzzle_next = puz[2];
+	orm_puzzle_next = puz[1][1];
 };
 
 const orm_puzzle_over = function() {
@@ -72,15 +72,15 @@ const orm_puzzle_fail = function() {
 	gumble_load_fen(prev.data('fen'));
 	gumble_play_legal_lan(prev.data('lan'));
 	orm_movehist_make_active(prev);
-	while(orm_puzzle_next !== null) {
+	while(orm_puzzle_next) {
 		for(let lan in orm_puzzle_next) {
 			let fen = gumble_save_fen();
 			let san = gumble_lan_to_san(lan);
 			gumble_play_legal_lan(lan);
 			orm_movehist_push(fen, lan, san);
 			orm_movehist_current().addClass('good-move');
-			if(orm_puzzle_next[lan] === null) {
-				orm_puzzle_next = null;
+			if(orm_puzzle_next[lan] === 0) {
+				orm_puzzle_next = 0;
 				break;
 			}
 			fen = gumble_save_fen();
@@ -102,7 +102,7 @@ const orm_puzzle_fail = function() {
 };
 
 const orm_puzzle_try = function(lan) {
-	if(orm_puzzle_next === null) return;
+	if(!orm_puzzle_next) return;
 	let current = orm_movehist_current();
 	if(!current.hasClass('new')) return;
 
@@ -116,7 +116,7 @@ const orm_puzzle_try = function(lan) {
 		return;
 	}
 
-	if(orm_puzzle_next[lan] === null) {
+	if(orm_puzzle_next[lan] === 0) {
 		orm_puzzle_success();
 		return;
 	}

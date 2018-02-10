@@ -5,3 +5,4 @@ frontend/ormulogun.js
 frontend/puzzles/*.js
 puzzlegen/*.j[lz]
 puzzlegen/gen-puzzles
+puzzlegen/tmp.*

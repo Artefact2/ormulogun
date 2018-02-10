@@ -1,40 +1,22 @@
 Generating puzzles
 ==================
 
-If you don't have `pv` installed, replace it by `cat`.
-
 1. Process a PGN dump into a filtered list of games (1 game per line)
 
    ~~~
-   pv ~/pgn_dump.pgn.bz2 | bzcat | ./chunk-pgn | xargs -d '\n' -P 16 ./preprocess-pgn | zstd -4 - -o pgnlist.jz
+   make pgnlist.jz INPUT=foo.pgn
    ~~~
 
 2. Generate puzzles
 
    ~~~
-   pv pgnlist.jz | zstdcat | xargs -d '\n' -P 16 ./probe-puzzles | zstd -4 - -o puzzles.jz
-
-   # games 2000-2999 only
-   zstdcat pgnlist.gz | tail -n +2000 | head -n 1000 | pv -ls 1000 | xargs...
+   make puzzles-all # all games
+   make puzzles-partial OFFSET=100 COUNT=50 # games 100-149 only
    ~~~
 
-3. Categorize puzzles (change `foo` into any prefix you want)
+3. Convert to JSON and update manifest
 
    ~~~
-   pv puzzles.jz | zstdcat | ./dispatch-puzzles foo
-   ~~~
-
-4. Merge puzzle sets
-
-   ~~~
-   find . -maxdepth 1 -type f -name '*.jl' -print0 | xargs -0 -n 1 -P 16 ./merge-puzzles out
-
-   # Without categorizing
-   zstdcat puzzles.jz | ./merge-puzzles out/foo.json
-   ~~~
-
-5. Update manifest
-
-   ~~~
+   zstdcat master.jz | ./jl_to_json > out/master.json
    ./update-manifest out/manifest.json
    ~~~
