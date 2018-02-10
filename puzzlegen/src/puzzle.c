@@ -75,6 +75,7 @@ void puzzle_print(puzzle_t* p) {
 	printf("[\"%s\",", p->fen);
 	puzzle_print_step(&(p->root));
 	puts("]");
+	fflush(stdout); /* Play nice with xargs */
 }
 
 static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,

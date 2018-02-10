@@ -17,6 +17,6 @@ Generating puzzles
 3. Convert to JSON and update manifest
 
    ~~~
-   zstdcat master.jz | ./jl_to_json > out/master.json
-   ./update-manifest out/manifest.json
+   zstdcat master.jz | ./tools/jl_to_json > out/master.json
+   ./tools/update-manifest out/manifest.json
    ~~~
