@@ -24,13 +24,17 @@ int main(int argc, char** argv) {
 	cch_board_t b;
 	cch_move_t m;
 	cch_return_t ret;
+
+	uci_engine_context_t ctx;
+	uci_eval_t evals[max_variations + 1];
+	unsigned char nlines;
+	puzzle_t p;
+
 	char lanlist[4096]; /* XXX */
 	size_t lanlistlen;
-	uci_engine_context_t ctx;
 	char* sanmove;
 	char lanmove[SAFE_ALG_LENGTH];
 	char* saveptr;
-	uci_eval_t evals[10];
 
 	if(argc == 1) {
 		fprintf(stderr, "Usage: %s <games...>\n"
@@ -52,7 +56,8 @@ int main(int argc, char** argv) {
 		lanlistlen = 0;
 
 		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr); sanmove; sanmove = strtok_r(0, "[]\",", &saveptr)) {
-			printf("san: %s\n", sanmove);
+			ret = cch_save_fen(&b, p.fen, SAFE_FEN_LENGTH);
+			assert(ret == CCH_OK);
 			ret = cch_parse_san_move(&b, sanmove, &m);
 			assert(ret == CCH_OK);
 			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
@@ -64,18 +69,16 @@ int main(int argc, char** argv) {
 				lanlist[lanlistlen] = ' ';
 				++lanlistlen;
 			}
-			strcpy(lanlist + lanlistlen, lanmove);
+			strncpy(lanlist + lanlistlen, lanmove, SAFE_ALG_LENGTH);
 			lanlistlen += strlen(lanmove);
 
-			puts(lanlist);
+			nlines = uci_eval(&ctx, uci_limiter_probe, lanlist, evals, max_variations + 1);
+			if(!puzzle_consider(evals, nlines, eval_cutoff, best_eval_cutoff)) continue;
 
-			unsigned char stop = uci_eval(&ctx, "movetime 1000", lanlist, 10, evals);
-			for(unsigned char i = 0; i < stop; ++i) {
-				printf("%02d: score %s %d, bestmove %s\n",
-					   i, evals[i].type == SCORE_CP ? "cp" : "mate",
-					   evals[i].score,
-					   evals[i].bestlan);
-			}
+			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
+			puzzle_build(&ctx, lanlist, lanlistlen, &p, &b, uci_limiter, max_variations, eval_cutoff, best_eval_cutoff, variation_eval_cutoff);
+			puzzle_print(&p);
+			puzzle_free(&p);
 		}
 	}
 

@@ -85,7 +85,7 @@ void uci_init(const uci_engine_context_t* ctx, const char* const* opts) {
 }
 
 unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
-					   const char* lanlist, unsigned char maxlines, uci_eval_t* evals) {
+					   const char* lanlist, uci_eval_t* evals, unsigned char maxlines) {
 	static const char* delim = " \n";
 	static char* line = 0;
 	static size_t linelen;
@@ -124,7 +124,7 @@ unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
 				assert(tok);
 				assert(strlen(tok) < 6);
 				has_pv = true;
-				strncpy(ev.bestlan, tok, 6);
+				strncpy(ev.bestlan, tok, SAFE_ALG_LENGTH);
 				continue;
 			}
 

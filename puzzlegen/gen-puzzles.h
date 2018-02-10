@@ -17,7 +17,9 @@
 #ifndef ORMULOGUN_GEN_PUZZLES_H
 #define ORMULOGUN_GEN_PUZZLES_H
 
+#include <engine.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 /* ----- uci.c ----- */
 
@@ -29,12 +31,33 @@ typedef struct {
 typedef struct {
 	enum { SCORE_CP, SCORE_MATE } type;
 	int score;
-	char bestlan[6];
+	char bestlan[SAFE_ALG_LENGTH];
 } uci_eval_t;
 
 int uci_create(const char*, uci_engine_context_t*);
 void uci_quit(const uci_engine_context_t*);
 void uci_init(const uci_engine_context_t*, const char* const*);
-unsigned char uci_eval(const uci_engine_context_t*, const char*, const char*, unsigned char, uci_eval_t*);
+unsigned char uci_eval(const uci_engine_context_t*, const char*, const char*, uci_eval_t*, unsigned char);
+
+
+
+/* ----- puzzle.c ----- */
+
+typedef struct puzzle_step_s {
+	char move[SAFE_ALG_LENGTH];
+	char reply[SAFE_ALG_LENGTH];
+	unsigned char nextlen;
+	struct puzzle_step_s* next;
+} puzzle_step_t;
+
+typedef struct {
+	char fen[SAFE_FEN_LENGTH];
+	puzzle_step_t root;
+} puzzle_t;
+
+bool puzzle_consider(const uci_eval_t*, unsigned char, int, int);
+void puzzle_free(puzzle_t*);
+void puzzle_print(puzzle_t*);
+void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_board_t*, const char*, int, int, int, int);
 
 #endif
