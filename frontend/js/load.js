@@ -32,16 +32,20 @@ const orm_load_puzzle_manifest = function(done) {
 		for(let i in data) {
 			let pset = data[i];
 			let li = $(document.createElement('li'));
-			li.addClass('col-xl-6 mb-4');
+			li.addClass('mb-4');
 
 			let h = $(document.createElement('h2'));
 			let span = $(document.createElement('span'));
 			let btn = $(document.createElement('button'));
+			let badge = $(document.createElement('span'));
 			h.addClass('d-flex justify-content-between border-bottom pb-1 border-dark');
 			span.text(pset.name);
-			btn.text('Start training');
+			btn.text('Start training ');
 			btn.addClass('btn btn-primary');
 			btn.data('idx', i).data('tag', null);
+			badge.addClass('badge badge-light');
+			badge.text(pset.count);
+			btn.append(badge);
 			h.append(span, btn);
 			li.append(h);
 
@@ -49,7 +53,7 @@ const orm_load_puzzle_manifest = function(done) {
 			for(let t in pset.tags) {
 				let btn = $(document.createElement('button'));
 				let span = $(document.createElement('span'));
-				btn.addClass('btn btn-sm btn-secondary mr-1');
+				btn.addClass('btn btn-sm btn-secondary mr-1 mb-1');
 				btn.text(t + ' ');
 				btn.data('tag', t).data('idx', i);
 				span.addClass('badge badge-light');
@@ -60,7 +64,7 @@ const orm_load_puzzle_manifest = function(done) {
 			li.append(p);
 
 			p = $(document.createElement('p'));
-			p.text(pset.desc + " " + pset.count + " puzzles.");
+			p.text(pset.desc);
 			li.append(p);
 
 			ul.append(li);
