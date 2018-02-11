@@ -40,4 +40,9 @@ puzzles-partial: tools/gen-puzzles
 	mv $(TMP) puzzles-$(OFFSET)-$(COUNT).jz
 	make merge-to-master INPUT=puzzles-$(OFFSET)-$(COUNT).jz
 
-.PHONY: clean merge-to-master puzzles-all puzzles-partial
+master-json: master.jz
+	zstdcat master.jz | ./tools/jl_to_json > ./out/master.json
+	./tools/update-manifest ./out/manifest.json
+	cd .. && make
+
+.PHONY: clean merge-to-master puzzles-all puzzles-partial master-json
