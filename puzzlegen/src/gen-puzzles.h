@@ -60,6 +60,12 @@ typedef struct puzzle_step_s {
 typedef struct {
 	char fen[SAFE_FEN_LENGTH];
 	puzzle_step_t root;
+	unsigned char min_depth;
+	struct {
+		bool checkmate:1;
+		bool stalemate:1;
+		bool draw:1;
+	} tags;
 } puzzle_t;
 
 bool puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t);

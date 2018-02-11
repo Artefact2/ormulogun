@@ -41,6 +41,17 @@ const orm_load_puzzle_manifest = function(done) {
 			let p = $(document.createElement('p'));
 			p.text(pset.desc + " " + pset.count + " puzzles.");
 			p.addClass('col-6');
+			p.append($(document.createElement('br')));
+			for(let t in pset.tags) {
+				let btn = $(document.createElement('button'));
+				let span = $(document.createElement('span'));
+				btn.addClass('btn btn-sm btn-secondary mr-1');
+				btn.text(t + ' ');
+				span.addClass('badge badge-light');
+				span.text(pset.tags[t]);
+				btn.append(span);
+				p.append(btn);
+			}
 			li.append(p);
 
 			let btn = $(document.createElement('button'));

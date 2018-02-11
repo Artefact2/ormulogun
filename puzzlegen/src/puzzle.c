@@ -71,15 +71,33 @@ static void puzzle_print_step(puzzle_step_t* st) {
 	fputs("}]", stdout);
 }
 
+#define MAYBE_PRINT_TAG(f, n) do {				\
+		if(f) {									\
+			printf(",\"%s\"", n);				\
+		}										\
+	} while(0)
+
 void puzzle_print(puzzle_t* p) {
+	if(p->min_depth == 0) return;
 	printf("[\"%s\",", p->fen);
 	puzzle_print_step(&(p->root));
-	puts("]");
-	fflush(stdout); /* Play nice with xargs */
+	printf(",[\"Depth %d\"", p->min_depth);
+	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
+	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
+	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw: Stalemate");
+	puts("]]");
+	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
-static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
-							  puzzle_step_t* st, cch_board_t* b,
+static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char depth) {
+	st->reply[0] = '\0';
+	st->nextlen = 0;
+	st->next = 0;
+	if(p->min_depth > depth) p->min_depth = depth;
+}
+
+static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen, unsigned char depth,
+							  puzzle_t* p, puzzle_step_t* st, cch_board_t* b,
 							  const char* engine_limiter, puzzlegen_settings_t s) {
 	unsigned char nlines, nreplies, i;
 	size_t nll;
@@ -89,9 +107,8 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 
 	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, s.max_variations + 1);
 	if(!puzzle_consider(evals, nlines, s)) {
-		st->reply[0] = '\0';
-		st->nextlen = 0;
-		st->next = 0;
+		/* Puzzle over */
+		puzzle_finalize_step(p, st, depth);
 		return;
 	}
 
@@ -114,13 +131,19 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 		strncpy(st->next[i].move, evals[i].bestlan, SAFE_ALG_LENGTH);
 		strncpy(lanlist + nll, evals[i].bestlan, SAFE_ALG_LENGTH);
 		nll += strlen(evals[i].bestlan);
+		cch_parse_lan_move(evals[i].bestlan, &m);
+		cch_play_legal_move(b, &m, &umove);
 
 		nreplies = uci_eval(ctx, engine_limiter, lanlist, &(evals[s.max_variations]), 1);
 		if(nreplies == 0) {
 			/* Game over */
-			st->next[i].reply[0] = '\0';
-			st->next[i].nextlen = 0;
-			st->next[i].next = 0;
+			puzzle_finalize_step(p, &(st->next[i]), depth + 1);
+			if(CCH_IS_OWN_KING_CHECKED(b)) {
+				p->tags.checkmate = true;
+			} else {
+				p->tags.stalemate = true;
+				p->tags.draw = true;
+			}
 			continue;
 		}
 
@@ -129,13 +152,10 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 		strncpy(st->next[i].reply, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
 		strncpy(lanlist + nll, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
 		nll += strlen(evals[s.max_variations].bestlan);
-
-		cch_parse_lan_move(evals[i].bestlan, &m);
-		cch_play_legal_move(b, &m, &umove);
 		cch_parse_lan_move(evals[s.max_variations].bestlan, &mr);
 		cch_play_legal_move(b, &mr, &ureply);
 
-		puzzle_build_step(ctx, lanlist, nll, &(st->next[i]), b, engine_limiter, s);
+		puzzle_build_step(ctx, lanlist, nll, depth + 1, p, &(st->next[i]), b, engine_limiter, s);
 
 		cch_undo_move(b, &mr, &ureply);
 		cch_undo_move(b, &m, &umove);
@@ -145,5 +165,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
 				  puzzle_t* p, cch_board_t* b,
 				  const char* engine_limiter, puzzlegen_settings_t s) {
-	puzzle_build_step(ctx, lanlist, lanlistlen, &(p->root), b, engine_limiter, s);
+	p->min_depth = 255;
+	memset(&(p->tags), 0, sizeof(p->tags));
+	puzzle_build_step(ctx, lanlist, lanlistlen, 0, p, &(p->root), b, engine_limiter, s);
 }

@@ -37,8 +37,9 @@ const orm_load_puzzle = function(idx) {
 	}, 500);
 
 	$("p#puzzle-prompt")
+		.empty()
 		.removeClass("text-success text-danger")
-		.text(orm_manifest[orm_puzzle_midx].prompt.replace("{%side}",  puz.side ? 'White' : 'Black'));
+		.text("Find the best move for " + (puz.side ? 'White' : 'Black') + ".");
 	$("div#puzzle-actions-after").removeClass("visible");
 	$("button#puzzle-abandon").show();
 	$("button#puzzle-next").hide();
@@ -50,6 +51,16 @@ const orm_puzzle_over = function() {
 	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
 	$("button#puzzle-next").show();
+
+	let prompt = $("p#puzzle-prompt");
+	prompt.append($(document.createElement('br')));
+	for(let i in orm_puzzle[2]) {
+		let span = $(document.createElement('span'));
+		span.addClass('d-inline-block mr-1 badge badge-secondary');
+		span.text(orm_puzzle[2][i]);
+		prompt.append(span);
+	}
+
 	orm_puzzle_next = null;
 };
 

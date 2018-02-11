@@ -34,9 +34,17 @@ $me = pathinfo($argv[1], PATHINFO_BASENAME);
 foreach(glob('*.json') as $f) {
 	if($f === $me) continue;
 	$puzzles = json_decode(file_get_contents($f));
+	$tc = [];
+
+	foreach($puzzles as $p) {
+		foreach($p[2] as $tag) {
+			$tc[$tag] = ($tc[$tag] ?? 0) + 1;
+		}
+	}
 
 	if(isset($index[$f])) {
 		$manifest[$index[$f]]['count'] = count($puzzles);
+		$manifest[$index[$f]]['tags'] = $tc;
 		continue;
 	}
 
@@ -46,7 +54,7 @@ foreach(glob('*.json') as $f) {
 		'count' => count($puzzles),
 		'name' => $f.' (auto-generated name)',
 		'desc' => 'Auto-generated description.',
-		'prompt' => 'Find the best move for {%side}.',
+		'tags' => $tc,
 	];
 }
 
