@@ -10,7 +10,7 @@ clean:
 	rm -f tools/gen-puzzles
 
 pgnlist.jz:
-	pv $(INPUT) | ./tools/chunk-pgn | xargs -d '\n' -P $(JOBS) ./tools/preprocess-pgn | zstd -4 - -o $(TMP)
+	pv -cN input $(INPUT) | ./tools/chunk-pgn | xargs -d '\n' -P $(JOBS) ./tools/preprocess-pgn | pv -lcN games | zstd -4 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $@
 
@@ -29,13 +29,13 @@ merge-to-master: master.jz
 	rm -f tmp.master.fifo tmp.input.fifo
 
 puzzles-all: tools/gen-puzzles
-	pv pgnlist.jz | zstdcat | xargs -d '\n' -P $(JOBS) ./tools/gen-puzzles | zstd -4 - -o $(TMP)
+	pv -cN input pgnlist.jz | zstdcat | xargs -d '\n' -P $(JOBS) ./tools/gen-puzzles | pv -lcN puzzles | zstd -4 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) puzzles-all.jz
 	make merge-to-master INPUT=puzzles-all.jz
 
 puzzles-partial: tools/gen-puzzles
-	zstdcat pgnlist.jz | tail -n +$(OFFSET) | head -n $(COUNT) | pv -ls $(COUNT) | xargs -d '\n' -P $(JOBS) -n $$(( $(COUNT) / $(JOBS) )) ./tools/gen-puzzles | zstd -4 -o - $(TMP)
+	zstdcat pgnlist.jz | tail -n +$(OFFSET) | head -n $(COUNT) | pv -lcN games -s $(COUNT) | xargs -d '\n' -P $(JOBS) -n $$(( $(COUNT) / $(JOBS) )) ./tools/gen-puzzles | pv -lcN puzzles | zstd -4 -o - $(TMP)
 	sync $(TMP)
 	mv $(TMP) puzzles-$(OFFSET)-$(COUNT).jz
 	make merge-to-master INPUT=puzzles-$(OFFSET)-$(COUNT).jz
