@@ -42,6 +42,8 @@ foreach(glob('*.json') as $f) {
 		}
 	}
 
+	ksort($tc);
+
 	if(isset($index[$f])) {
 		$manifest[$index[$f]]['count'] = count($puzzles);
 		$manifest[$index[$f]]['tags'] = $tc;
