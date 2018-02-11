@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
 			lanlistlen += strlen(lanmove);
 
 			nlines = uci_eval(&ctx, uci_limiter_probe, lanlist, evals, settings.max_variations + 1);
-			if(!puzzle_consider(evals, nlines, settings)) continue;
+			if(!puzzle_consider(evals, nlines, settings, 0)) continue;
 
 			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
 			puzzle_build(&ctx, lanlist, lanlistlen, &p, &b, uci_limiter, settings);

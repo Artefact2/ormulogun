@@ -18,7 +18,7 @@
 #include <stdbool.h>
 #include <assert.h>
 
-bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s) {
+bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
 	/* No moves or forced move? */
 	if(nlines < 2) return false;
 
@@ -26,18 +26,27 @@ bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_se
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
 	   || (evals[0].type == SCORE_CP && evals[0].score < -s.eval_cutoff)) return false;
 
-	/* Clearly won position? */
-	if((evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0)
-	   || (evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff)) return false;
-
-	/* Force mate, or avoid forced mate */
-	if(evals[0].type != evals[nlines - 1].type) return /*true*/ false; /* XXX: todo */
-
-	if(evals[0].type == SCORE_MATE && evals[nlines - 1].type == SCORE_MATE) {
-		return false; /* XXX: todo */
-		return evals[0].score * evals[nlines - 1].type < 0;
+	if(depth == 0) {
+		/* Clearly won position? */
+		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return false;
+		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return false;
 	}
 
+	/* Forced mate? */
+	if(evals[0].type == SCORE_MATE) {
+		if(evals[nlines - 1].type == SCORE_CP) return true;
+		if(evals[nlines - 1].score != evals[0].score) {
+			return evals[0].score + depth <= s.max_depth;
+		}
+		return false;
+	}
+
+	/* Escape mate threat? */
+	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE) {
+		return true;
+	}
+
+	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
 	return evals[0].score - evals[nlines - 1].score > s.best_eval_cutoff;
 }
 
@@ -73,7 +82,7 @@ static void puzzle_print_step(puzzle_step_t* st) {
 
 #define MAYBE_PRINT_TAG(f, n) do {				\
 		if(f) {									\
-			printf(",\"%s\"", n);				\
+			printf(",\"%s\"", (n));				\
 		}										\
 	} while(0)
 
@@ -82,24 +91,78 @@ void puzzle_print(puzzle_t* p) {
 	printf("[\"%s\",", p->fen);
 	puzzle_print_step(&(p->root));
 	printf(",[\"Depth %d\"", p->min_depth);
-	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
+
+	if(p->tags.checkmate) {
+		printf(",\"Checkmate\",\"Checkmate in %d\"", p->checkmate_length);
+	}
+
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw: Stalemate");
+	MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
+
+	if(!p->tags.draw && !p->tags.checkmate) {
+		//MAYBE_PRINT_TAG(p->min_material_diff > 0, "Material gain");
+	}
+
 	puts("]]");
 	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
-static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char depth) {
+static void count_material(const cch_board_t* b, unsigned char* total, char* difference) {
+	static const char mat[] = { 0, 1, 3, 3, 5, 9, 0 };
+	cch_piece_t p;
+
+	*total = 0;
+	*difference = 0;
+
+	for(unsigned char sq = 0; sq < 64; ++sq) {
+		p = CCH_GET_SQUARE(b, sq);
+		*total += mat[CCH_PURE_PIECE(p)];
+		if(CCH_IS_OWN_PIECE(b, p)) {
+			*difference += mat[CCH_PURE_PIECE(p)];
+		} else {
+			*difference -= mat[CCH_PURE_PIECE(p)];
+		}
+	}
+}
+
+static void count_material_quiet(const uci_engine_context_t* ctx, const char* engine_limiter, char* lanlist, size_t lanlistlen,
+								 cch_board_t* b, unsigned char* total, char* difference) {
+	cch_move_t m;
+	cch_undo_move_state_t u;
+	uci_eval_t eval;
+
+	/* Keep going through captures */
+	if(uci_eval(ctx, engine_limiter, lanlist, &eval, 1)) {
+		cch_parse_lan_move(eval.bestlan, &m);
+		if(CCH_GET_SQUARE(b, m.end)) {
+			cch_play_legal_move(b, &m, &u);
+			lanlist[lanlistlen] = ' ';
+			++lanlistlen;
+			strncpy(lanlist + lanlistlen, eval.bestlan, SAFE_ALG_LENGTH);
+			lanlistlen += strlen(eval.bestlan);
+			//count_material_difference(ctx, engine_limiter, b, lanlist, lanlistlen, total, difference);
+			cch_undo_move(b, &m, &u);
+			return;
+		}
+	}
+
+	count_material(b, total, difference);
+}
+
+static void puzzle_finalize_step(const uci_engine_context_t* ctx, puzzle_t* p, puzzle_step_t* st, cch_board_t* b, unsigned char depth, const char* engine_limiter, char* lanlist, size_t lanlistlen) {
+	//char diff = count_material_difference(ctx, engine_limiter, b, lanlist, lanlistlen);
 	st->reply[0] = '\0';
 	st->nextlen = 0;
 	st->next = 0;
 	if(p->min_depth > depth) p->min_depth = depth;
+	//if(diff < p->min_material_diff) p->min_material_diff = diff;
 }
 
 static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen, unsigned char depth,
 							  puzzle_t* p, puzzle_step_t* st, cch_board_t* b,
 							  const char* engine_limiter, puzzlegen_settings_t s) {
-	unsigned char nlines, nreplies, i;
+	unsigned char nlines, i;
 	size_t nll;
 	cch_undo_move_state_t umove, ureply;
 	cch_move_t m, mr;
@@ -112,23 +175,28 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	}
 
 	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, s.max_variations + 1);
-	if(!puzzle_consider(evals, nlines, s)) {
+	if(!puzzle_consider(evals, nlines, s, depth)) {
 		/* Puzzle over */
-		puzzle_finalize_step(p, st, depth);
+		puzzle_finalize_step(ctx, p, st, b, depth, engine_limiter, lanlist, lanlistlen);
+		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0 && depth + evals[0].score <= s.max_depth) {
+			/* Incomplete checkmate sequence, because it has too many branches */
+			p->tags.checkmate = true;
+			p->checkmate_length = depth + evals[0].score; /* XXX? */
+		}
 		return;
 	}
 
-	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
-	assert(evals[0].score - evals[nlines - 1].score > s.best_eval_cutoff);
-
-	for(i = 0; i < nlines; ++i) {
-		if(evals[0].score - evals[i].score < s.variation_eval_cutoff) continue;
-		st->nextlen = i;
-		st->next = malloc(i * sizeof(puzzle_step_t));
-		break;
+	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score < 0) {
+		p->tags.mate_threat = true;
 	}
 
-	assert(st->nextlen < nlines);
+	if(evals[0].type == SCORE_MATE) {
+		for(i = 0; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
+	} else {
+		for(i = 0; i < nlines && evals[i].type == SCORE_CP && evals[0].score - evals[i].score < s.variation_eval_cutoff; ++i);
+	}
+	st->nextlen = i;
+	st->next = malloc(i * sizeof(puzzle_step_t));
 
 	for(i = 0; i < st->nextlen; ++i) {
 		nll = lanlistlen;
@@ -140,16 +208,17 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 		cch_parse_lan_move(evals[i].bestlan, &m);
 		cch_play_legal_move(b, &m, &umove);
 
-		nreplies = uci_eval(ctx, engine_limiter, lanlist, &(evals[s.max_variations]), 1);
-		if(nreplies == 0) {
+		if(uci_eval(ctx, engine_limiter, lanlist, &(evals[s.max_variations]), 1) == 0) {
 			/* Game over */
-			puzzle_finalize_step(p, &(st->next[i]), depth + 1);
 			if(CCH_IS_OWN_KING_CHECKED(b)) {
 				p->tags.checkmate = true;
+				p->checkmate_length = depth + 1;
 			} else {
 				p->tags.stalemate = true;
 				p->tags.draw = true;
 			}
+			puzzle_finalize_step(ctx, p, &(st->next[i]), b, depth + 1, engine_limiter, lanlist, lanlistlen);
+			cch_undo_move(b, &m, &umove);
 			continue;
 		}
 
@@ -172,6 +241,7 @@ void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlist
 				  puzzle_t* p, cch_board_t* b,
 				  const char* engine_limiter, puzzlegen_settings_t s) {
 	p->min_depth = 255;
+	//p->min_material_diff = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
 	puzzle_build_step(ctx, lanlist, lanlistlen, 0, p, &(p->root), b, engine_limiter, s);
 }
