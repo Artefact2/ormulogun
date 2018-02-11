@@ -11,6 +11,10 @@ nav#mainnav {
 	transition: background-color 1s;
 }
 
+div#select-puzzleset > ul {
+	list-style-type: none;
+}
+
 div#board {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAQAAAAnZu5uAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gICEQQVU8RjagAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAADklEQVQI12NggIH/pDAAhrAE/LwPpvYAAAAASUVORK5CYII=);
 	display: inline-block;

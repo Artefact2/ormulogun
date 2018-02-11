@@ -49,10 +49,10 @@ foreach(glob('*.json') as $f) {
 	}
 
 	$manifest[] = [
-		'id' => pathinfo($f, PATHINFO_FILENAME),
+		'id' => $id = pathinfo($f, PATHINFO_FILENAME),
 		'src' => $f,
 		'count' => count($puzzles),
-		'name' => $f.' (auto-generated name)',
+		'name' => ucfirst($id),
 		'desc' => 'Auto-generated description.',
 		'tags' => $tc,
 	];

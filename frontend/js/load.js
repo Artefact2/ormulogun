@@ -17,6 +17,7 @@ let orm_manifest = null;
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
 let orm_puzzle_idx = null;
+let orm_puzzle_filter = null;
 
 const orm_load_puzzle_manifest = function(done) {
 	$.getJSON("./puzzles/manifest.js").always(function() {
@@ -31,22 +32,26 @@ const orm_load_puzzle_manifest = function(done) {
 		for(let i in data) {
 			let pset = data[i];
 			let li = $(document.createElement('li'));
-			li.addClass('row pb-2');
+			li.addClass('col-xl-6 mb-4');
 
-			let h = $(document.createElement('h3'));
-			h.text(pset.name);
-			h.addClass('col');
+			let h = $(document.createElement('h2'));
+			let span = $(document.createElement('span'));
+			let btn = $(document.createElement('button'));
+			h.addClass('d-flex justify-content-between border-bottom pb-1 border-dark');
+			span.text(pset.name);
+			btn.text('Start training');
+			btn.addClass('btn btn-primary');
+			btn.data('idx', i).data('tag', null);
+			h.append(span, btn);
 			li.append(h);
 
 			let p = $(document.createElement('p'));
-			p.text(pset.desc + " " + pset.count + " puzzles.");
-			p.addClass('col-6');
-			p.append($(document.createElement('br')));
 			for(let t in pset.tags) {
 				let btn = $(document.createElement('button'));
 				let span = $(document.createElement('span'));
 				btn.addClass('btn btn-sm btn-secondary mr-1');
 				btn.text(t + ' ');
+				btn.data('tag', t).data('idx', i);
 				span.addClass('badge badge-light');
 				span.text(pset.tags[t]);
 				btn.append(span);
@@ -54,22 +59,21 @@ const orm_load_puzzle_manifest = function(done) {
 			}
 			li.append(p);
 
-			let btn = $(document.createElement('button'));
-			btn.text('Start training');
-			btn.addClass('btn btn-primary col start-training');
-			btn.data('idx', i);
-			li.append(btn);
+			p = $(document.createElement('p'));
+			p.text(pset.desc + " " + pset.count + " puzzles.");
+			li.append(p);
 
 			ul.append(li);
 		}
 
-		ul.find("button.start-training").click(function() {
+		ul.find("button").click(function() {
 			let t = $(this);
-			t.prop('disabled', 'disabled');
-			t.addClass('disabled');
+			t.prop('disabled', 'disabled').addClass('disabled');
+			orm_puzzle_filter = t.data('tag');
 			orm_load_puzzle_set(t.data('idx'), null, null, function() {
 				$("div#select-puzzleset").fadeOut(250, function() {
-					orm_load_puzzle(0);
+					orm_load_next_puzzle();
+					t.prop('disabled', false).removeClass('disabled');
 					$("div#play-puzzle").fadeIn(250);
 				});
 			});

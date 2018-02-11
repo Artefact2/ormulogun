@@ -47,6 +47,17 @@ const orm_load_puzzle = function(idx) {
 	orm_puzzle_next = puz[1][1];
 };
 
+const orm_load_next_puzzle = function() {
+	/* XXX: puzzle cooldown, box system, etc */
+	let cur = orm_puzzle_idx === null ? -1 : orm_puzzle_idx;
+	for(let i = cur + 1; i < orm_manifest[orm_puzzle_midx].count; ++i) {
+		if(orm_puzzle_filter === null) return orm_load_puzzle(i);
+		if($.inArray(orm_puzzle_filter, orm_puzzle_set[i][2]) !== -1) return orm_load_puzzle(i);
+	}
+	/* XXX */
+	orm_error("No more puzzles to play.");
+};
+
 const orm_puzzle_over = function() {
 	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
@@ -79,6 +90,7 @@ const orm_puzzle_fail = function() {
 	}
 
 	/* XXX: set as main variation */
+	/* XXX: show all puzzle variations */
 	var prev = $("ul#movehist li.puzzle-reply").last();
 	gumble_load_fen(prev.data('fen'));
 	gumble_play_legal_lan(prev.data('lan'));
@@ -155,7 +167,6 @@ orm_when_ready.push(function() {
 	});
 
 	$("button#puzzle-next").click(function() {
-		/* XXX */
-		orm_load_puzzle(orm_puzzle_idx + 1);
+		orm_load_next_puzzle();
 	});
 });
