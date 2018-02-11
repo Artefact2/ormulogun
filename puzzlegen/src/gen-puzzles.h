@@ -43,6 +43,13 @@ unsigned char uci_eval(const uci_engine_context_t*, const char*, const char*, uc
 
 /* ----- puzzle.c ----- */
 
+typedef struct {
+	int eval_cutoff;
+	int best_eval_cutoff;
+	int variation_eval_cutoff;
+	unsigned char max_variations;
+} puzzlegen_settings_t;
+
 typedef struct puzzle_step_s {
 	char move[SAFE_ALG_LENGTH];
 	char reply[SAFE_ALG_LENGTH];
@@ -55,9 +62,9 @@ typedef struct {
 	puzzle_step_t root;
 } puzzle_t;
 
-bool puzzle_consider(const uci_eval_t*, unsigned char, int, int);
+bool puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t);
 void puzzle_free(puzzle_t*);
 void puzzle_print(puzzle_t*);
-void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_board_t*, const char*, int, int, int, int);
+void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_board_t*, const char*, puzzlegen_settings_t);
 
 #endif

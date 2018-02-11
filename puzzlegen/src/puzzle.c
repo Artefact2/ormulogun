@@ -18,17 +18,17 @@
 #include <stdbool.h>
 #include <assert.h>
 
-bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, int eval_cutoff, int best_eval_cutoff) {
+bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s) {
 	/* No moves or forced move? */
 	if(nlines < 2) return false;
 
 	/* Clearly lost position? */
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
-	   || (evals[0].type == SCORE_CP && evals[0].score < -eval_cutoff)) return false;
+	   || (evals[0].type == SCORE_CP && evals[0].score < -s.eval_cutoff)) return false;
 
 	/* Clearly won position? */
 	if((evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0)
-	   || (evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > eval_cutoff)) return false;
+	   || (evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff)) return false;
 
 	/* Force mate, or avoid forced mate */
 	if(evals[0].type != evals[nlines - 1].type) return /*true*/ false; /* XXX: todo */
@@ -38,7 +38,7 @@ bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, int eval_cut
 		return evals[0].score * evals[nlines - 1].type < 0;
 	}
 
-	return evals[0].score - evals[nlines - 1].score > best_eval_cutoff;
+	return evals[0].score - evals[nlines - 1].score > s.best_eval_cutoff;
 }
 
 static void puzzle_free_steps(puzzle_step_t* st) {
@@ -80,16 +80,15 @@ void puzzle_print(puzzle_t* p) {
 
 static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
 							  puzzle_step_t* st, cch_board_t* b,
-							  const char* engine_limiter,
-							  int max_variations, int eval_cutoff, int best_eval_cutoff, int variation_eval_cutoff) {
+							  const char* engine_limiter, puzzlegen_settings_t s) {
 	unsigned char nlines, nreplies, i;
 	size_t nll;
 	cch_undo_move_state_t umove, ureply;
 	cch_move_t m, mr;
-	uci_eval_t evals[max_variations + 1];
+	uci_eval_t evals[s.max_variations + 1];
 
-	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, max_variations + 1);
-	if(!puzzle_consider(evals, nlines, eval_cutoff, best_eval_cutoff)) {
+	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, s.max_variations + 1);
+	if(!puzzle_consider(evals, nlines, s)) {
 		st->reply[0] = '\0';
 		st->nextlen = 0;
 		st->next = 0;
@@ -97,10 +96,10 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	}
 
 	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
-	assert(evals[0].score - evals[nlines - 1].score > best_eval_cutoff);
+	assert(evals[0].score - evals[nlines - 1].score > s.best_eval_cutoff);
 
 	for(i = 0; i < nlines; ++i) {
-		if(evals[0].score - evals[i].score < variation_eval_cutoff) continue;
+		if(evals[0].score - evals[i].score < s.variation_eval_cutoff) continue;
 		st->nextlen = i;
 		st->next = malloc(i * sizeof(puzzle_step_t));
 		break;
@@ -116,7 +115,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 		strncpy(lanlist + nll, evals[i].bestlan, SAFE_ALG_LENGTH);
 		nll += strlen(evals[i].bestlan);
 
-		nreplies = uci_eval(ctx, engine_limiter, lanlist, &(evals[max_variations]), 1);
+		nreplies = uci_eval(ctx, engine_limiter, lanlist, &(evals[s.max_variations]), 1);
 		if(nreplies == 0) {
 			/* Game over */
 			st->next[i].reply[0] = '\0';
@@ -127,18 +126,16 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 
 		lanlist[nll] = ' ';
 		++nll;
-		strncpy(st->next[i].reply, evals[max_variations].bestlan, SAFE_ALG_LENGTH);
-		strncpy(lanlist + nll, evals[max_variations].bestlan, SAFE_ALG_LENGTH);
-		nll += strlen(evals[max_variations].bestlan);
+		strncpy(st->next[i].reply, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
+		strncpy(lanlist + nll, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
+		nll += strlen(evals[s.max_variations].bestlan);
 
 		cch_parse_lan_move(evals[i].bestlan, &m);
 		cch_play_legal_move(b, &m, &umove);
-		cch_parse_lan_move(evals[max_variations].bestlan, &mr);
+		cch_parse_lan_move(evals[s.max_variations].bestlan, &mr);
 		cch_play_legal_move(b, &mr, &ureply);
 
-		puzzle_build_step(ctx, lanlist, nll,
-						  &(st->next[i]), b,
-						  engine_limiter, max_variations, eval_cutoff, best_eval_cutoff, variation_eval_cutoff);
+		puzzle_build_step(ctx, lanlist, nll, &(st->next[i]), b, engine_limiter, s);
 
 		cch_undo_move(b, &mr, &ureply);
 		cch_undo_move(b, &m, &umove);
@@ -147,9 +144,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 
 void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
 				  puzzle_t* p, cch_board_t* b,
-				  const char* engine_limiter,
-				  int max_variations, int eval_cutoff, int best_eval_cutoff, int variation_eval_cutoff) {
-	puzzle_build_step(ctx, lanlist, lanlistlen,
-					  &(p->root), b,
-					  engine_limiter, max_variations, eval_cutoff, best_eval_cutoff, variation_eval_cutoff);
+				  const char* engine_limiter, puzzlegen_settings_t s) {
+	puzzle_build_step(ctx, lanlist, lanlistlen, &(p->root), b, engine_limiter, s);
 }

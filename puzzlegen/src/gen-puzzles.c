@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 	cch_return_t ret;
 
 	uci_engine_context_t ctx;
-	uci_eval_t evals[max_variations + 1];
+	uci_eval_t evals[settings.max_variations + 1];
 	unsigned char nlines;
 	puzzle_t p;
 
@@ -72,11 +72,11 @@ int main(int argc, char** argv) {
 			strncpy(lanlist + lanlistlen, lanmove, SAFE_ALG_LENGTH);
 			lanlistlen += strlen(lanmove);
 
-			nlines = uci_eval(&ctx, uci_limiter_probe, lanlist, evals, max_variations + 1);
-			if(!puzzle_consider(evals, nlines, eval_cutoff, best_eval_cutoff)) continue;
+			nlines = uci_eval(&ctx, uci_limiter_probe, lanlist, evals, settings.max_variations + 1);
+			if(!puzzle_consider(evals, nlines, settings)) continue;
 
 			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
-			puzzle_build(&ctx, lanlist, lanlistlen, &p, &b, uci_limiter, max_variations, eval_cutoff, best_eval_cutoff, variation_eval_cutoff);
+			puzzle_build(&ctx, lanlist, lanlistlen, &p, &b, uci_limiter, settings);
 			puzzle_print(&p);
 			puzzle_free(&p);
 		}

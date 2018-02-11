@@ -16,14 +16,16 @@ static const char* uci_limiter_probe = "movetime 100";
 /* When building puzzles */
 static const char* uci_limiter = "movetime 500";
 
-/* Don't look for puzzles in clearly lost or won positions */
-static const int eval_cutoff = 500;
+static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
+	/* Don't look for puzzles in clearly lost or won positions */
+	.eval_cutoff = 500,
 
-/* No more than this many possible moves for the first puzzle move */
-static const unsigned char max_variations = 3;
+	/* No more than this many possible moves for the first puzzle move */
+	.max_variations = 3,
 
-/* Consider tactics when best move is this much above last move */
-static const int best_eval_cutoff = 190;
+	/* Consider tactics when best move is this much above last move */
+	.best_eval_cutoff = 190,
 
-/* Consider variations when they differ at most by this much compared to the best move */
-static const int variation_eval_cutoff = 50;
+	/* Consider variations when they differ at most by this much compared to the best move */
+	.variation_eval_cutoff = 50,
+};
