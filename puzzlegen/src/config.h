@@ -17,6 +17,9 @@ static const char* uci_limiter_probe = "movetime 100";
 static const char* uci_limiter = "movetime 500";
 
 static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
+	/* Abort if puzzle is longer than this number of turns */
+	.max_depth = 6,
+
 	/* Don't look for puzzles in clearly lost or won positions */
 	.eval_cutoff = 500,
 

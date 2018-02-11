@@ -48,6 +48,7 @@ typedef struct {
 	int best_eval_cutoff;
 	int variation_eval_cutoff;
 	unsigned char max_variations;
+	unsigned char max_depth;
 } puzzlegen_settings_t;
 
 typedef struct puzzle_step_s {

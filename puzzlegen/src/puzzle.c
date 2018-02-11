@@ -105,6 +105,12 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	cch_move_t m, mr;
 	uci_eval_t evals[s.max_variations + 1];
 
+	if(depth > s.max_depth) {
+		/* Puzzle is too long */
+		p->min_depth = 0;
+		return;
+	}
+
 	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, s.max_variations + 1);
 	if(!puzzle_consider(evals, nlines, s)) {
 		/* Puzzle over */
