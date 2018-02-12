@@ -45,4 +45,8 @@ out/master.json: master.jz
 	./tools/update-manifest ./out/manifest.json
 	cd .. && make
 
+replace-partial:
+	rm -f master.jz
+	make puzzles-partial out/master.json
+
 .PHONY: clean merge-to-master puzzles-all puzzles-partial
