@@ -20,7 +20,7 @@
 
 bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
 	/* No moves or forced move? */
-	if(nlines < 2) return false;
+	if(nlines < 2) return nlines == 1 && depth > 0;
 
 	/* Clearly lost position? */
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
@@ -47,7 +47,7 @@ bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_se
 	}
 
 	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
-	return evals[0].score - evals[nlines - 1].score > s.best_eval_cutoff;
+	return evals[0].score - evals[nlines - 1].score > (depth == 0 ? s.best_eval_cutoff_start : s.best_eval_cutoff_continue);
 }
 
 static void puzzle_free_steps(puzzle_step_t* st) {

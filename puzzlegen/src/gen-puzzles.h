@@ -45,7 +45,8 @@ unsigned char uci_eval(const uci_engine_context_t*, const char*, const char*, uc
 
 typedef struct {
 	int eval_cutoff;
-	int best_eval_cutoff;
+	int best_eval_cutoff_start;
+	int best_eval_cutoff_continue;
 	int variation_eval_cutoff;
 	unsigned char max_variations;
 	unsigned char max_depth;
