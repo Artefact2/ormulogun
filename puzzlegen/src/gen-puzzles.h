@@ -63,8 +63,6 @@ typedef struct {
 	puzzle_step_t root;
 	unsigned char min_depth;
 	unsigned char checkmate_length;
-	unsigned char start_material;
-	unsigned char end_material_max;
 	char start_material_diff;
 	char end_material_diff_min;
 	struct {
@@ -77,6 +75,7 @@ typedef struct {
 
 bool puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t, unsigned char);
 void puzzle_free(puzzle_t*);
+void puzzle_init(puzzle_t*, cch_board_t*);
 void puzzle_print(puzzle_t*);
 void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_board_t*, const char*, puzzlegen_settings_t);
 

@@ -56,8 +56,7 @@ int main(int argc, char** argv) {
 		lanlistlen = 0;
 
 		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr); sanmove; sanmove = strtok_r(0, "[]\",", &saveptr)) {
-			ret = cch_save_fen(&b, p.fen, SAFE_FEN_LENGTH);
-			assert(ret == CCH_OK);
+			puzzle_init(&p, &b);
 			ret = cch_parse_san_move(&b, sanmove, &m);
 			assert(ret == CCH_OK);
 			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
