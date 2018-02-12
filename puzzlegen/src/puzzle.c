@@ -230,6 +230,22 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	}
 }
 
+static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
+	if(p->min_depth != 1) return false;
+
+	/* Filter simple 2-ply trades with no choices involved */
+	cch_move_t m;
+	cch_parse_lan_move(p->root.reply, &m);
+	if(!CCH_GET_SQUARE(b, m.end)) return false;
+
+	cch_movelist_t ml;
+	unsigned char i, takebacks = 0, stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
+	for(i = 0; i < stop; ++i) {
+		if(ml[i].end == m.end) ++takebacks;
+	}
+	return p->root.nextlen == takebacks;
+}
+
 void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
 				  puzzle_t* p, cch_board_t* b,
 				  const char* engine_limiter, puzzlegen_settings_t s) {
@@ -237,5 +253,10 @@ void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlist
 	p->end_material_min = 255;
 	p->end_material_diff_min = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
+
 	puzzle_build_step(ctx, lanlist, lanlistlen, 0, p, &(p->root), b, engine_limiter, s);
+
+	if(puzzle_is_trivial(p, b)) {
+		p->min_depth = 0;
+	}
 }
