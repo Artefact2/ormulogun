@@ -72,14 +72,22 @@ typedef struct {
 		bool checkmate:1;
 		bool stalemate:1;
 		bool draw:1;
+		bool escape_mate:1;
 		bool mate_threat:1;
 	} tags;
 } puzzle_t;
 
 bool puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t, unsigned char);
 void puzzle_free(puzzle_t*);
-void puzzle_init(puzzle_t*, cch_board_t*);
-void puzzle_print(puzzle_t*);
+void puzzle_init(puzzle_t*, const cch_board_t*);
+void puzzle_print(const puzzle_t*);
 void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_board_t*, const char*, puzzlegen_settings_t);
+
+
+
+/* ----- tags.c ----- */
+
+void tags_print(const puzzle_t*);
+void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, char*, size_t);
 
 #endif

@@ -64,7 +64,7 @@ void puzzle_free(puzzle_t* p) {
 	puzzle_free_steps(&(p->root));
 }
 
-static void puzzle_print_step(puzzle_step_t* st) {
+static void puzzle_print_step(const puzzle_step_t* st) {
 	printf("[\"%s\",{", st->reply);
 
 	for(unsigned char i = 0; i < st->nextlen; ++i) {
@@ -80,33 +80,13 @@ static void puzzle_print_step(puzzle_step_t* st) {
 	fputs("}]", stdout);
 }
 
-#define MAYBE_PRINT_TAG(f, n) do {				\
-		if(f) {									\
-			printf(",\"%s\"", (n));				\
-		}										\
-	} while(0)
-
-void puzzle_print(puzzle_t* p) {
+void puzzle_print(const puzzle_t* p) {
 	if(p->min_depth == 0) return;
 	printf("[\"%s\",", p->fen);
 	puzzle_print_step(&(p->root));
-	printf(",[\"Depth %d\"", p->min_depth);
-
-	if(p->tags.checkmate) {
-		printf(",\"Checkmate\",\"Checkmate in %d\"", p->checkmate_length);
-	}
-
-	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
-	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw: Stalemate");
-	MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
-
-	if(!p->tags.draw && !p->tags.checkmate) {
-		MAYBE_PRINT_TAG(p->end_material_diff_min > p->start_material_diff, "Material gain");
-		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min < p->start_material, "Trade");
-		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min == p->start_material, "Quiet");
-	}
-
-	puts("]]");
+	putchar(',');
+	tags_print(p);
+	puts("]");
 	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
@@ -128,7 +108,7 @@ static void count_material(const cch_board_t* b, bool reverse, unsigned char* to
 	}
 }
 
-void puzzle_init(puzzle_t* p, cch_board_t* b) {
+void puzzle_init(puzzle_t* p, const cch_board_t* b) {
 	cch_return_t ret;
 	ret = cch_save_fen(b, p->fen, SAFE_FEN_LENGTH);
 	assert(ret == CCH_OK);
@@ -180,7 +160,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	}
 
 	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score < 0) {
-		p->tags.mate_threat = true;
+		p->tags.escape_mate = true;
 	}
 
 	if(evals[0].type == SCORE_MATE) {
@@ -214,6 +194,8 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 			cch_undo_move(b, &m, &umove);
 			continue;
 		}
+
+		tags_after_player_move(ctx, p, lanlist, nll);
 
 		lanlist[nll] = ' ';
 		++nll;
