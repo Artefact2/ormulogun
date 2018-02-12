@@ -102,34 +102,37 @@ void puzzle_print(puzzle_t* p) {
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->end_material_diff_min > p->start_material_diff, "Material gain");
+		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min < p->start_material, "Trade");
+		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min == p->start_material, "Quiet");
 	}
 
 	puts("]]");
 	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
-static char count_material_diff(const cch_board_t* b) {
+static void count_material(const cch_board_t* b, bool reverse, unsigned char* total, char* diff) {
 	static const char mat[] = { 0, 1, 3, 3, 5, 9, 0 };
 	cch_piece_t p;
-	char diff = 0;
+
+	*total = 0;
+	*diff = 0;
 
 	for(unsigned char sq = 0; sq < 64; ++sq) {
 		p = CCH_GET_SQUARE(b, sq);
-		if(CCH_IS_OWN_PIECE(b, p)) {
-			diff += mat[CCH_PURE_PIECE(p)];
+		*total += mat[CCH_PURE_PIECE(p)];
+		if(CCH_IS_OWN_PIECE(b, p) ^ reverse) {
+			*diff += mat[CCH_PURE_PIECE(p)];
 		} else {
-			diff -= mat[CCH_PURE_PIECE(p)];
+			*diff -= mat[CCH_PURE_PIECE(p)];
 		}
 	}
-
-	return diff;
 }
 
 void puzzle_init(puzzle_t* p, cch_board_t* b) {
 	cch_return_t ret;
 	ret = cch_save_fen(b, p->fen, SAFE_FEN_LENGTH);
 	assert(ret == CCH_OK);
-	p->start_material_diff = -count_material_diff(b);
+	count_material(b, true, &(p->start_material), &(p->start_material_diff));
 }
 
 static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char depth) {
@@ -159,8 +162,12 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	if(!puzzle_consider(evals, nlines, s, depth)) {
 		/* Puzzle over, after computer reply of last puzzle move */
 
-		char diff = count_material_diff(b); /* XXX: assuming a quiet position */
+		unsigned char total;
+		char diff;
+
+		count_material(b, false, &total, &diff); /* XXX: assuming a quiet position */
 		if(diff < p->end_material_diff_min) p->end_material_diff_min = diff;
+		if(total < p->end_material_min) p->end_material_min = total;
 
 		puzzle_finalize_step(p, st, depth);
 
@@ -227,6 +234,7 @@ void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlist
 				  puzzle_t* p, cch_board_t* b,
 				  const char* engine_limiter, puzzlegen_settings_t s) {
 	p->min_depth = 255;
+	p->end_material_min = 255;
 	p->end_material_diff_min = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
 	puzzle_build_step(ctx, lanlist, lanlistlen, 0, p, &(p->root), b, engine_limiter, s);

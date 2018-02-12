@@ -63,7 +63,9 @@ typedef struct {
 	puzzle_step_t root;
 	unsigned char min_depth;
 	unsigned char checkmate_length;
+	unsigned char start_material;
 	char start_material_diff;
+	unsigned char end_material_min;
 	char end_material_diff_min;
 	struct {
 		bool checkmate:1;
