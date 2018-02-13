@@ -77,6 +77,7 @@ const orm_puzzle_over = function() {
 
 const orm_puzzle_success = function() {
 	$("ul#movehist li.new").addClass("good-move");
+	orm_movehist_merge_from_puzzle(orm_puzzle);
 	orm_movehist_make_active(orm_movehist_current());
 	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
 	$("nav#mainnav").addClass("bg-success");
@@ -89,35 +90,7 @@ const orm_puzzle_fail = function() {
 		cur.parent().addClass('bad-move');
 	}
 
-	/* XXX: set as main variation */
-	/* XXX: show all puzzle variations */
-	var prev = $("ul#movehist li.puzzle-reply").last();
-	gumble_load_fen(prev.data('fen'));
-	gumble_play_legal_lan(prev.data('lan'));
-	orm_movehist_make_active(prev);
-	while(orm_puzzle_next) {
-		for(let lan in orm_puzzle_next) {
-			let fen = gumble_save_fen();
-			let san = gumble_lan_to_san(lan);
-			gumble_play_legal_lan(lan);
-			orm_movehist_push(fen, lan, san);
-			orm_movehist_current().addClass('good-move');
-			if(orm_puzzle_next[lan] === 0) {
-				orm_puzzle_next = 0;
-				break;
-			}
-			fen = gumble_save_fen();
-			san = gumble_lan_to_san(orm_puzzle_next[lan][0]);
-			gumble_play_legal_lan(orm_puzzle_next[lan][0]);
-			orm_movehist_push(fen, orm_puzzle_next[lan][0], san);
-			orm_puzzle_next = orm_puzzle_next[lan][1];
-			break;
-		}
-	}
-
-	gumble_load_fen(cur.parent().data('fen'));
-	gumble_play_legal_lan(cur.parent().data('lan'));
-	orm_movehist_make_active(cur.parent());
+	orm_movehist_merge_from_puzzle(orm_puzzle);
 
 	$("p#puzzle-prompt").addClass("text-danger").text("Puzzle failed.");
 	$("nav#mainnav").addClass("bg-danger");

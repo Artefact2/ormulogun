@@ -20,7 +20,6 @@ To-Do
 
 * More automatic tagging (draws, promotions, pins, skewers, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, ...)
 * Puzzle filtering (union or intersection of arbitrary tags)
-* Show all variations when failing/abandoning puzzle
 * Progress tracking, spaced repetition
 * Preferences (board appearance, Leitner tweakables)
 * Touch-friendly drag and drop

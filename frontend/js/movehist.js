@@ -207,6 +207,47 @@ const orm_movehist_push = function(startfen, lan, san) {
 	}
 };
 
+const orm_movehist_merge_from_puzzle_step = function(step) {
+	if(step === 0) return;
+
+	let current = orm_movehist_current();
+	let fen = gumble_save_fen(); /* XXX: undo move */
+
+	let san = gumble_lan_to_san(step[0]);
+	orm_movehist_push(fen, step[0], san);
+	gumble_play_legal_lan(step[0]);
+
+	let current2 = orm_movehist_current();
+	let fen2 = gumble_save_fen();
+
+	for(var lan in step[1]) {
+		san = gumble_lan_to_san(lan);
+		orm_movehist_push(fen2, lan, san);
+		orm_movehist_current().addClass('good-move');
+		gumble_play_legal_lan(lan);
+
+		orm_movehist_merge_from_puzzle_step(step[1][lan]);
+
+		gumble_load_fen(fen2);
+		orm_movehist_make_active(current2);
+	}
+
+	gumble_load_fen(fen);
+	orm_movehist_make_active(current);
+};
+
+const orm_movehist_merge_from_puzzle = function(puz) {
+	let current = orm_movehist_current();
+	let fen = gumble_save_fen();
+
+	gumble_load_fen(puz[0]);
+	orm_movehist_make_active($());
+	orm_movehist_merge_from_puzzle_step(puz[1]);
+
+	gumble_load_fen(fen);
+	orm_movehist_make_active(current);
+};
+
 orm_when_ready.push(function() {
 	$("body").keydown(function(e) {
 		if(!$("div#board").is(':visible')) return;
