@@ -173,7 +173,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 		let ul = $(document.createElement('ul'));
 		vli.append(ul);
 		ul.append(li);
-		vli.addClass('variation w-100 ml-4');
+		vli.addClass('variation w-100');
 		li.addClass('mr-1');
 		btn.addClass('btn-sm');
 
