@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-if($argc !== 3) {
-	fprintf(STDERR, "Usage: %s <jl-1> <jl-2>\n", $argv[0]);
+if($argc !== 1) {
+	fprintf(STDERR, "Usage: %s < <jl-with-dupes> > <jl-without-dupes>\n", $argv[0]);
 	die(1);
 }
 
@@ -27,24 +27,11 @@ function canonicalize_fen(string $fen): string {
 	return implode(' ', $parts);
 }
 
-$f = fopen($argv[1], 'rb');
 $i = 0;
 $puzzles = [];
 $index = [];
 
-while(($line = fgets($f)) !== false) {
-	$p = json_decode($line, true);
-	$k = canonicalize_fen($p[0]);
-
-	assert(!isset($index[$k]));
-	$index[$k] = $i;
-	$puzzles[] = $p;
-	++$i;
-}
-
-fclose($f);
-$f = fopen($argv[2], 'rb');
-while(($line = fgets($f)) !== false) {
+while(($line = fgets(STDIN)) !== false) {
 	$p = json_decode($line, true);
 	$k = canonicalize_fen($p[0]);
 

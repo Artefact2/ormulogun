@@ -17,36 +17,27 @@ pgnlist.jz:
 master.jz:
 	echo -n | zstd -4 - -o $@
 
-merge-to-master: master.jz
-	rm -f tmp.master.fifo tmp.input.fifo
-	mkfifo tmp.master.fifo
-	mkfifo tmp.input.fifo
-	zstdcat master.jz > tmp.master.fifo &
-	zstdcat $(INPUT) > tmp.input.fifo &
-	./tools/merge-jl tmp.master.fifo tmp.input.fifo | pv -l | zstd -4 - -o $(TMP)
-	sync $(TMP)
-	mv $(TMP) master.jz
-	rm -f tmp.master.fifo tmp.input.fifo
-
 puzzles-all: tools/gen-puzzles
 	pv -cN input pgnlist.jz | zstdcat | xargs -d '\n' -P $(JOBS) ./tools/gen-puzzles | pv -lcN puzzles | zstd -4 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) puzzles-all.jz
-	make merge-to-master INPUT=puzzles-all.jz
 
 puzzles-partial: tools/gen-puzzles
 	zstdcat pgnlist.jz | tail -n +$(OFFSET) | head -n $(COUNT) | pv -lcN games -s $(COUNT) | xargs -d '\n' -P $(JOBS) -n $$(( $(COUNT) / $(JOBS) )) ./tools/gen-puzzles | pv -lcN puzzles | zstd -4 -o - $(TMP)
 	sync $(TMP)
 	mv $(TMP) puzzles-$(OFFSET)-$(COUNT).jz
-	make merge-to-master INPUT=puzzles-$(OFFSET)-$(COUNT).jz
 
-out/master.json: master.jz
-	zstdcat master.jz | ./tools/jl_to_json > ./out/master.json
-	./tools/update-manifest ./out/manifest.json
-	cd .. && make
+merge-all: master.jz $(shell find . -name "*.jz" -not -name "pgnlist.jz" -not -name "master.jz")
+	zstdcat $^ | pv -lcN in | ./tools/merge-jl | pv -lcN out | zstd -4 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) master.jz
 
-replace-partial:
-	rm -f master.jz
-	make puzzles-partial out/master.json
+out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
+	./tools/update-manifest $@
 
-.PHONY: clean merge-to-master puzzles-all puzzles-partial
+out/%.json: %.jz
+	zstdcat $< | ./tools/jl_to_json > $@
+
+json-all: $(patsubst %.jz, out/%.json, $(shell find . -name "*.jz" -not -name "pgnlist.jz")) out/manifest.json
+
+.PHONY: clean puzzles-all puzzles-partial merge-all json-all
