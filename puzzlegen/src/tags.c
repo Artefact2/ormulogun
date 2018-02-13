@@ -32,6 +32,8 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
 	MAYBE_PRINT_TAG(p->tags.escape_mate, "Escape checkmate");
+	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
+	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -57,6 +59,30 @@ static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, char*
 	}
 }
 
-void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, char* ll, size_t lllen) {
+static void tags_requiring_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+	if(p->tags.discovered_check && p->tags.double_check) return;
+	if(!CCH_IS_OWN_KING_CHECKED(b)) return;
+
+	cch_movelist_t ml;
+	unsigned char i, checkers = 0, stop;
+
+	b->side = !b->side;
+	stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
+	b->side = !b->side;
+
+	for(i = 0; i < stop; ++i) {
+		if(ml[i].end == CCH_OWN_KING(b)) {
+			if(ml[i].start != last->end) {
+				p->tags.discovered_check = true;
+			}
+			++checkers;
+		}
+	}
+
+	if(checkers > 1) p->tags.double_check = true;
+}
+
+void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, char* ll, size_t lllen, cch_board_t* b, const cch_move_t* last) {
 	tags_mate_threat(ctx, p, ll, lllen);
+	tags_requiring_check(p, b, last);
 }

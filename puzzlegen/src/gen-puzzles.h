@@ -74,6 +74,8 @@ typedef struct {
 		bool draw:1;
 		bool escape_mate:1;
 		bool mate_threat:1;
+		bool discovered_check:1;
+		bool double_check:1;
 	} tags;
 } puzzle_t;
 
@@ -88,6 +90,6 @@ void puzzle_build(const uci_engine_context_t*, char*, size_t, puzzle_t*, cch_boa
 /* ----- tags.c ----- */
 
 void tags_print(const puzzle_t*);
-void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, char*, size_t);
+void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, char*, size_t, cch_board_t*, const cch_move_t*);
 
 #endif

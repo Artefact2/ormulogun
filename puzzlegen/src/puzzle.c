@@ -195,7 +195,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 			continue;
 		}
 
-		tags_after_player_move(ctx, p, lanlist, nll);
+		tags_after_player_move(ctx, p, lanlist, nll, b, &m);
 
 		lanlist[nll] = ' ';
 		++nll;
