@@ -1,4 +1,4 @@
-DEFAULTS=frontend/index.html frontend/ormulogun.js frontend/gumble.js $(patsubst %.json, %.js, $(shell find frontend/puzzles -name "*.json"))
+DEFAULTS=frontend/index.html frontend/ormulogun.js frontend/gumble.js
 
 default: frontend/deps $(DEFAULTS)
 
@@ -10,9 +10,6 @@ frontend/deps:
 frontend/index.html: frontend/index.xhtml
 	echo '<!DOCTYPE html>' > $@
 	tail -n +2 $< >> $@
-
-frontend/puzzles/%.js: frontend/puzzles/%.json
-	cp $< $@
 
 frontend/gumble.js:
 	git submodule init

@@ -38,6 +38,11 @@ out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
 out/%.json: %.jz
 	zstdcat $< | ./tools/jl_to_json > $@
 
+out/%.js: out/%.json
+	cp $< $@
+
 json-all: $(patsubst %.jz, out/%.json, $(shell find . -name "*.jz" -not -name "pgnlist.jz")) out/manifest.json
 
-.PHONY: clean puzzles-all puzzles-partial merge-all json-all
+js-all: $(patsubst %.json, %.js, $(shell find out/ -name "*.json"))
+
+.PHONY: clean puzzles-all puzzles-partial merge-all json-all js-all
