@@ -81,7 +81,6 @@ static void puzzle_print_step(const puzzle_step_t* st) {
 }
 
 void puzzle_print(const puzzle_t* p) {
-	if(p->min_depth == 0) return;
 	printf("[\"%s\",", p->fen);
 	puzzle_print_step(&(p->root));
 	putchar(',');

@@ -20,6 +20,9 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* Abort if puzzle is longer than this number of turns */
 	.max_depth = 6,
 
+	/* Look for tactics after this many plies */
+	.min_ply = 8,
+
 	/* Don't look for puzzles in clearly lost or won positions */
 	.eval_cutoff = 500,
 

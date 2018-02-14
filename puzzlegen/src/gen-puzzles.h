@@ -48,6 +48,7 @@ typedef struct {
 	int best_eval_cutoff_start;
 	int best_eval_cutoff_continue;
 	int variation_eval_cutoff;
+	unsigned int min_ply;
 	unsigned char max_variations;
 	unsigned char max_depth;
 } puzzlegen_settings_t;
