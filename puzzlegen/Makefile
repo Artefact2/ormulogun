@@ -1,7 +1,7 @@
 SOURCES:=$(shell find src -name "*.c")
 HEADERS:=$(shell find src -name "*.h")
 TMP:=$(shell mktemp -u -p .)
-JOBS:=16
+JOBS:=2
 
 tools/gen-puzzles: $(HEADERS) $(SOURCES) ../gumble/build/src/libenginecore.a
 	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I../gumble/include $(SOURCES) ../gumble/build/src/libenginecore.a
