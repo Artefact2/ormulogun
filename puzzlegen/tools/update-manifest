@@ -51,7 +51,7 @@ foreach(glob('*.json') as $f) {
 	}
 
 	$manifest[] = [
-		'id' => $id = pathinfo($f, PATHINFO_FILENAME),
+		'id' => preg_replace('%[^A-Za-z0-9]+%', '_', $id = pathinfo($f, PATHINFO_FILENAME)),
 		'src' => $f,
 		'count' => count($puzzles),
 		'name' => ucfirst($id),
