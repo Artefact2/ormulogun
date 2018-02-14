@@ -16,12 +16,17 @@
 let orm_puzzle = null;
 let orm_puzzle_next = null;
 
-const orm_load_puzzle = function(idx) {
-	orm_puzzle_idx = idx;
-	let puz = orm_puzzle = orm_puzzle_set[idx];
+const orm_load_puzzle = function(puz) {
+	if(typeof(puz) === "number") {
+		orm_puzzle_idx = puz;
+		puz = orm_puzzle = orm_puzzle_set[puz];
+	} else {
+		orm_puzzle_idx = -1;
+		orm_puzzle = puz;
+	}
 
 	$("table#movelist > tbody").empty();
-	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + idx);
+	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + orm_puzzle_idx);
 
 	puz.side = puz[0].split(' ', 3)[1] === 'b';
 	$("div#board").toggleClass('flipped', !puz.side);
@@ -132,7 +137,7 @@ const orm_puzzle_try = function(lan) {
 
 orm_when_ready.push(function() {
 	$("button#puzzle-retry").click(function() {
-		orm_load_puzzle(orm_puzzle_idx);
+		orm_load_puzzle(orm_puzzle);
 	});
 
 	$("button#puzzle-abandon").click(function() {
