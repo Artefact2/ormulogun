@@ -34,6 +34,8 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.escape_mate, "Escape checkmate");
 	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
+	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
+	MAYBE_PRINT_TAG(p->tags.underpromotion, "Underpromotion");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -85,4 +87,12 @@ static void tags_requiring_check(puzzle_t* p, cch_board_t* b, const cch_move_t* 
 void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, char* ll, size_t lllen, cch_board_t* b, const cch_move_t* last) {
 	tags_mate_threat(ctx, p, ll, lllen);
 	tags_requiring_check(p, b, last);
+
+	if(last->promote) {
+		p->tags.promotion = true;
+
+		if(last->promote != CCH_QUEEN) {
+			p->tags.underpromotion = true;
+		}
+	}
 }

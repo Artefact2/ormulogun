@@ -77,6 +77,8 @@ typedef struct {
 		bool mate_threat:1;
 		bool discovered_check:1;
 		bool double_check:1;
+		bool promotion:1;
+		bool underpromotion:1;
 	} tags;
 } puzzle_t;
 
