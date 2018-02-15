@@ -18,7 +18,7 @@ Dependencies
 To-Do
 =====
 
-* More automatic tagging (draws, forks, discovered attacks, pins, skewers, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, ...)
+* More automatic tagging (draws (3 fold, perpetual), forks, discovered attacks, pins, skewers, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, ...)
 * Puzzle filtering (union or intersection of arbitrary tags)
 * Progress tracking, spaced repetition
 * Preferences (board appearance, Leitner tweakables)

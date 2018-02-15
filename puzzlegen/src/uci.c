@@ -85,20 +85,22 @@ void uci_init(const uci_engine_context_t* ctx, const char* const* opts) {
 }
 
 unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
-					   const char* lanlist, uci_eval_t* evals, unsigned char maxlines) {
+					   const cch_board_t* b, uci_eval_t* evals, unsigned char maxlines) {
 	static const char* delim = " \n";
 	static char* line = 0;
 	static size_t linelen;
 
+	char fen[SAFE_FEN_LENGTH];
 	unsigned char nlines = 0;
 	char* tok;
 	char* saveptr;
 
+	cch_save_fen(b, fen, SAFE_FEN_LENGTH);
 	fprintf(ctx->w,
 			"setoption name MultiPV value %d\n"
-			"position startpos moves %s\n"
+			"position fen %s\n"
 			"go %s\n",
-			maxlines, lanlist, limiter);
+			maxlines, fen, limiter);
 	fflush(ctx->w);
 
 	while(getline(&line, &linelen, ctx->r) != -1) {

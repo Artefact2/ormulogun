@@ -83,40 +83,30 @@ int main(int argc, char** argv) {
 	puzzle_t p;
 	unsigned int puzzles = 0, ply;
 
-	char lanlist[4096]; /* XXX */
-	size_t lanlistlen;
-	char* sanmove;
 	char lanmove[SAFE_ALG_LENGTH];
+	char* sanmove;
 	char* saveptr;
 
 	for(int i = 0; i < argc; ++i) {
 		cch_init_board(&b);
 		fputs("ucinewgame\n", ctx.w);
-		lanlistlen = 0;
 
 		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; sanmove; sanmove = strtok_r(0, "[]\",", &saveptr), ++ply) {
 			puzzle_init(&p, &b);
 			ret = cch_parse_san_move(&b, sanmove, &m);
 			assert(ret == CCH_OK);
-			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
-			assert(ret == CCH_OK);
 			ret = cch_play_move(&b, &m, 0);
 			assert(ret == CCH_OK);
 
-			if(lanlistlen) {
-				lanlist[lanlistlen] = ' ';
-				++lanlistlen;
-			}
-			strncpy(lanlist + lanlistlen, lanmove, SAFE_ALG_LENGTH);
-			lanlistlen += strlen(lanmove);
-
 			if(ply < s.min_ply) continue;
 
-			nlines = uci_eval(&ctx, uci_limiter_probe, lanlist, evals, s.max_variations + 1);
+			nlines = uci_eval(&ctx, uci_limiter_probe, &b, evals, s.max_variations + 1);
 			if(!puzzle_consider(evals, nlines, s, 0)) continue;
 
+			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
+			assert(ret == CCH_OK);
 			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
-			puzzle_build(&ctx, lanlist, lanlistlen, &p, &b, uci_limiter, s);
+			puzzle_build(&ctx, &p, &b, uci_limiter, s);
 			if(p.min_depth > 0) {
 				++puzzles;
 				puzzle_print(&p);

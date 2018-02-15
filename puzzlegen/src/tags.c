@@ -47,23 +47,23 @@ void tags_print(const puzzle_t* p) {
 	putchar(']');
 }
 
-static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, char* ll, size_t lllen) {
+/* XXX */
+static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b) {
 	if(p->tags.mate_threat) return;
 
 	uci_eval_t ev;
 
-	strcpy(ll + lllen, " null");
-	lllen += 5;
-	if(uci_eval(ctx, "nodes 1000000", ll, &ev, 1)) { /* XXX */
+	b->side = !b->side;
+	if(uci_eval(ctx, "nodes 1000000", b, &ev, 1)) { /* XXX */
 		if(ev.type == SCORE_MATE && ev.score > 0) {
 			p->tags.mate_threat = true;
 		}
 	}
+	b->side = !b->side;
 }
 
-static void tags_requiring_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
 	if(p->tags.discovered_check && p->tags.double_check) return;
-	if(!CCH_IS_OWN_KING_CHECKED(b)) return;
 
 	cch_movelist_t ml;
 	unsigned char i, checkers = 0, stop;
@@ -84,9 +84,12 @@ static void tags_requiring_check(puzzle_t* p, cch_board_t* b, const cch_move_t* 
 	if(checkers > 1) p->tags.double_check = true;
 }
 
-void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, char* ll, size_t lllen, cch_board_t* b, const cch_move_t* last) {
-	tags_mate_threat(ctx, p, ll, lllen);
-	tags_requiring_check(p, b, last);
+void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+	if(CCH_IS_OWN_KING_CHECKED(b)) {
+		tags_discovered_double_check(p, b, last);
+	} else {
+		tags_mate_threat(ctx, p, b);
+	}
 
 	if(last->promote) {
 		p->tags.promotion = true;

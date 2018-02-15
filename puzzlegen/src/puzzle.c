@@ -122,11 +122,10 @@ static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char d
 	if(p->min_depth > depth) p->min_depth = depth;
 }
 
-static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen, unsigned char depth,
+static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char depth,
 							  puzzle_t* p, puzzle_step_t* st, cch_board_t* b,
 							  const char* engine_limiter, puzzlegen_settings_t s) {
 	unsigned char nlines, i;
-	size_t nll;
 	cch_undo_move_state_t umove, ureply;
 	cch_move_t m, mr;
 	uci_eval_t evals[s.max_variations + 1];
@@ -137,7 +136,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 		return;
 	}
 
-	nlines = uci_eval(ctx, engine_limiter, lanlist, evals, s.max_variations + 1);
+	nlines = uci_eval(ctx, engine_limiter, b, evals, s.max_variations + 1);
 	if(!puzzle_consider(evals, nlines, s, depth)) {
 		/* Puzzle over, after computer reply of last puzzle move */
 
@@ -171,16 +170,11 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 	st->next = malloc(i * sizeof(puzzle_step_t));
 
 	for(i = 0; i < st->nextlen; ++i) {
-		nll = lanlistlen;
-		lanlist[nll] = ' ';
-		++nll;
 		strncpy(st->next[i].move, evals[i].bestlan, SAFE_ALG_LENGTH);
-		strncpy(lanlist + nll, evals[i].bestlan, SAFE_ALG_LENGTH);
-		nll += strlen(evals[i].bestlan);
 		cch_parse_lan_move(evals[i].bestlan, &m);
 		cch_play_legal_move(b, &m, &umove);
 
-		if(uci_eval(ctx, engine_limiter, lanlist, &(evals[s.max_variations]), 1) == 0) {
+		if(uci_eval(ctx, engine_limiter, b, &(evals[s.max_variations]), 1) == 0) {
 			/* Game over */
 			if(CCH_IS_OWN_KING_CHECKED(b)) {
 				p->tags.checkmate = true;
@@ -194,17 +188,13 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, char* lanlist, si
 			continue;
 		}
 
-		tags_after_player_move(ctx, p, lanlist, nll, b, &m);
+		tags_after_player_move(ctx, p, b, &m);
 
-		lanlist[nll] = ' ';
-		++nll;
 		strncpy(st->next[i].reply, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
-		strncpy(lanlist + nll, evals[s.max_variations].bestlan, SAFE_ALG_LENGTH);
-		nll += strlen(evals[s.max_variations].bestlan);
 		cch_parse_lan_move(evals[s.max_variations].bestlan, &mr);
 		cch_play_legal_move(b, &mr, &ureply);
 
-		puzzle_build_step(ctx, lanlist, nll, depth + 1, p, &(st->next[i]), b, engine_limiter, s);
+		puzzle_build_step(ctx, depth + 1, p, &(st->next[i]), b, engine_limiter, s);
 
 		cch_undo_move(b, &mr, &ureply);
 		cch_undo_move(b, &m, &umove);
@@ -227,15 +217,13 @@ static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
 	return p->root.nextlen == takebacks;
 }
 
-void puzzle_build(const uci_engine_context_t* ctx, char* lanlist, size_t lanlistlen,
-				  puzzle_t* p, cch_board_t* b,
-				  const char* engine_limiter, puzzlegen_settings_t s) {
+void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
 	p->min_depth = 255;
 	p->end_material_min = 255;
 	p->end_material_diff_min = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
 
-	puzzle_build_step(ctx, lanlist, lanlistlen, 0, p, &(p->root), b, engine_limiter, s);
+	puzzle_build_step(ctx, 0, p, &(p->root), b, engine_limiter, s);
 
 	if(puzzle_is_trivial(p, b)) {
 		p->min_depth = 0;
