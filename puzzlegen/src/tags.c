@@ -36,6 +36,8 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
 	MAYBE_PRINT_TAG(p->tags.underpromotion, "Underpromotion");
+	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin");
+	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin (Absolute)");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -84,11 +86,30 @@ static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_
 	if(checkers > 1) p->tags.double_check = true;
 }
 
+static void tags_pin_absolute(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+	if(p->tags.pin_absolute) return;
+
+	cch_movelist_t ml;
+	unsigned char i, stop = cch_generate_moves(b, ml, CCH_PSEUDO_LEGAL, 0, 64);
+
+	for(i = 0; i < stop; ++i) {
+		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
+		if(ml[i].start == CCH_OWN_KING(b)) continue;
+		/* XXX: not all pins involve being blocked from capturing the
+		 * piece that just moved */
+		if(ml[i].end != last->end) continue;
+		if(cch_is_pseudo_legal_move_legal(b, &(ml[i]))) continue;
+		p->tags.pin_absolute = true;
+		break;
+	}
+}
+
 void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
 	if(CCH_IS_OWN_KING_CHECKED(b)) {
 		tags_discovered_double_check(p, b, last);
 	} else {
-		tags_mate_threat(ctx, p, b);
+		//tags_mate_threat(ctx, p, b);
+		tags_pin_absolute(p, b, last);
 	}
 
 	if(last->promote) {

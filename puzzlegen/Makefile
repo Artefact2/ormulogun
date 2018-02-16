@@ -41,7 +41,8 @@ out/%.json: %.jz
 out/%.js: out/%.json
 	cp $< $@
 
-json-all: $(patsubst %.jz, out/%.json, $(shell find . -name "*.jz" -not -name "pgnlist.jz")) out/manifest.json
+json-all: $(patsubst %.jz, out/%.json, $(shell find . -name "*.jz" -not -name "pgnlist.jz"))
+	make out/manifest.json
 
 js-all: $(patsubst %.json, %.js, $(shell find out/ -name "*.json"))
 

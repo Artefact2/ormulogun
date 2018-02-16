@@ -79,6 +79,7 @@ typedef struct {
 		bool double_check:1;
 		bool promotion:1;
 		bool underpromotion:1;
+		bool pin_absolute:1;
 	} tags;
 } puzzle_t;
 
