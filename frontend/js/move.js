@@ -185,7 +185,9 @@ orm_when_ready.push(function() {
 		focus: false,
 	}).on('hidden.bs.modal', function() {
 		orm_do_puzzle_move(orm_promote_context[0], orm_promote_context[1], function() {
-			orm_promote_context[2]();
+			if(typeof(orm_promote_context[2]) === "function") {
+				orm_promote_context[2]();
+			}
 			orm_promote_context = null;
 		});
 	}).on('click', 'div.piece', function() {
@@ -198,7 +200,7 @@ orm_when_ready.push(function() {
 		} else if(p.hasClass('bishop')) {
 			append = 'b';
 		} else if(p.hasClass('knight')) {
-			append = 'k';
+			append = 'n';
 		} else return;
 		if(orm_promote_context[0].length === 4) {
 			orm_promote_context[0] += append;
