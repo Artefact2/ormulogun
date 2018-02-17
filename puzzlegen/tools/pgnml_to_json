@@ -1,0 +1,30 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+if($argc === 1) {
+	fprintf(STDERR, "Usage: %s <pgn-movelist1> <pgn-movelist2> <pgn-movelist3>...\n", $argv[0]);
+	die(1);
+}
+
+array_shift($argv);
+
+foreach($argv as $pgnml) {
+	assert(preg_match('%^1\. (?<moves>.+)$%m', $pgnml));
+	$moves = preg_replace('% \{[^}]*\} %', ' ', $pgnml);
+	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
+	echo json_encode($matches['san']), "\n";
+}

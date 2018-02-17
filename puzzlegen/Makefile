@@ -10,7 +10,7 @@ clean:
 	rm -f tools/gen-puzzles
 
 pgnlist.jz:
-	pv -cN input $(INPUT) | ./tools/chunk-pgn | xargs -d '\n' -P $(JOBS) ./tools/preprocess-pgn | pv -lcN games | zstd -4 - -o $(TMP)
+	pv -cN input $(INPUT) | ./tools/chunk-pgn | xargs -d '\n' -P $(JOBS) ./tools/filter-pgn | xargs -d '\n' -P $(JOBS) ./tools/pgnml_to_json | pv -lcN games | zstd -4 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $@
 

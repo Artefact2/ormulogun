@@ -15,7 +15,9 @@
  * limitations under the License.
  */
 
-require __DIR__.'/config.php';
+/* XXX: as args maybe? */
+const RATING_CUTOFF = 2000;
+const TIME_CUTOFF = 900;
 
 if($argc === 1) {
 	fprintf(STDERR, "Usage: %s <pgn1> <pgn2> <pgn3>...\n", $argv[0]);
@@ -39,8 +41,5 @@ foreach($argv as $pgn) {
 	if((int)$tc['base'] + 40 * (int)$tc['inc'] < TIME_CUTOFF) continue;
 
 	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgn, $match)) continue;
-	$moves = preg_replace('% \{[^}]*\} %', ' ', $match['moves']);
-	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
-
-	echo json_encode($matches['san']), "\n";
+	echo $match[0], "\n";
 }
