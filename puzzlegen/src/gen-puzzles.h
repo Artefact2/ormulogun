@@ -73,7 +73,6 @@ typedef struct {
 		bool checkmate:1;
 		bool stalemate:1;
 		bool draw:1;
-		bool escape_mate:1;
 		bool mate_threat:1;
 		bool discovered_check:1;
 		bool double_check:1;

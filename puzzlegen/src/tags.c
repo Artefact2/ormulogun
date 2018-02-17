@@ -31,7 +31,6 @@ void tags_print(const puzzle_t* p) {
 
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
-	MAYBE_PRINT_TAG(p->tags.escape_mate, "Escape checkmate");
 	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
@@ -49,19 +48,16 @@ void tags_print(const puzzle_t* p) {
 	putchar(']');
 }
 
-/* XXX */
 static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b) {
 	if(p->tags.mate_threat) return;
 
-	uci_eval_t ev;
+	uci_eval_t ev[5];
+	unsigned char stop = uci_eval(ctx, "depth 1", b, ev, 5);
+	if(stop == 0) return;
 
-	b->side = !b->side;
-	if(uci_eval(ctx, "nodes 1000000", b, &ev, 1)) { /* XXX */
-		if(ev.type == SCORE_MATE && ev.score > 0) {
-			p->tags.mate_threat = true;
-		}
+	if(ev[stop - 1].type == SCORE_MATE && ev[stop - 1].score == -1) {
+		p->tags.mate_threat = true;
 	}
-	b->side = !b->side;
 }
 
 static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
@@ -108,9 +104,10 @@ void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, cch_bo
 	if(CCH_IS_OWN_KING_CHECKED(b)) {
 		tags_discovered_double_check(p, b, last);
 	} else {
-		//tags_mate_threat(ctx, p, b);
 		tags_pin_absolute(p, b, last);
 	}
+
+	tags_mate_threat(ctx, p, b);
 
 	if(last->promote) {
 		p->tags.promotion = true;

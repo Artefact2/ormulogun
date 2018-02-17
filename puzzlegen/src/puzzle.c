@@ -157,10 +157,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		return;
 	}
 
-	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score < 0) {
-		p->tags.escape_mate = true;
-	}
-
 	if(evals[0].type == SCORE_MATE) {
 		for(i = 0; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
 	} else {
