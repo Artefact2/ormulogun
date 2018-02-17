@@ -3,10 +3,6 @@ div.board {
 	display: inline-block;
 	position: relative;
 
-	&.board-main {
-		width: 80vmin;
-	}
-
 	&> span.board-pad {
 		display: block;
 		padding-bottom: 100%;

@@ -7,10 +7,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 		<link rel="stylesheet" href="./deps/css/bootstrap.min.css" />
 		<link rel="stylesheet" href="./ormulogun.css" />
-		<script src="./deps/js/jquery-3.3.1.min.js"></script>
-		<script src="./deps/js/bootstrap.min.js"></script>
-		<script src="./gumble.js"></script>
-		<script src="./ormulogun.js"></script>
+		<script src="./gumble.js" async="async"></script>
+		<script src="./deps/js/jquery-3.3.1.min.js" defer="defer"></script>
+		<script src="./deps/js/bootstrap.min.js" defer="defer"></script>
+		<script src="./ormulogun.js" defer="defer"></script>
 		<title>Ormulogun</title>
 	</head>
 	<body>
@@ -27,31 +27,31 @@
 				</ul>
 			</div>
 		</nav>
-		<p class="alert alert-danger" id="enable-js">
-			<strong>Ormulogun requires Javascript to work properly.</strong> Please enable scripts (and XHR) for the top-level domain.
+		<p class="alert alert-primary" id="enable-js">
+			<strong>Ormulogun is now loading its scripts.</strong> (If this is taking forever, enable scripts and XHR for the top-level domain.)
 		</p>
-		<div id="intro" class="container">
+		<div id="intro" class="container mt-2">
 			<h1>What is Ormulogun?</h1>
 			<p><strong>Ormulogun is a tactics trainer for chess.</strong> It is completely free and libre.</p>
 			<p>Puzzles are generated from tactics in classical games of high-rated players on Lichess.</p>
 			<p class="alert alert-warning"><strong>Ormulogun is still under heavy developement. Some features are incomplete, or not implemented at all. Because puzzles are computer-generated and computer-tagged, some may not make sense to humans.</strong></p>
-			<p><button type="button" id="start" class="btn btn-primary btn-lg">Start training</button></p>
+			<p><button type="button" id="start" class="btn btn-primary btn-lg disabled" disabled="disabled">Start training</button></p>
 		</div>
-		<div id="select-puzzleset" class="tab container">
+		<div id="select-puzzleset" class="tab container mt-2">
 			<h1>Choose a puzzle set</h1>
 			<p class="alert alert-primary">Loading the puzzle set manifest…</p>
 			<ul class="m-0 p-0"></ul>
 		</div>
-		<div id="play-puzzle" class="tab container">
-			<div class="row">
-				<div class="col-sm-auto text-center">
+		<div id="play-puzzle" class="tab container-fluid p-0 mt-2">
+			<div class="row justify-content-lg-center m-0">
+				<div class="col-lg-auto text-center p-0">
 					<div class="board board-main" id="board"><span class="board-pad"></span></div>
 				</div>
-				<div class="col-sm-3">
-					<div class="row mb-2">
+				<div class="col-lg-3 p-0">
+					<div class="row m-2">
 						<button type="button" id="flip-board" class="btn btn-secondary btn-sm">Flip board</button>
 					</div>
-					<div class="row mb-2">
+					<div class="row m-2">
 						<div class="btn-group btn-group-sm w-100 mb-1">
 							<button type="button" class="btn btn-light w-25" id="movehist-first" title="Jump to first move"></button>
 							<button type="button" class="btn btn-light w-25" id="movehist-prev" title="Jump to previous move"></button>
@@ -60,7 +60,7 @@
 						</div>
 						<ul id="movehist" class="row w-100"></ul>
 					</div>
-					<div class="row mt-2">
+					<div class="row m-2">
 						<p id="puzzle-prompt"></p>
 						<div class="container" id="puzzle-actions-after">
 							<div class="row">
@@ -78,7 +78,7 @@
 				</div>
 			</div>
 		</div>
-		<div id="preferences" class="tab container">
+		<div id="preferences" class="tab container mt-2">
 			<h1>Preferences</h1>
 		</div>
 		<div id="promote-modal" class="modal fade">
