@@ -1,6 +1,6 @@
 DEFAULTS=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js
 
-default: frontend/deps $(DEFAULTS)
+default: js-all frontend/deps $(DEFAULTS)
 
 frontend/deps:
 	mkdir $@ || exit 1
@@ -42,4 +42,7 @@ optisvg:
 	while ! cmp -s min.css frontend/ormulogun.css; do mv min.css frontend/ormulogun.css; ./tools/optisvg < frontend/ormulogun.css > min.css; done
 	rm min.css
 
-.PHONY: clean dist-clean host optisvg
+js-all:
+	+make -C puzzlegen $@
+
+.PHONY: clean dist-clean host optisvg js-all
