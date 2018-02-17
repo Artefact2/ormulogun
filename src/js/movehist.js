@@ -220,7 +220,7 @@ const orm_movehist_merge_from_puzzle_step = function(step) {
 	let current2 = orm_movehist_current();
 	let fen2 = gumble_save_fen();
 
-	for(var lan in step[1]) {
+	for(let lan in step[1]) {
 		san = gumble_lan_to_san(lan);
 		orm_movehist_push(fen2, lan, san);
 		orm_movehist_current().addClass('good-move');
@@ -278,7 +278,7 @@ orm_when_ready.push(function() {
 	});
 
 	$("div#board").on("wheel", function(e) {
-		var tgt = null;
+		let tgt = null;
 		if(e.originalEvent.deltaY > 0) {
 			/* Scroll down */
 			tgt = $("button#movehist-next");
