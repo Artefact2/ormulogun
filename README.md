@@ -14,6 +14,7 @@ Dependencies
 * CMake
 * LLVM, clang
 * Emscripten
+* sassc
 
 To-Do
 =====

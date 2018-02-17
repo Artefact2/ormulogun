@@ -1,6 +1,7 @@
 frontend/deps
 frontend/gumble.js
 frontend/index.html
+frontend/ormulogun.css
 frontend/ormulogun.js
 frontend/puzzles/*.js
 frontend/puzzles/puzzles-*.json

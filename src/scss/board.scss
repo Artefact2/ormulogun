@@ -1,0 +1,148 @@
+div.board {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAQAAAAnZu5uAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gICEQQVU8RjagAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAADklEQVQI12NggIH/pDAAhrAE/LwPpvYAAAAASUVORK5CYII=);
+	display: inline-block;
+	position: relative;
+
+	&.board-main {
+		width: 80vmin;
+	}
+
+	&> span.board-pad {
+		display: block;
+		padding-bottom: 100%;
+	}
+
+	&> div {
+		position: absolute;
+		width: 12.5%;
+		height: 12.5%;
+
+		&.back {
+			&.light {
+				background-color: white;
+			}
+
+			&.dark {
+				background-color: hsla(0, 0%, 100%, .5);
+			}
+
+			&.move-source:before, &.move-target:before {
+				content: " ";
+				position: absolute;
+				background-color: hsla(60, 100%, 50%, .5);
+			}
+
+			&.move-source:before {
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+			}
+
+			&.move-target:before {
+				z-index: 5;
+				top: 30%;
+				left: 30%;
+				width: 40%;
+				height: 40%;
+				border-radius: 50%;
+			}
+		}
+
+		&.piece {
+			background-size: cover;
+			background-repeat: no-repeat;
+
+			&.dragging {
+				z-index: 10;
+				cursor: grabbing;
+			}
+
+			&.moving {
+				z-index: 9;
+				transition: left .5s, top .5s !important;
+			}
+
+			&.captured {
+				transition: opacity .25s ease .25s !important;
+				opacity: 0;
+			}
+		}
+	}
+
+	&.black > div.piece.black, &.white > div.piece.white {
+		cursor: grab;
+		transition: all 0s;
+	}
+
+	&> div {
+		&.f1 { left: 0*12.5%; }
+		&.f2 { left: 1*12.5%; }
+		&.f3 { left: 2*12.5%; }
+		&.f4 { left: 3*12.5%; }
+		&.f5 { left: 4*12.5%; }
+		&.f6 { left: 5*12.5%; }
+		&.f7 { left: 6*12.5%; }
+		&.f8 { left: 7*12.5%; }
+		&.r8 { top: 0*12.5%; }
+		&.r7 { top: 1*12.5%; }
+		&.r6 { top: 2*12.5%; }
+		&.r5 { top: 3*12.5%; }
+		&.r4 { top: 4*12.5%; }
+		&.r3 { top: 5*12.5%; }
+		&.r2 { top: 6*12.5%; }
+		&.r1 { top: 7*12.5%; }
+	}
+
+	&.flipped > div {
+		&.f1 { left: 7*12.5%; }
+		&.f2 { left: 6*12.5%; }
+		&.f3 { left: 5*12.5%; }
+		&.f4 { left: 4*12.5%; }
+		&.f5 { left: 3*12.5%; }
+		&.f6 { left: 2*12.5%; }
+		&.f7 { left: 1*12.5%; }
+		&.f8 { left: 0*12.5%; }
+		&.r8 { top: 7*12.5%; }
+		&.r7 { top: 6*12.5%; }
+		&.r6 { top: 5*12.5%; }
+		&.r5 { top: 4*12.5%; }
+		&.r4 { top: 3*12.5%; }
+		&.r3 { top: 2*12.5%; }
+		&.r2 { top: 1*12.5%; }
+		&.r1 { top: 0*12.5%; }
+	}
+
+	&.black:before, &.white:before {
+		content: " ";
+		display: block;
+		width: 3%;
+		height: 3%;
+		position: absolute;
+		left: -4%;
+		background-color: transparent;
+	}
+
+	&.black:before {
+		background-color: black;
+		top: 0;
+	}
+
+	&.white:before {
+		background-color: white;
+		border: .1rem solid black;
+		bottom: 0;
+	}
+
+	&.flipped {
+		&.black:before {
+			top: unset;
+			bottom: 0;
+		}
+
+		&.white:before {
+			bottom: unset;
+			top: 0;
+		}
+	}
+}

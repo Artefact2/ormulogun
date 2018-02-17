@@ -21,7 +21,6 @@ const orm_load_puzzle = function(puz) {
 		orm_puzzle_idx = puz;
 		puz = orm_puzzle = orm_puzzle_set[puz];
 	} else {
-		orm_puzzle_idx = -1;
 		orm_puzzle = puz;
 	}
 
