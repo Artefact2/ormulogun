@@ -130,7 +130,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	cch_move_t m, mr;
 	uci_eval_t evals[s.max_variations + 1];
 
-	if(depth > s.max_depth) {
+	if(depth > s.max_depth || p->min_depth == 0) {
 		/* Puzzle is too long */
 		p->min_depth = 0;
 		return;
