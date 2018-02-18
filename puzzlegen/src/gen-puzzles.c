@@ -22,7 +22,13 @@
 #include <assert.h>
 
 static void usage(char* me) {
-	fprintf(stderr, "Usage: %s [--start-ply N] [--max-puzzles N] <games...>\n"
+	fprintf(stderr,
+			"Usage: %s [--verbose] [--start-ply N] [--max-puzzles N]\n"
+			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
+			"          [--max-depth N] [--eval-cutoff N] [--max-variations N] [--variation-eval-cutoff N]\n"
+			"          [--best-eval-cutoff-start N] [--best-eval-cutoff-continue N]\n"
+			"          <games...>\n"
+			"See config.h for an explanation of these options.\n"
 			"Where each game is a JSON array of SAN moves from starting position.\n"
 			"Example: %s '[\"e4\",\"Nc6\"]'\n", me, me);
 	exit(1);
@@ -39,9 +45,21 @@ static int expect_number(int argc, char** argv) {
 	exit(1);
 }
 
+static const char* expect_string(int argc, char** argv) {
+	if(argc >= 1) {
+		return *argv;
+	}
+
+	fprintf(stderr, "Expected a string argument after %s\n", argv[-1]);
+	exit(1);
+}
+
 int main(int argc, char** argv) {
 	puzzlegen_settings_t s = settings;
+	const char* limiterp = uci_limiter_probe;
+	const char* limiter = uci_limiter;
 	unsigned int max_puzzles = 0;
+	bool verbose = false;
 
 	if(argc == 1) {
 		usage(*argv);
@@ -50,21 +68,46 @@ int main(int argc, char** argv) {
 	--argc;
 	++argv;
 	while(argc > 0) {
-		if(!strcmp("--start-ply", *argv)) {
-			--argc;
-			++argv;
+		if(!strcmp("--verbose", *argv)) {
+			verbose = true;
+		} else if(!strcmp("--start-ply", *argv)) {
+			--argc; ++argv;
 			s.min_ply = expect_number(argc, argv);
 		} else if(!strcmp("--max-puzzles", *argv)) {
-			--argc;
-			++argv;
+			--argc; ++argv;
 			max_puzzles = expect_number(argc, argv);
-		} else if(!strncmp("--", *argv, 2)) {
+		} else if(!strcmp("--uci-engine-limiter-probe", *argv)) {
+			--argc; ++argv;
+			limiterp = expect_string(argc, argv);
+		} else if(!strcmp("--uci-engine-limiter", *argv)) {
+			--argc; ++argv;
+			limiter = expect_string(argc, argv);
+		} else if(!strcmp("--max-depth", *argv)) {
+			--argc; ++argv;
+			s.max_depth = expect_number(argc, argv);
+		} else if(!strcmp("--eval-cutoff", *argv)) {
+			--argc; ++argv;
+			s.eval_cutoff = expect_number(argc, argv);
+		} else if(!strcmp("--max-variations", *argv)) {
+			--argc; ++argv;
+			s.max_variations = expect_number(argc, argv);
+		} else if(!strcmp("--variation-eval-cutoff", *argv)) {
+			--argc; ++argv;
+			s.variation_eval_cutoff = expect_number(argc, argv);
+		} else if(!strcmp("--best-eval-cutoff-start", *argv)) {
+			--argc; ++argv;
+			s.best_eval_cutoff_start = expect_number(argc, argv);
+		} else if(!strcmp("--best-eval-cutoff-continue", *argv)) {
+			--argc; ++argv;
+			s.best_eval_cutoff_continue = expect_number(argc, argv);
+		}
+
+		else if(!strncmp("--", *argv, 2)) {
 			fprintf(stderr, "Unknown argument %s\n", *argv);
 			exit(1);
 		} else break;
 
-		--argc;
-		++argv;
+		--argc; ++argv;
 	}
 
 	uci_engine_context_t ctx;
@@ -100,13 +143,13 @@ int main(int argc, char** argv) {
 
 			if(ply < s.min_ply) continue;
 
-			nlines = uci_eval(&ctx, uci_limiter_probe, &b, evals, s.max_variations + 1);
+			nlines = uci_eval(&ctx, limiterp, &b, evals, s.max_variations + 1);
 			if(!puzzle_consider(evals, nlines, s, 0)) continue;
 
 			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
 			assert(ret == CCH_OK);
 			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
-			puzzle_build(&ctx, &p, &b, uci_limiter, s);
+			puzzle_build(&ctx, &p, &b, limiter, s);
 			if(p.min_depth > 0) {
 				++puzzles;
 				puzzle_print(&p);
