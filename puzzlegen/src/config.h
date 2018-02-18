@@ -1,4 +1,5 @@
-/* Options for Ormulogun puzzlegen. Re-run make after changing this file. */
+/* Default options for Ormulogun puzzlegen. Can be overwritten using
+ * gen-puzzles command-line args, or PFLAGS in make rules. */
 
 static const char* uci_engine = "stockfish";
 

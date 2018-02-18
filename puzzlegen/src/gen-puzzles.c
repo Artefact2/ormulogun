@@ -135,6 +135,8 @@ int main(int argc, char** argv) {
 		fputs("ucinewgame\n", ctx.w);
 
 		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; sanmove; sanmove = strtok_r(0, "[]\",", &saveptr), ++ply) {
+			if(verbose) fputs("move\n", stderr);
+
 			puzzle_init(&p, &b);
 			ret = cch_parse_san_move(&b, sanmove, &m);
 			assert(ret == CCH_OK);
@@ -161,6 +163,8 @@ int main(int argc, char** argv) {
 				break;
 			}
 		}
+
+		if(verbose) fputs("game\n", stderr);
 	}
 
 	uci_quit(&ctx);

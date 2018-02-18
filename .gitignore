@@ -6,5 +6,6 @@ frontend/ormulogun.js
 frontend/puzzles/*.js
 frontend/puzzles/puzzles-*.json
 puzzlegen/*.j[lz]
+puzzlegen/*.jpz
 puzzlegen/tools/gen-puzzles
 puzzlegen/tmp.*
