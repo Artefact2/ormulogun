@@ -65,23 +65,38 @@ static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, cch_b
 static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
 	if(p->tags.discovered_check && p->tags.double_check) return;
 
-	cch_movelist_t ml;
-	unsigned char i, checkers = 0, stop;
+	/* XXX: pure piece 7 is a dummy piece */
+	cch_piece_t prev = CCH_GET_SQUARE(b, last->end), dummy = CCH_MAKE_ENEMY_PIECE(b, 7);
+	CCH_SET_SQUARE(b, last->end, dummy);
+	bool check = CCH_IS_OWN_KING_CHECKED(b);
+	CCH_SET_SQUARE(b, last->end, prev);
 
-	b->side = !b->side;
-	stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
-	b->side = !b->side;
+	if(!check) return;
 
-	for(i = 0; i < stop; ++i) {
-		if(ml[i].end == CCH_OWN_KING(b)) {
-			if(ml[i].start != last->end) {
-				p->tags.discovered_check = true;
-			}
-			++checkers;
+	cch_board_t copy = *b;
+	unsigned char checkers = 0;
+	unsigned char i;
+
+	/* XXX: this is sub-obtimal, have cch_is_square_checked() return the checking square? */
+
+	/* Replace all enemy pieces with dummies */
+	for(i = 0; i < 64; ++i) {
+		if(CCH_IS_ENEMY_PIECE(&copy, CCH_GET_SQUARE(&copy, i))) {
+			CCH_SET_SQUARE(&copy, i, dummy);
 		}
 	}
 
+	/* Check one by one which enemy piece causes check */
+	for(i = 0; i < 64 && checkers < 2; ++i) {
+		CCH_SET_SQUARE(&copy, i, CCH_GET_SQUARE(b, i));
+		if(CCH_IS_OWN_KING_CHECKED(&copy)) {
+			++checkers;
+		}
+		CCH_SET_SQUARE(&copy, i, dummy);
+	}
+
 	if(checkers > 1) p->tags.double_check = true;
+	else p->tags.discovered_check = true;
 }
 
 static void tags_pin_absolute(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
