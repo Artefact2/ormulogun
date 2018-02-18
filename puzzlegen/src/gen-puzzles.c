@@ -124,11 +124,15 @@ int main(int argc, char** argv) {
 	uci_eval_t evals[s.max_variations + 1];
 	unsigned char nlines;
 	puzzle_t p;
+	puzzle_step_t* st = 0;
+	bool strep = false; /* false -> st.next[?].move, true -> st.reply */
 	unsigned int puzzles = 0, ply;
 
 	char lanmove[SAFE_ALG_LENGTH];
 	char* sanmove;
 	char* saveptr;
+
+	p.root.next = 0;
 
 	for(int i = 0; i < argc; ++i) {
 		cch_init_board(&b);
@@ -142,21 +146,45 @@ int main(int argc, char** argv) {
 			assert(ret == CCH_OK);
 			ret = cch_play_move(&b, &m, 0);
 			assert(ret == CCH_OK);
+			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
+			assert(ret == CCH_OK);
 
 			if(ply < s.min_ply) continue;
+
+			if(st) {
+				if(strep) {
+					if(!strcmp(lanmove, st->reply)) {
+						strep = false;
+						continue;
+					}
+					st = 0;
+				} else {
+					for(unsigned char j = 0; j < st->nextlen; ++j) {
+						if(!strcmp(lanmove, st->next[j].move)) {
+							st = &(st->next[j]);
+							strep = true;
+							break;
+						}
+					}
+					if(strep) continue;
+					else st = 0;
+				}
+			}
 
 			nlines = uci_eval(&ctx, limiterp, &b, evals, s.max_variations + 1);
 			if(!puzzle_consider(evals, nlines, s, 0)) continue;
 
-			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
-			assert(ret == CCH_OK);
+			if(p.root.next) puzzle_free(&p);
 			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
 			puzzle_build(&ctx, &p, &b, limiter, s);
 			if(p.min_depth > 0) {
 				++puzzles;
 				puzzle_print(&p);
+				st = &(p.root);
+				strep = false;
+			} else {
+				st = 0;
 			}
-			puzzle_free(&p);
 
 			if(puzzles > 0 && puzzles == max_puzzles) {
 				i = argc;

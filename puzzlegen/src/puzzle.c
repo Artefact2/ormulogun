@@ -141,7 +141,7 @@ static bool check_threefold(puzzle_t* p, cch_board_t* b, threefold_entry_t* tfta
 			repetitions += tftable[tftlen - 1].h == tftable[i].h;
 		}
 
-		if(repetitions >= 2) {
+		if(repetitions >= 3) {
 			p->tags.draw = true;
 			if(tftable[tftlen - 1].check || tftable[tftlen - 2].check) p->tags.perpetual = true; /* XXX: more complicated than that */
 			else p->tags.threefold = true;
