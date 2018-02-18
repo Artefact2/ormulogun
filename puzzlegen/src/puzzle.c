@@ -43,7 +43,7 @@ bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_se
 
 	/* Escape mate threat? */
 	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE) {
-		return true;
+		return s.best_eval_cutoff_start < 100000;
 	}
 
 	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
@@ -223,5 +223,8 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 
 	if(puzzle_is_trivial(p, b)) {
 		p->min_depth = 0;
+		return;
 	}
+
+	tags_after_puzzle_done(p);
 }

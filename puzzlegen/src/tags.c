@@ -108,12 +108,39 @@ void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, cch_bo
 	}
 
 	tags_mate_threat(ctx, p, b);
+}
 
-	if(last->promote) {
-		p->tags.promotion = true;
+static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
+	if(p->tags.promotion && p->tags.underpromotion) return;
 
-		if(last->promote != CCH_QUEEN) {
-			p->tags.underpromotion = true;
+	bool promote = false;
+	bool queen_promote = false;
+	unsigned char i;
+
+	for(i = 0; i < st->nextlen; ++i) {
+		if(strlen(st->next[i].move) == 5) {
+			promote = true;
+
+			if(st->next[i].move[4] == 'q') {
+				queen_promote = true;
+				break;
+			}
 		}
 	}
+
+	if(promote) {
+		p->tags.promotion = true;
+		if(!queen_promote) {
+			p->tags.underpromotion = true;
+			return;
+		}
+	}
+
+	for(i = 0; i < st->nextlen; ++i) {
+		tags_promotion(p, &(st->next[i]));
+	}
+}
+
+void tags_after_puzzle_done(puzzle_t* p) {
+	tags_promotion(p, &(p->root));
 }

@@ -1,6 +1,6 @@
 JOBS:=2
 
 test:
-	xargs -d '\n' -P $(JOBS) ./test-tags < tags.jl | pv -ls `wc -l < tags.jl` >/dev/null
+	sort -R tags.jl | xargs -d '\n' -n 1 -P $(JOBS) ./test-tags | pv -ls `wc -l < tags.jl` >/dev/null
 
 .PHONY: test
