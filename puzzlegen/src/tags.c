@@ -31,6 +31,8 @@ void tags_print(const puzzle_t* p) {
 
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
+	MAYBE_PRINT_TAG(p->tags.threefold, "Draw (Threefold repetition)");
+	MAYBE_PRINT_TAG(p->tags.perpetual, "Draw (Perpetual check)");
 	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");

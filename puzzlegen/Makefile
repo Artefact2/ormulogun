@@ -24,7 +24,7 @@ puzzles-all: tools/gen-puzzles
 	mv $(TMP) $(OUTPUT)
 
 puzzles-partial: tools/gen-puzzles
-	zstdcat $(INPUT) | tail -n +$(OFFSET) | head -n $(COUNT) | xargs -d '\n' -P $(JOBS) -n $$(( $(COUNT) / $(JOBS) )) ./tools/gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $(COUNT) -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 -o - $(TMP)
+	zstdcat $(INPUT) | tail -n +$(OFFSET) | head -n $(COUNT) | xargs -d '\n' -P $(JOBS) ./tools/gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $(COUNT) -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 -o - $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 

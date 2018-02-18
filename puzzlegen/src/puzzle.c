@@ -18,6 +18,11 @@
 #include <stdbool.h>
 #include <assert.h>
 
+typedef struct {
+	cch_hash_t h;
+	bool check;
+} threefold_entry_t;
+
 bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
 	/* No moves or forced move? */
 	if(nlines < 2) return nlines == 1 && depth > 0;
@@ -43,6 +48,7 @@ bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_se
 
 	/* Escape mate threat? */
 	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE) {
+	    /* XXX: needs refinement */
 		return s.best_eval_cutoff_start < 100000;
 	}
 
@@ -122,9 +128,34 @@ static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char d
 	if(p->min_depth > depth) p->min_depth = depth;
 }
 
+static void fill_threefold_entry(threefold_entry_t* e, const cch_board_t* b) {
+	e->h = b->hash;
+	e->check = CCH_IS_OWN_KING_CHECKED(b);
+}
+
+static bool check_threefold(puzzle_t* p, cch_board_t* b, threefold_entry_t* tftable, unsigned char tftlen) {
+	if(tftlen >= 3) {
+		unsigned char repetitions = 0;
+
+		for(unsigned char i = 0; i < tftlen; ++i) {
+			repetitions += tftable[tftlen - 1].h == tftable[i].h;
+		}
+
+		if(repetitions >= 2) {
+			p->tags.draw = true;
+			if(tftable[tftlen - 1].check || tftable[tftlen - 2].check) p->tags.perpetual = true; /* XXX: more complicated than that */
+			else p->tags.threefold = true;
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char depth,
 							  puzzle_t* p, puzzle_step_t* st, cch_board_t* b,
-							  const char* engine_limiter, puzzlegen_settings_t s) {
+							  const char* engine_limiter, puzzlegen_settings_t s,
+							  threefold_entry_t* tftable, unsigned char tftlen) {
 	unsigned char nlines, i;
 	cch_undo_move_state_t umove, ureply;
 	cch_move_t m, mr;
@@ -133,6 +164,11 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	if(depth > s.max_depth || p->min_depth == 0) {
 		/* Puzzle is too long */
 		p->min_depth = 0;
+		return;
+	}
+
+	if(check_threefold(p, b, tftable, tftlen)) {
+		puzzle_finalize_step(p, st, depth);
 		return;
 	}
 
@@ -170,6 +206,15 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		cch_parse_lan_move(evals[i].bestlan, &m);
 		cch_play_legal_move(b, &m, &umove);
 
+		if(b->smoves) {
+			fill_threefold_entry(&(tftable[tftlen]), b);
+			if(check_threefold(p, b, tftable, tftlen)) {
+				puzzle_finalize_step(p, &(st->next[i]), depth + 1);
+				cch_undo_move(b, &m, &umove);
+				continue;
+			}
+		}
+
 		if(uci_eval(ctx, engine_limiter, b, &(evals[s.max_variations]), 1) == 0) {
 			/* Game over */
 			if(CCH_IS_OWN_KING_CHECKED(b)) {
@@ -190,7 +235,14 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		cch_parse_lan_move(evals[s.max_variations].bestlan, &mr);
 		cch_play_legal_move(b, &mr, &ureply);
 
-		puzzle_build_step(ctx, depth + 1, p, &(st->next[i]), b, engine_limiter, s);
+		if(b->smoves <= 1) {
+			threefold_entry_t tftable[s.max_depth << 1];
+			fill_threefold_entry(tftable, b);
+			puzzle_build_step(ctx, depth + 1, p, &(st->next[i]), b, engine_limiter, s, tftable, b->smoves);
+		} else {
+			fill_threefold_entry(&(tftable[tftlen + 1]), b);
+			puzzle_build_step(ctx, depth + 1, p, &(st->next[i]), b, engine_limiter, s, tftable, tftlen + 2);
+		}
 
 		cch_undo_move(b, &mr, &ureply);
 		cch_undo_move(b, &m, &umove);
@@ -219,7 +271,8 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 	p->end_material_diff_min = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
 
-	puzzle_build_step(ctx, 0, p, &(p->root), b, engine_limiter, s);
+	threefold_entry_t tftable[s.max_depth << 1];
+	puzzle_build_step(ctx, 0, p, &(p->root), b, engine_limiter, s, tftable, 0);
 
 	if(puzzle_is_trivial(p, b)) {
 		p->min_depth = 0;
