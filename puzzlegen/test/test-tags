@@ -19,7 +19,7 @@ array_shift($argv);
 foreach($argv as $testjson) {
 	$test = json_decode($testjson, true);
 
-	/* XXX: this is flaky at best. "movetime N" is definitely non-deterministic and "nodes N" also seems to be */
+	/* XXX: this is highly non deterministic */
 	$puzjson = trim(shell_exec(sprintf(
 		'%s --uci-engine-limiter-probe "depth 12" --uci-engine-limiter "depth 23" %s --max-puzzles 1 %s',
 		escapeshellcmd(__DIR__.'/../tools/gen-puzzles'),
