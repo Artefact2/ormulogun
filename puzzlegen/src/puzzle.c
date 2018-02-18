@@ -185,10 +185,10 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 
 		puzzle_finalize_step(p, st, depth);
 
-		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0 && depth + evals[0].score <= s.max_depth) {
-			/* Incomplete checkmate sequence, because it has too many branches */
+		if(evals[0].type == SCORE_MATE && evals[0].score > 0) {
+			/* Puzzle leads to forced checkmate */
 			p->tags.checkmate = true;
-			p->checkmate_length = depth + evals[0].score; /* XXX? */
+			p->checkmate_length = 0; /* XXX: get rid of this and use winning_position flag in struct */
 		}
 		return;
 	}

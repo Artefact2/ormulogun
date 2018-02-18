@@ -26,7 +26,11 @@ void tags_print(const puzzle_t* p) {
 	printf("[\"Depth %d\"", p->min_depth);
 
 	if(p->tags.checkmate) {
-		printf(",\"Checkmate\",\"Checkmate in %d\"", p->checkmate_length);
+		if(p->checkmate_length > 0) {
+			printf(",\"Checkmate\",\"Checkmate in %d\"", p->checkmate_length);
+		} else {
+			fputs(",\"Winning position\"", stdout);
+		}
 	}
 
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
