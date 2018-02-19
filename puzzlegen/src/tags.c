@@ -14,7 +14,6 @@
  */
 
 #include "gen-puzzles.h"
-#include <string.h>
 
 #define MAYBE_PRINT_TAG(f, n) do {				\
 		if(f) {									\
@@ -43,6 +42,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.underpromotion, "Underpromotion");
 	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin");
 	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin (Absolute)");
+	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -121,11 +121,11 @@ static void tags_pin_absolute(puzzle_t* p, cch_board_t* b, const cch_move_t* las
 	}
 }
 
-void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, puzzle_step_t* st, cch_board_t* b) {
 	if(CCH_IS_OWN_KING_CHECKED(b)) {
-		tags_discovered_double_check(p, b, last);
+		tags_discovered_double_check(p, b, &(st->move));
 	} else {
-		tags_pin_absolute(p, b, last);
+		tags_pin_absolute(p, b, &(st->move));
 	}
 
 	tags_mate_threat(ctx, p, b);
@@ -139,10 +139,10 @@ static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 	unsigned char i;
 
 	for(i = 0; i < st->nextlen; ++i) {
-		if(strlen(st->next[i].move) == 5) {
+		if(st->next[i].move.promote) {
 			promote = true;
 
-			if(st->next[i].move[4] == 'q') {
+			if(st->next[i].move.promote == CCH_QUEEN) {
 				queen_promote = true;
 				break;
 			}
@@ -162,6 +162,6 @@ static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 	}
 }
 
-void tags_after_puzzle_done(puzzle_t* p) {
+void tags_after_puzzle_done(puzzle_t* p, cch_board_t* b) {
 	tags_promotion(p, &(p->root));
 }

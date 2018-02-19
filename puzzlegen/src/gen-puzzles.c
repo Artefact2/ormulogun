@@ -21,6 +21,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define MOVES_EQUAL(m1, m2) ((m1).start == (m2).start && (m1).end == (m2).end && (m1).promote == (m2).promote)
+
 static void usage(char* me) {
 	fprintf(stderr,
 			"Usage: %s [--verbose] [--start-ply N] [--max-puzzles N]\n"
@@ -128,7 +130,6 @@ int main(int argc, char** argv) {
 	bool strep = false; /* false -> st.next[?].move, true -> st.reply */
 	unsigned int puzzles = 0, ply;
 
-	char lanmove[SAFE_ALG_LENGTH];
 	char* sanmove;
 	char* saveptr;
 
@@ -146,21 +147,19 @@ int main(int argc, char** argv) {
 			assert(ret == CCH_OK);
 			ret = cch_play_move(&b, &m, 0);
 			assert(ret == CCH_OK);
-			ret = cch_format_lan_move(&m, lanmove, SAFE_ALG_LENGTH);
-			assert(ret == CCH_OK);
 
 			if(ply < s.min_ply) continue;
 
 			if(st) {
 				if(strep) {
-					if(!strcmp(lanmove, st->reply)) {
+					if(MOVES_EQUAL(m, st->reply)) {
 						strep = false;
 						continue;
 					}
 					st = 0;
 				} else {
 					for(unsigned char j = 0; j < st->nextlen; ++j) {
-						if(!strcmp(lanmove, st->next[j].move)) {
+						if(MOVES_EQUAL(m, st->next[j].move)) {
 							st = &(st->next[j]);
 							strep = true;
 							break;
@@ -175,7 +174,7 @@ int main(int argc, char** argv) {
 			if(!puzzle_consider(evals, nlines, s, 0)) continue;
 
 			if(p.root.next) puzzle_free(&p);
-			strncpy(p.root.reply, lanmove, SAFE_ALG_LENGTH);
+			p.root.reply = m;
 			puzzle_build(&ctx, &p, &b, limiter, s);
 			if(p.min_depth > 0) {
 				++puzzles;

@@ -54,8 +54,8 @@ typedef struct {
 } puzzlegen_settings_t;
 
 typedef struct puzzle_step_s {
-	char move[SAFE_ALG_LENGTH];
-	char reply[SAFE_ALG_LENGTH];
+	cch_move_t move;
+	cch_move_t reply;
 	unsigned char nextlen;
 	struct puzzle_step_s* next;
 } puzzle_step_t;
@@ -81,6 +81,7 @@ typedef struct {
 		bool promotion:1;
 		bool underpromotion:1;
 		bool pin_absolute:1;
+		bool fork:1;
 	} tags;
 } puzzle_t;
 
@@ -95,8 +96,8 @@ void puzzle_build(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const ch
 /* ----- tags.c ----- */
 
 void tags_print(const puzzle_t*);
-void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const cch_move_t*);
-void tags_after_puzzle_done(puzzle_t*);
+void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, puzzle_step_t*, cch_board_t*);
+void tags_after_puzzle_done(puzzle_t*, cch_board_t*);
 
 /* ----- eval.c ----- */
 
