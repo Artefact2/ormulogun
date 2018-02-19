@@ -28,6 +28,9 @@ puzzles-partial: tools/gen-puzzles
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 
+puzzles-split: tools/gen-puzzles
+	(for x in $$(seq $(START) $(END)); do zstdcat $(INPUT) | tail -n +$$x | head -n 1 | xargs -d '\n' ./tools/gen-puzzles --verbose $(PFLAGS) | tee >(zstd -4 -o $(TMP)); sync $(TMP); mv $(TMP) $(OUTPUT)-$$x.jpz; done) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
+
 merge-all: master.jpz $(shell find . -name "*.jpz" -not -name "master.jpz")
 	zstdcat $^ | pv -lcN in | ./tools/merge-jl | pv -lcN out | zstd -4 - -o $(TMP)
 	sync $(TMP)
