@@ -162,6 +162,64 @@ static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 	}
 }
 
+static unsigned char count_winning_exchanges(cch_board_t* b, char ev, unsigned char start, unsigned char stop) {
+	cch_movelist_t ml;
+	cch_undo_move_state_t undo;
+	unsigned char attacks = 0, nmoves = cch_generate_moves(b, ml, CCH_LEGAL, start, stop);
+
+	for(unsigned char i = 0; i < nmoves; ++i) {
+		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
+		cch_play_legal_move(b, &(ml[i]), &undo);
+		if(-eval_quiet_material(b, -127, 127) > ev) {
+			++attacks;
+		}
+		cch_undo_move(b, &(ml[i]), &undo);
+	}
+
+	return attacks;
+}
+
+static void tags_fork(puzzle_t* p, puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.fork) return;
+	if(st->nextlen == 0) return;
+
+	cch_undo_move_state_t um, ur;
+	char ev;
+	unsigned char attacks;
+
+	cch_play_legal_move(b, &(st->move), &um);
+	eval_material(b, true, 0, &ev);
+
+	/* If opponent does nothing, how many exchanges can we win with
+	 * the piece that we just moved? */
+	b->side = !b->side;
+	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1);
+	b->side = !b->side;
+
+	cch_play_legal_move(b, &(st->reply), &ur);
+
+	/* Can we win more than 2 exchanges ? Now that the opponent's
+	 * reply has been played, can we still win one exchange? */
+	if(attacks >= 2) {
+		attacks = count_winning_exchanges(b, ev, 0, 64);
+		if(attacks > 0) p->tags.fork = true;
+	}
+
+	if(!p->tags.fork) {
+		/* Check children for forks */
+		for(unsigned char i = 0; i < st->nextlen; ++i) {
+			tags_fork(p, &(st->next[i]), b);
+		}
+	}
+
+	cch_undo_move(b, &(st->reply), &ur);
+	cch_undo_move(b, &(st->move), &um);
+}
+
 void tags_after_puzzle_done(puzzle_t* p, cch_board_t* b) {
 	tags_promotion(p, &(p->root));
+
+	for(unsigned char i = 0; i < p->root.nextlen; ++i) {
+		tags_fork(p, &(p->root.next[i]), b);
+	}
 }

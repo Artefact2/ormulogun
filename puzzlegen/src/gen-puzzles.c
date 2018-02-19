@@ -150,6 +150,7 @@ int main(int argc, char** argv) {
 
 			if(ply < s.min_ply) continue;
 
+			/* XXX: this will skip opposite color puzzles */
 			if(st) {
 				if(strep) {
 					if(MOVES_EQUAL(m, st->reply)) {
