@@ -98,4 +98,9 @@ void tags_print(const puzzle_t*);
 void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const cch_move_t*);
 void tags_after_puzzle_done(puzzle_t*);
 
+/* ----- eval.c ----- */
+
+void eval_material(const cch_board_t* b, bool, unsigned char*, char*);
+char eval_quiet_material(cch_board_t* b, char, char);
+
 #endif

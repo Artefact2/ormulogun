@@ -117,7 +117,7 @@ void puzzle_init(puzzle_t* p, const cch_board_t* b) {
 	cch_return_t ret;
 	ret = cch_save_fen(b, p->fen, SAFE_FEN_LENGTH);
 	assert(ret == CCH_OK);
-	count_material(b, true, &(p->start_material), &(p->start_material_diff));
+	eval_material(b, true, &(p->start_material), &(p->start_material_diff));
 }
 
 static void puzzle_finalize_step(puzzle_t* p, puzzle_step_t* st, unsigned char depth) {
@@ -179,7 +179,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		unsigned char total;
 		char diff;
 
-		count_material(b, false, &total, &diff); /* XXX: assuming a quiet position */
+		eval_material(b, false, &total, &diff); /* XXX: assuming a quiet position */
 		if(diff < p->end_material_diff_min) p->end_material_diff_min = diff;
 		if(total < p->end_material_min) p->end_material_min = total;
 
