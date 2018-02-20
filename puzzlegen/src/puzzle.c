@@ -23,37 +23,51 @@ typedef struct {
 	bool check;
 } threefold_entry_t;
 
-bool puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
+unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
 	/* No moves or forced move? */
 	if(nlines < 2) return nlines == 1 && depth > 0;
 
 	/* Clearly lost position? */
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
-	   || (evals[0].type == SCORE_CP && evals[0].score < -s.eval_cutoff)) return false;
+	   || (evals[0].type == SCORE_CP && evals[0].score < -s.eval_cutoff)) return 0;
 
 	if(depth == 0) {
 		/* Clearly won position? */
-		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return false;
-		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return false;
+		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
+		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
 	}
 
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
-		if(evals[nlines - 1].type == SCORE_CP) return true;
-		if(evals[nlines - 1].score != evals[0].score) {
-			return evals[0].score + depth <= s.max_depth;
+		unsigned char i = 1;
+		while(i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score) {
+			++i;
 		}
-		return false;
+		return i < nlines;
 	}
 
-	/* Escape mate threat? */
-	if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_MATE) {
-	    /* XXX: needs refinement */
-		return s.best_eval_cutoff_start < 100000;
+	unsigned int diff = 0;
+	int cutoff = 0;
+	unsigned char i;
+	for(i = 1; i < nlines && evals[i].type == SCORE_CP; ++i) {
+		if(evals[i - 1].score - evals[i].score > diff) {
+			diff = evals[i - 1].score - evals[i].score;
+			cutoff = evals[i].score;
+		}
 	}
 
-	assert(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP);
-	return evals[0].score - evals[nlines - 1].score > (depth == 0 ? s.best_eval_cutoff_start : s.best_eval_cutoff_continue);
+	if(diff < s.puzzle_threshold_absolute) {
+		if(i < nlines) return i; /* Escape forced mate */
+
+		if(evals[0].score - evals[i - 1].score < s.puzzle_threshold_absolute) {
+			return 0;
+		} else {
+			cutoff = evals[0].score - s.puzzle_threshold_absolute;
+		}
+	}
+
+	for(i = 1; (float)(evals[0].score - evals[i].score) / (float)(evals[0].score - cutoff) < s.variation_cutoff_relative; ++i);
+	return i;
 }
 
 static void puzzle_free_steps(puzzle_step_t* st) {
@@ -157,7 +171,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	}
 
 	nlines = uci_eval(ctx, engine_limiter, b, evals, s.max_variations + 1);
-	if(!puzzle_consider(evals, nlines, s, depth)) {
+	if((i = puzzle_consider(evals, nlines, s, depth)) == 0) {
 		/* Puzzle over, after computer reply of last puzzle move */
 
 		unsigned char total;
@@ -177,11 +191,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		return;
 	}
 
-	if(evals[0].type == SCORE_MATE) {
-		for(i = 0; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
-	} else {
-		for(i = 0; i < nlines && evals[i].type == SCORE_CP && evals[0].score - evals[i].score < s.variation_eval_cutoff; ++i);
-	}
 	st->nextlen = i;
 	st->next = malloc(i * sizeof(puzzle_step_t));
 

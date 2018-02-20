@@ -27,8 +27,8 @@ static void usage(char* me) {
 	fprintf(stderr,
 			"Usage: %s [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
 			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
-			"          [--max-depth N] [--eval-cutoff N] [--max-variations N] [--variation-eval-cutoff N]\n"
-			"          [--best-eval-cutoff-start N] [--best-eval-cutoff-continue N]\n"
+			"          [--max-depth N] [--eval-cutoff N] [--max-variations N]\n"
+			"          [--puzzle-threshold-absolute N] [--variation-cutoff-relative D]\n"
 			"          <games...>\n"
 			"See config.h for an explanation of these options.\n"
 			"Where each game is a JSON array of SAN moves from starting position.\n"
@@ -40,6 +40,17 @@ static int expect_number(int argc, char** argv) {
 	if(argc >= 1) {
 		char* end;
 		int num = strtol(*argv, &end, 10);
+		if(**argv != '\0' && *end == '\0') return num;
+	}
+
+	fprintf(stderr, "Expected a numeric argument after %s\n", argv[-1]);
+	exit(1);
+}
+
+static float expect_float(int argc, char** argv) {
+	if(argc >= 1) {
+		char* end;
+		float num = strtof(*argv, &end);
 		if(**argv != '\0' && *end == '\0') return num;
 	}
 
@@ -94,15 +105,12 @@ int main(int argc, char** argv) {
 		} else if(!strcmp("--max-variations", *argv)) {
 			--argc; ++argv;
 			s.max_variations = expect_number(argc, argv);
-		} else if(!strcmp("--variation-eval-cutoff", *argv)) {
+		} else if(!strcmp("--puzzle-threshold-absolute", *argv)) {
 			--argc; ++argv;
-			s.variation_eval_cutoff = expect_number(argc, argv);
-		} else if(!strcmp("--best-eval-cutoff-start", *argv)) {
+			s.puzzle_threshold_absolute = expect_number(argc, argv);
+		} else if(!strcmp("--variation-cutoff-relative", *argv)) {
 			--argc; ++argv;
-			s.best_eval_cutoff_start = expect_number(argc, argv);
-		} else if(!strcmp("--best-eval-cutoff-continue", *argv)) {
-			--argc; ++argv;
-			s.best_eval_cutoff_continue = expect_number(argc, argv);
+			s.variation_cutoff_relative = expect_float(argc, argv);
 		} else if(!strcmp("--start-fen", *argv)) {
 			--argc; ++argv;
 			startfen = expect_string(argc, argv);

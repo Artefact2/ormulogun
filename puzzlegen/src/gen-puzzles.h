@@ -45,9 +45,8 @@ unsigned char uci_eval(const uci_engine_context_t*, const char*, const cch_board
 
 typedef struct {
 	int eval_cutoff;
-	int best_eval_cutoff_start;
-	int best_eval_cutoff_continue;
-	int variation_eval_cutoff;
+	int puzzle_threshold_absolute;
+	float variation_cutoff_relative;
 	unsigned int min_ply;
 	unsigned char max_variations;
 	unsigned char max_depth;
@@ -85,7 +84,7 @@ typedef struct {
 	} tags;
 } puzzle_t;
 
-bool puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t, unsigned char);
+unsigned char puzzle_consider(const uci_eval_t*, unsigned char, puzzlegen_settings_t, unsigned char);
 void puzzle_free(puzzle_t*);
 void puzzle_init(puzzle_t*, const cch_board_t*, const cch_move_t*);
 void puzzle_print(const puzzle_t*);
