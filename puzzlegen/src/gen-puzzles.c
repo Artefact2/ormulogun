@@ -25,7 +25,7 @@
 
 static void usage(char* me) {
 	fprintf(stderr,
-			"Usage: %s [--verbose] [--start-ply N] [--max-puzzles N]\n"
+			"Usage: %s [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
 			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
 			"          [--max-depth N] [--eval-cutoff N] [--max-variations N] [--variation-eval-cutoff N]\n"
 			"          [--best-eval-cutoff-start N] [--best-eval-cutoff-continue N]\n"
@@ -47,7 +47,7 @@ static int expect_number(int argc, char** argv) {
 	exit(1);
 }
 
-static const char* expect_string(int argc, char** argv) {
+static char* expect_string(int argc, char** argv) {
 	if(argc >= 1) {
 		return *argv;
 	}
@@ -60,6 +60,7 @@ int main(int argc, char** argv) {
 	puzzlegen_settings_t s = settings;
 	const char* limiterp = uci_limiter_probe;
 	const char* limiter = uci_limiter;
+	const char* startfen = 0;
 	unsigned int max_puzzles = 0;
 	bool verbose = false;
 
@@ -102,6 +103,9 @@ int main(int argc, char** argv) {
 		} else if(!strcmp("--best-eval-cutoff-continue", *argv)) {
 			--argc; ++argv;
 			s.best_eval_cutoff_continue = expect_number(argc, argv);
+		} else if(!strcmp("--start-fen", *argv)) {
+			--argc; ++argv;
+			startfen = expect_string(argc, argv);
 		}
 
 		else if(!strncmp("--", *argv, 2)) {
@@ -127,7 +131,7 @@ int main(int argc, char** argv) {
 	unsigned char nlines;
 	unsigned int npuzzles = 0, ply;
 
-	char* sanmove;
+	char* movestr;
 	char* saveptr;
 
 	/* Keep the last two generated puzzles, one for each side. This
@@ -142,15 +146,23 @@ int main(int argc, char** argv) {
 	memset(puzzles, 0, sizeof(puzzles));
 
 	for(int i = 0; i < argc; ++i) {
-		cch_init_board(&b);
+		if(startfen) {
+			ret = cch_load_fen(&b, startfen);
+			assert(ret == CCH_OK);
+		} else {
+			cch_init_board(&b);
+		}
 		fputs("ucinewgame\n", ctx.w);
 
-		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; sanmove; sanmove = strtok_r(0, "[]\",", &saveptr), ++ply) {
-			if(verbose) fprintf(stderr, "move %s\n", sanmove);
+		for(movestr = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; movestr; movestr = strtok_r(0, "[]\",", &saveptr), ++ply) {
+			if(verbose) fprintf(stderr, "move %s\n", movestr);
 
 			p = &(puzzles[!b.side].p);
 
-			ret = cch_parse_san_move(&b, sanmove, &m);
+			ret = cch_parse_lan_move(movestr, &m);
+			if(ret == CCH_PARSE_ERROR) {
+				ret = cch_parse_san_move(&b, movestr, &m);
+			}
 			assert(ret == CCH_OK);
 			puzzle_init(p, &b, &m);
 			ret = cch_play_move(&b, &m, 0);

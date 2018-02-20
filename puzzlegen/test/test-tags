@@ -15,37 +15,50 @@
  * limitations under the License.
  */
 
+$failures = 0;
+
 array_shift($argv);
 foreach($argv as $testjson) {
 	$test = json_decode($testjson, true);
+	assert(is_array($test) && count($test) === 4);
+	list($fen, $lan, $flags, $tags) = $test;
+	assert(is_string($fen));
+	assert(is_string($lan));
+	assert(is_string($flags));
+	assert(is_array($tags));
 
 	/* XXX: this is highly non deterministic */
-	$puzjson = trim(shell_exec(sprintf(
-		'%s --uci-engine-limiter-probe "depth 12" --uci-engine-limiter "depth 23" %s --max-puzzles 1 %s',
+	$puzjson = trim(shell_exec($cmd = sprintf(
+		'%s --uci-engine-limiter-probe "depth 12" --uci-engine-limiter "depth 23" %s --start-ply 0 --max-puzzles 1 --start-fen %s %s',
 		escapeshellcmd(__DIR__.'/../tools/gen-puzzles'),
-		$test[0],
-		escapeshellarg(json_encode($test[2]))
+		$flags,
+		escapeshellarg($fen),
+		escapeshellarg(json_encode([ $lan ]))
 	)));
 
 	if($puzjson === '') {
 		fprintf(STDERR, "Unexpected lack of puzzle!\nTest: %s\n", $testjson);
-		die(1);
+		++$failures;
+		continue;
 	}
 
 	$puz = json_decode($puzjson, true);
-	foreach($test[1] as $wanttag) {
-		if(!in_array($wanttag, $puz[2], true)) {
-			fprintf(STDERR, "Puzzle is lacking tag: '%s'\nTest: %s\nPuzzle: %s\n", $wanttag, $testjson, $puzjson);
-			die(1);
-		}
+
+	if($puz[0] !== $fen || $puz[1][0] !== $lan) {
+		fprintf(STDERR, "Unexpected puzzle start!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
+		++$failures;
+		continue;
 	}
 
-	foreach($puz[2] as $tag) {
-		if(!in_array($tag, $test[1], true)) {
-			fprintf(STDERR, "Puzzle has extra tag: '%s'\nTest: %s\nPuzzle: %s\n", $tag, $testjson, $puzjson);
-			die(1);
-		}
+	sort($tags);
+	sort($puz[2]);
+	if($tags !== $puz[2]) {
+		fprintf(STDERR, "Mismatched tags!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
+		++$failures;
+		continue;
 	}
 
-	printf("Test OK: %s\n", $testjson);
+	printf("Puzzle OK: %s\n", $puzjson);
 }
+
+die($failures);
