@@ -27,9 +27,17 @@ foreach($argv as $testjson) {
 	assert(is_string($flags));
 	assert(is_array($tags));
 
+	$hasdepth = false;
+	foreach($tags as $t) {
+		if(preg_match('%^Depth [1-9][0-9]*$%', $t)) {
+			$hasdepth = true;
+			break;
+		}
+	}
+
 	/* XXX: this is highly non deterministic */
 	$puzjson = trim(shell_exec($cmd = sprintf(
-		'%s --uci-engine-limiter-probe "depth 12" --uci-engine-limiter "depth 23" %s --start-ply 0 --max-puzzles 1 --start-fen %s %s',
+		'%s %s --start-ply 0 --max-puzzles 1 --start-fen %s %s',
 		escapeshellcmd(__DIR__.'/../tools/gen-puzzles'),
 		$flags,
 		escapeshellarg($fen),
@@ -38,27 +46,38 @@ foreach($argv as $testjson) {
 
 	if($puzjson === '') {
 		fprintf(STDERR, "Unexpected lack of puzzle!\nTest: %s\n", $testjson);
-		++$failures;
-		continue;
+		goto fail;
 	}
 
 	$puz = json_decode($puzjson, true);
 
 	if($puz[0] !== $fen || $puz[1][0] !== $lan) {
 		fprintf(STDERR, "Unexpected puzzle start!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
-		++$failures;
-		continue;
+		goto fail;
+	}
+
+	if(!$hasdepth) {
+		foreach($puz[2] as $k => $t) {
+			if(preg_match('%^Depth [1-9][0-9]*$%', $t)) {
+				unset($puz[2][$k]);
+				break;
+			}
+		}
 	}
 
 	sort($tags);
 	sort($puz[2]);
 	if($tags !== $puz[2]) {
 		fprintf(STDERR, "Mismatched tags!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
-		++$failures;
-		continue;
+		goto fail;
 	}
 
-	printf("Puzzle OK: %s\n", $puzjson);
+	printf("Test OK: %s => %s\n", $testjson, $puzjson);
+	continue;
+
+	fail:
+	++$failures;
+	printf("Test failed: %s\n", $testjson);
 }
 
 die($failures);
