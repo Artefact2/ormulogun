@@ -125,15 +125,21 @@ int main(int argc, char** argv) {
 
 	uci_eval_t evals[s.max_variations + 1];
 	unsigned char nlines;
-	puzzle_t p;
-	puzzle_step_t* st = 0;
-	bool strep = false; /* false -> st.next[?].move, true -> st.reply */
-	unsigned int puzzles = 0, ply;
+	unsigned int npuzzles = 0, ply;
 
 	char* sanmove;
 	char* saveptr;
 
-	p.root.next = 0;
+	/* Keep the last two generated puzzles, one for each side. This
+	 * prevents generating puzzles that are children of the previously
+	 * generated puzzle for that side. */
+	struct {
+		puzzle_t p;
+		puzzle_step_t* st;
+	} puzzles[2];
+	puzzle_t* p;
+
+	memset(puzzles, 0, sizeof(puzzles));
 
 	for(int i = 0; i < argc; ++i) {
 		cch_init_board(&b);
@@ -142,51 +148,51 @@ int main(int argc, char** argv) {
 		for(sanmove = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; sanmove; sanmove = strtok_r(0, "[]\",", &saveptr), ++ply) {
 			if(verbose) fprintf(stderr, "move %s\n", sanmove);
 
-			puzzle_init(&p, &b);
+			p = &(puzzles[!b.side].p);
+
 			ret = cch_parse_san_move(&b, sanmove, &m);
 			assert(ret == CCH_OK);
+			puzzle_init(p, &b, &m);
 			ret = cch_play_move(&b, &m, 0);
 			assert(ret == CCH_OK);
 
 			if(ply < s.min_ply) continue;
 
-			/* XXX: this will skip opposite color puzzles */
-			if(st) {
-				if(strep) {
-					if(MOVES_EQUAL(m, st->reply)) {
-						strep = false;
-						continue;
+			if(puzzles[!b.side].st) {
+				bool found = false;
+				for(unsigned char j = 0; j < puzzles[!b.side].st->nextlen; ++j) {
+					if(MOVES_EQUAL(m, puzzles[!b.side].st->next[j].move)) {
+						found = true;
+						puzzles[!b.side].st = &(puzzles[!b.side].st->next[j]);
+						break;
 					}
-					st = 0;
+				}
+				if(!found) {
+					puzzles[!b.side].st = 0;
+				}
+			}
+			if(puzzles[b.side].st) {
+				if(!MOVES_EQUAL(m, puzzles[b.side].st->reply)) {
+					puzzles[b.side].st = 0;
 				} else {
-					for(unsigned char j = 0; j < st->nextlen; ++j) {
-						if(MOVES_EQUAL(m, st->next[j].move)) {
-							st = &(st->next[j]);
-							strep = true;
-							break;
-						}
-					}
-					if(strep) continue;
-					else st = 0;
+					continue;
 				}
 			}
 
 			nlines = uci_eval(&ctx, limiterp, &b, evals, s.max_variations + 1);
 			if(!puzzle_consider(evals, nlines, s, 0)) continue;
 
-			if(p.root.next) puzzle_free(&p);
-			p.root.reply = m;
-			puzzle_build(&ctx, &p, &b, limiter, s);
-			if(p.min_depth > 0) {
-				++puzzles;
-				puzzle_print(&p);
-				st = &(p.root);
-				strep = false;
+			if(p->root.next) puzzle_free(p);
+			puzzle_build(&ctx, p, &b, limiter, s);
+			if(p->min_depth > 0) {
+				++npuzzles;
+				puzzle_print(p);
+				puzzles[b.side].st = &(p->root);
 			} else {
-				st = 0;
+				puzzles[b.side].st = 0;
 			}
 
-			if(puzzles > 0 && puzzles == max_puzzles) {
+			if(npuzzles > 0 && npuzzles == max_puzzles) {
 				i = argc;
 				break;
 			}

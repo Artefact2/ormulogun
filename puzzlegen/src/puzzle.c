@@ -99,10 +99,11 @@ void puzzle_print(const puzzle_t* p) {
 	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
-void puzzle_init(puzzle_t* p, const cch_board_t* b) {
+void puzzle_init(puzzle_t* p, const cch_board_t* b, const cch_move_t* m) {
 	cch_return_t ret;
 	ret = cch_save_fen(b, p->fen, SAFE_FEN_LENGTH);
 	assert(ret == CCH_OK);
+	p->root.reply = *m;
 	eval_material(b, true, &(p->start_material), &(p->start_material_diff));
 }
 
