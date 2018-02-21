@@ -63,7 +63,6 @@ typedef struct {
 	char fen[SAFE_FEN_LENGTH];
 	puzzle_step_t root;
 	unsigned char min_depth;
-	unsigned char checkmate_length;
 	unsigned char start_material;
 	char start_material_diff;
 	unsigned char end_material_min;
@@ -81,6 +80,7 @@ typedef struct {
 		bool underpromotion:1;
 		bool pin_absolute:1;
 		bool fork:1;
+		bool winning_position:1;
 	} tags;
 } puzzle_t;
 

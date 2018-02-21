@@ -24,14 +24,8 @@
 void tags_print(const puzzle_t* p) {
 	printf("[\"Depth %d\"", p->min_depth);
 
-	if(p->tags.checkmate) {
-		if(p->checkmate_length > 0) {
-			printf(",\"Checkmate\",\"Checkmate in %d\"", p->checkmate_length);
-		} else {
-			fputs(",\"Winning position\"", stdout);
-		}
-	}
-
+	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
+	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
 	MAYBE_PRINT_TAG(p->tags.threefold, "Draw (Threefold repetition)");
@@ -194,6 +188,12 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
 
+	if(st->nextlen == 0) {
+		if(depth < p->min_depth) {
+			p->min_depth = depth;
+		}
+	}
+
 	if(depth > 0) {
 		cch_play_move(b, &(st->move), &um);
 
@@ -204,6 +204,11 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 		}
 		tags_mate_threat(ctx, p, b);
 		tags_fork(p, st, b);
+
+		if(st->reply.start == 255) {
+			cch_undo_move(b, &(st->move), &um);
+			return;
+		}
 
 		cch_play_move(b, &(st->reply), &ur);
 	}
