@@ -221,7 +221,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 			continue;
 		}
 
-		tags_after_player_move(ctx, p, &(st->next[i]), b);
 		cch_parse_lan_move(evals[s.max_variations].bestlan, &(st->next[i].reply));
 		cch_play_legal_move(b, &(st->next[i].reply), &ur);
 
@@ -275,5 +274,7 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 		return;
 	}
 
-	tags_after_puzzle_done(p, b);
+	/* XXX: prune branches that lose on material gains */
+
+	tags_puzzle(p, b, ctx);
 }

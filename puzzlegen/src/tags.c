@@ -121,16 +121,6 @@ static void tags_pin_absolute(puzzle_t* p, cch_board_t* b, const cch_move_t* las
 	}
 }
 
-void tags_after_player_move(const uci_engine_context_t* ctx, puzzle_t* p, puzzle_step_t* st, cch_board_t* b) {
-	if(CCH_IS_OWN_KING_CHECKED(b)) {
-		tags_discovered_double_check(p, b, &(st->move));
-	} else {
-		tags_pin_absolute(p, b, &(st->move));
-	}
-
-	tags_mate_threat(ctx, p, b);
-}
-
 static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 	if(p->tags.promotion && p->tags.underpromotion) return;
 
@@ -153,12 +143,7 @@ static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 		p->tags.promotion = true;
 		if(!queen_promote) {
 			p->tags.underpromotion = true;
-			return;
 		}
-	}
-
-	for(i = 0; i < st->nextlen; ++i) {
-		tags_promotion(p, &(st->next[i]));
 	}
 }
 
@@ -179,15 +164,13 @@ static unsigned char count_winning_exchanges(cch_board_t* b, char ev, unsigned c
 	return attacks;
 }
 
-static void tags_fork(puzzle_t* p, puzzle_step_t* st, cch_board_t* b) {
+static void tags_fork(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	if(p->tags.fork) return;
 	if(st->nextlen == 0) return;
 
-	cch_undo_move_state_t um, ur;
 	char ev;
 	unsigned char attacks;
 
-	cch_play_legal_move(b, &(st->move), &um);
 	eval_material(b, true, 0, &ev);
 
 	/* If opponent does nothing, how many exchanges can we win with
@@ -196,28 +179,49 @@ static void tags_fork(puzzle_t* p, puzzle_step_t* st, cch_board_t* b) {
 	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1);
 	b->side = !b->side;
 
-	cch_play_legal_move(b, &(st->reply), &ur);
-
 	/* Can we win more than 2 exchanges ? Now that the opponent's
 	 * reply has been played, can we still win one exchange? */
 	if(attacks >= 2) {
+		cch_undo_move_state_t ur;
+		cch_play_legal_move(b, &(st->reply), &ur);
 		attacks = count_winning_exchanges(b, ev, 0, 64);
+		cch_undo_move(b, &(st->reply), &ur);
 		if(attacks > 0) p->tags.fork = true;
 	}
-
-	if(!p->tags.fork) {
-		/* Check children for forks */
-		for(unsigned char i = 0; i < st->nextlen; ++i) {
-			tags_fork(p, &(st->next[i]), b);
-		}
-	}
-
-	cch_undo_move(b, &(st->reply), &ur);
-	cch_undo_move(b, &(st->move), &um);
 }
 
-void tags_after_puzzle_done(puzzle_t* p, cch_board_t* b) {
-	tags_promotion(p, &(p->root));
+static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {
+	cch_undo_move_state_t um, ur;
+	unsigned char i;
+
+	if(depth > 0) {
+		cch_play_move(b, &(st->move), &um);
+
+		if(CCH_IS_OWN_KING_CHECKED(b)) {
+			tags_discovered_double_check(p, b, &(st->move));
+		} else {
+			tags_pin_absolute(p, b, &(st->move));
+		}
+		tags_mate_threat(ctx, p, b);
+		tags_fork(p, st, b);
+
+		cch_play_move(b, &(st->reply), &ur);
+	}
+
+	tags_promotion(p, st);
+
+	for(i = 0; i < st->nextlen; ++i) {
+		tags_step(p, &(st->next[i]), b, ctx, depth + 1);
+	}
+
+	if(depth > 0) {
+		cch_undo_move(b, &(st->reply), &ur);
+		cch_undo_move(b, &(st->move), &um);
+	}
+}
+
+void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
+	tags_step(p, &(p->root), b, ctx, 0);
 
 	for(unsigned char i = 0; i < p->root.nextlen; ++i) {
 		tags_fork(p, &(p->root.next[i]), b);

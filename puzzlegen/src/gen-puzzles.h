@@ -95,8 +95,7 @@ void puzzle_build(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const ch
 /* ----- tags.c ----- */
 
 void tags_print(const puzzle_t*);
-void tags_after_player_move(const uci_engine_context_t*, puzzle_t*, puzzle_step_t*, cch_board_t*);
-void tags_after_puzzle_done(puzzle_t*, cch_board_t*);
+void tags_puzzle(puzzle_t*, cch_board_t*, const uci_engine_context_t*);
 
 /* ----- eval.c ----- */
 
