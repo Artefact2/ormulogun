@@ -40,9 +40,14 @@ void tags_print(const puzzle_t* p) {
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
-		MAYBE_PRINT_TAG(p->end_material_diff_min > p->start_material_diff, "Material gain");
-		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min < p->start_material, "Trade");
-		MAYBE_PRINT_TAG(p->end_material_diff_min == p->start_material_diff && p->end_material_min == p->start_material, "Quiet");
+		MAYBE_PRINT_TAG(!p->tags.promotion && p->end_material_diff_min > p->start_material_diff, "Material gain");
+		MAYBE_PRINT_TAG(p->end_material_diff_max == p->start_material_diff
+						&& p->end_material_diff_min == p->start_material_diff
+						&& p->end_material_max < p->start_material, "Trade");
+		MAYBE_PRINT_TAG(p->end_material_diff_max == p->start_material_diff
+						&& p->end_material_diff_min == p->start_material_diff
+						&& p->end_material_max == p->start_material
+						&& p->end_material_min == p->start_material, "Quiet");
 	}
 
 	putchar(']');
@@ -219,6 +224,16 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 		tags_step(p, &(st->next[i]), b, ctx, depth + 1);
 	}
 
+	if(st->nextlen == 0) {
+		unsigned char total;
+		char diff;
+		eval_material(b, false, &total, &diff);
+		if(total > p->end_material_max) p->end_material_max = total;
+		if(total < p->end_material_min) p->end_material_min = total;
+		if(diff > p->end_material_diff_max) p->end_material_diff_max = diff;
+		if(diff < p->end_material_diff_min) p->end_material_diff_min = diff;
+	}
+
 	if(depth > 0) {
 		cch_undo_move(b, &(st->reply), &ur);
 		cch_undo_move(b, &(st->move), &um);
@@ -226,9 +241,10 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 }
 
 void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
-	tags_step(p, &(p->root), b, ctx, 0);
+	p->end_material_min = 255;
+	p->end_material_max = 0;
+	p->end_material_diff_min = 127;
+	p->end_material_diff_max = -127;
 
-	for(unsigned char i = 0; i < p->root.nextlen; ++i) {
-		tags_fork(p, &(p->root.next[i]), b);
-	}
+	tags_step(p, &(p->root), b, ctx, 0);
 }

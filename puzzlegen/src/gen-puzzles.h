@@ -66,7 +66,9 @@ typedef struct {
 	unsigned char start_material;
 	char start_material_diff;
 	unsigned char end_material_min;
+	unsigned char end_material_max;
 	char end_material_diff_min;
+	char end_material_diff_max;
 	struct {
 		bool checkmate:1;
 		bool stalemate:1;

@@ -167,14 +167,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	nlines = uci_eval(ctx, engine_limiter, b, evals, s.max_variations + 1);
 	if((i = puzzle_consider(evals, nlines, s, depth)) == 0) {
 		/* Puzzle over, after computer reply of last puzzle move */
-
-		unsigned char total;
-		char diff;
-
-		eval_material(b, false, &total, &diff); /* XXX: assuming a quiet position */
-		if(diff < p->end_material_diff_min) p->end_material_diff_min = diff;
-		if(total < p->end_material_min) p->end_material_min = total;
-
 		if(evals[0].type == SCORE_MATE && evals[0].score > 0) {
 			/* Puzzle leads to forced checkmate */
 			p->tags.winning_position = true;
@@ -232,12 +224,14 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 
 /* Filter simple 2-ply trades with no choices involved */
 static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
-	if(p->min_depth != 1) return false;
-
 	/* Last move was not a capture */
 	if(!CCH_GET_SQUARE(b, p->root.reply.end)) return false;
 
 	for(unsigned char i = 0; i < p->root.nextlen; ++i) {
+		if(p->root.next[i].nextlen > 0) {
+			/* Too deep */
+			return false;
+		}
 		if(p->root.next[i].move.end != p->root.reply.end) {
 			/* Puzzle move is not a takeback */
 			return false;
@@ -298,8 +292,6 @@ static char puzzle_prune_step(puzzle_t* p, puzzle_step_t* st, cch_board_t* b, un
 
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
 	p->min_depth = 255;
-	p->end_material_min = 255;
-	p->end_material_diff_min = 127;
 	memset(&(p->tags), 0, sizeof(p->tags));
 
 	threefold_entry_t tftable[s.max_depth << 1];
