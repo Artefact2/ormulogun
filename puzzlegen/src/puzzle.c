@@ -252,6 +252,50 @@ static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
 	return p->root.nextlen == takebacks;
 }
 
+/* Prune branches that don't win the max amount of material */
+static char puzzle_prune_step(puzzle_t* p, puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
+	assert(st->reply.start != 255);
+
+	cch_undo_move_state_t um, ur;
+	char diff;
+
+	if(st->move.promote > 0) {
+		/* Promotions are tricky, bail out */
+		eval_material(b, false, 0, &diff);
+		return diff;
+	}
+
+	if(depth > 0) {
+		cch_play_legal_move(b, &(st->move), &um);
+		cch_play_legal_move(b, &(st->reply), &ur);
+	}
+
+	if(st->nextlen == 0) {
+		eval_material(b, false, 0, &diff);
+	} else {
+		char vardiff;
+		diff = puzzle_prune_step(p, &(st->next[0]), b, depth + 1);
+		for(unsigned char i = 1; i < st->nextlen; ++i) {
+			vardiff = puzzle_prune_step(p, &(st->next[i]), b, depth + 1);
+			if(vardiff < diff) {
+				/* Variation loses on material gains, prune it */
+				puzzle_free_steps(&(st->next[i]));
+				--st->nextlen;
+				if(i < st->nextlen) {
+					st->next[i] = st->next[st->nextlen];
+				}
+			}
+		}
+	}
+
+	if(depth > 0) {
+		cch_undo_move(b, &(st->reply), &ur);
+		cch_undo_move(b, &(st->move), &um);
+	}
+
+	return diff;
+}
+
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
 	p->min_depth = 255;
 	p->end_material_min = 255;
@@ -265,7 +309,9 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 		return;
 	}
 
-	/* XXX: prune branches that lose on material gains */
+	if(!p->tags.checkmate && !p->tags.draw) {
+		puzzle_prune_step(p, &(p->root), b, 0);
+	}
 
 	if(puzzle_is_trivial(p, b)) {
 		p->min_depth = 0;

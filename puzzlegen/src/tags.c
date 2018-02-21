@@ -195,7 +195,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	}
 
 	if(depth > 0) {
-		cch_play_move(b, &(st->move), &um);
+		cch_play_legal_move(b, &(st->move), &um);
 
 		if(CCH_IS_OWN_KING_CHECKED(b)) {
 			tags_discovered_double_check(p, b, &(st->move));
@@ -210,7 +210,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 			return;
 		}
 
-		cch_play_move(b, &(st->reply), &ur);
+		cch_play_legal_move(b, &(st->reply), &ur);
 	}
 
 	tags_promotion(p, st);
