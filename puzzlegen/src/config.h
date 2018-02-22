@@ -12,10 +12,10 @@ static const char* uci_engine_opts[] = {
 
 
 /* When probing for puzzles */
-static const char* uci_limiter_probe = "depth 14";
+static const char* uci_limiter_probe = "depth 18";
 
 /* When building puzzles */
-static const char* uci_limiter = "depth 24";
+static const char* uci_limiter = "depth 22";
 
 static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* Abort if puzzle is longer than this number of turns */
@@ -30,12 +30,12 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* No more than this many possible moves for the first puzzle move */
 	.max_variations = 3,
 
-	/* Minimum eval difference between best and worst outcome of first
-	 * <max_variations> moves to generate a puzzle */
-	.puzzle_threshold_absolute = 150,
+	/* Minimum eval difference between consecutive best moves to
+	 * consider a tactic */
+	.puzzle_threshold_absolute = 200,
 
 	/* Consider variations if the difference between best move and
 	 * candidate move, relative to the difference between best move
 	 * and threshold move, is less than this */
-	.variation_cutoff_relative = .3f,
+	.variation_cutoff_relative = .2f,
 };

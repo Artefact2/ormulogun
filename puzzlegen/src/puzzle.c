@@ -39,16 +39,26 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
+		if(evals[0].score > s.max_depth) {
+			/* XXX: Long checkmate */
+			if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
+			if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
+		}
+
 		unsigned char i = 1;
 		while(i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score) {
 			++i;
 		}
-		return i < nlines;
+		return i < nlines ? i : 0;
 	}
+
+	/* XXX */
+	if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
 
 	unsigned int diff = 0;
 	int cutoff = 0;
 	unsigned char i;
+
 	for(i = 1; i < nlines && evals[i].type == SCORE_CP; ++i) {
 		if(evals[i - 1].score - evals[i].score > diff) {
 			diff = evals[i - 1].score - evals[i].score;
@@ -58,16 +68,11 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 
 	if(diff < s.puzzle_threshold_absolute) {
 		if(i < nlines) return i; /* Escape forced mate */
-
-		if(evals[0].score - evals[i - 1].score < s.puzzle_threshold_absolute) {
-			return 0;
-		} else {
-			cutoff = evals[0].score - s.puzzle_threshold_absolute;
-		}
+		return 0;
 	}
 
 	for(i = 1; (float)(evals[0].score - evals[i].score) / (float)(evals[0].score - cutoff) < s.variation_cutoff_relative; ++i);
-	return i;
+	return (i < nlines) ? i : 0;
 }
 
 static void puzzle_free_steps(puzzle_step_t* st) {

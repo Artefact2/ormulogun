@@ -112,7 +112,7 @@ unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
 	while(getline(&line, &linelen, ctx->r) != -1) {
 		tok = strtok_r(line, delim, &saveptr);
 		if(!strcmp("bestmove", tok)) {
-			if(verbose && strcmp("depth 1", limiter) && nlines > 1) {
+			if(verbose && strcmp("depth 1", limiter)) {
 				char san[SAFE_ALG_LENGTH];
 				cch_move_t m;
 				fprintf(stderr, "=====\nFEN: %s\nMultiPV: %d, Limiter: %s\n", fen, maxlines, limiter);
