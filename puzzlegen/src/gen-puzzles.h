@@ -37,7 +37,7 @@ typedef struct {
 int uci_create(const char*, uci_engine_context_t*);
 void uci_quit(const uci_engine_context_t*);
 void uci_init(const uci_engine_context_t*, const char* const*);
-unsigned char uci_eval(const uci_engine_context_t*, const char*, const cch_board_t*, uci_eval_t*, unsigned char);
+unsigned char uci_eval(const uci_engine_context_t*, const char*, cch_board_t*, uci_eval_t*, unsigned char);
 
 
 
