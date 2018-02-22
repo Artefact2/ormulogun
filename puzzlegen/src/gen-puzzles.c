@@ -32,6 +32,7 @@ static void usage(char* me) {
 			"          <games...>\n"
 			"See config.h for an explanation of these options.\n"
 			"Where each game is a JSON array of SAN moves from starting position.\n"
+			"Environment toggles: ORM_VERBOSE_EVAL\n"
 			"Example: %s '[\"e4\",\"Nc6\"]'\n", me, me);
 	exit(1);
 }

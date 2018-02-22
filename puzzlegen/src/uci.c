@@ -87,8 +87,14 @@ void uci_init(const uci_engine_context_t* ctx, const char* const* opts) {
 unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
 					   const cch_board_t* b, uci_eval_t* evals, unsigned char maxlines) {
 	static const char* delim = " \n";
+	static char verbose = -1;
 	static char* line = 0;
 	static size_t linelen;
+
+	if(verbose == -1) {
+		const char* env = getenv("ORM_VERBOSE_EVAL");
+		verbose = (env != 0 && env[0] == '1' && env[1] == '\0');
+	}
 
 	char fen[SAFE_FEN_LENGTH];
 	unsigned char nlines = 0;
@@ -105,7 +111,16 @@ unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
 
 	while(getline(&line, &linelen, ctx->r) != -1) {
 		tok = strtok_r(line, delim, &saveptr);
-		if(!strcmp("bestmove", tok)) return nlines;
+		if(!strcmp("bestmove", tok)) {
+			if(verbose && strcmp("depth 1", limiter) && nlines > 1) {
+				fprintf(stderr, "=====\nFEN: %s\nMultiPV: %d, Limiter: %s\n", fen, maxlines, limiter);
+				for(unsigned char i = 0; i < nlines; ++i) {
+					fprintf(stderr, "%s: score %s %d\n", evals[i].bestlan, evals[i].type == SCORE_CP ? "cp" : "mate", evals[i].score);
+				}
+				fprintf(stderr, "=====\n");
+			}
+			return nlines;
+		}
 		if(strcmp("info", tok)) continue;
 
 		bool has_mpv = false, has_pv = false, has_score = false;
