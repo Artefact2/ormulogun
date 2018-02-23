@@ -30,6 +30,7 @@ void tags_print(const puzzle_t* p) {
 		printf("\"Min depth %d\",\"Max depth %d\"", p->min_depth, p->max_depth);
 	}
 
+	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
@@ -226,6 +227,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	unsigned char i;
 
 	if(st->nextlen == 0) {
+		++p->num_variations;
 		if(depth < p->min_depth) {
 			p->min_depth = depth;
 		}
@@ -276,6 +278,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 }
 
 void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
+	p->num_variations = 0;
 	p->max_depth = 0;
 	p->end_material_min = 255;
 	p->end_material_max = 0;

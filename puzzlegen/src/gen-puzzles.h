@@ -62,6 +62,7 @@ typedef struct puzzle_step_s {
 typedef struct {
 	char fen[SAFE_FEN_LENGTH];
 	puzzle_step_t root;
+	unsigned char num_variations;
 	unsigned char min_depth;
 	unsigned char max_depth;
 	unsigned char start_material;
