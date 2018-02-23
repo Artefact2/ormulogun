@@ -152,7 +152,7 @@ static void tags_promotion(puzzle_t* p, const puzzle_step_t* st) {
 	}
 }
 
-static unsigned char count_winning_exchanges(cch_board_t* b, char ev, unsigned char start, unsigned char stop) {
+static unsigned char count_winning_exchanges(cch_board_t* b, char ev, unsigned char start, unsigned char stop, cch_move_t* out) {
 	cch_movelist_t ml;
 	cch_undo_move_state_t undo;
 	unsigned char attacks = 0, nmoves = cch_generate_moves(b, ml, CCH_LEGAL, start, stop);
@@ -161,6 +161,7 @@ static unsigned char count_winning_exchanges(cch_board_t* b, char ev, unsigned c
 		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
 		cch_play_legal_move(b, &(ml[i]), &undo);
 		if(-eval_quiet_material(b, -127, 127) > ev) {
+			out[attacks] = ml[i];
 			++attacks;
 		}
 		cch_undo_move(b, &(ml[i]), &undo);
@@ -175,24 +176,49 @@ static void tags_fork(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 
 	char ev;
 	unsigned char attacks;
+	cch_move_t moves[8]; /* XXX */
 
 	eval_material(b, true, 0, &ev);
 
 	/* If opponent does nothing, how many exchanges can we win with
 	 * the piece that we just moved? */
 	b->side = !b->side;
-	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1);
+	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
 	b->side = !b->side;
 
-	/* Can we win more than 2 exchanges ? Now that the opponent's
-	 * reply has been played, can we still win one exchange? */
-	if(attacks >= 2) {
-		cch_undo_move_state_t ur;
-		cch_play_legal_move(b, &(st->reply), &ur);
-		attacks = count_winning_exchanges(b, ev, 0, 64);
-		cch_undo_move(b, &(st->reply), &ur);
-		if(attacks > 0) p->tags.fork = true;
+	/* Can we win more than 2 exchanges? */
+	if(attacks < 2) return;
+
+	/* Is the reply to move one of the attacked pieces ? */
+	bool found = false;
+	unsigned char i;
+	for(i = 0; i < attacks; ++i) {
+		if(moves[i].end == st->reply.start) {
+			found = true;
+			break;
+		}
 	}
+	if(!found) return;
+
+	/* Now that the opponent's reply has been played, can we still win
+	 * one exchange with the same piece? */
+	cch_undo_move_state_t ur;
+	unsigned char afterattacks;
+	cch_move_t aftermoves[8]; /* XXX */
+
+	cch_play_legal_move(b, &(st->reply), &ur);
+	afterattacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, aftermoves);
+	cch_undo_move(b, &(st->reply), &ur);
+	if(afterattacks == 0 || afterattacks == attacks) return;
+
+	/* Is the follow up taking on one of these? */
+	for(i = 0; i < st->nextlen; ++i) {
+		if(!cch_is_move_in_list(&(st->next[i].move), aftermoves, afterattacks)) {
+			return;
+		}
+	}
+
+	p->tags.fork = true;
 }
 
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {
