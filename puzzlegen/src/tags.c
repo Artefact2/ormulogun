@@ -22,7 +22,13 @@
 	} while(0)
 
 void tags_print(const puzzle_t* p) {
-	printf("[\"Depth %d\"", p->min_depth);
+	putchar('[');
+
+	if(p->min_depth == p->max_depth) {
+		printf("\"Depth %d\"", p->min_depth);
+	} else {
+		printf("\"Min depth %d\",\"Max depth %d\"", p->min_depth, p->max_depth);
+	}
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
@@ -197,6 +203,9 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 		if(depth < p->min_depth) {
 			p->min_depth = depth;
 		}
+		if(depth > p->max_depth) {
+			p->max_depth = depth;
+		}
 	}
 
 	if(depth > 0) {
@@ -241,6 +250,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 }
 
 void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
+	p->max_depth = 0;
 	p->end_material_min = 255;
 	p->end_material_max = 0;
 	p->end_material_diff_min = 127;

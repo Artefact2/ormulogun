@@ -17,6 +17,12 @@
 
 $failures = 0;
 
+const OPTIONAL_TAGS = [
+	'%^Depth [1-9][0-9]*$%',
+	'%^Min depth [1-9][0-9]*$%',
+	'%^Max depth [1-9][0-9]*$%',
+];
+
 array_shift($argv);
 foreach($argv as $testjson) {
 	$test = json_decode($testjson, true);
@@ -27,11 +33,13 @@ foreach($argv as $testjson) {
 	assert(is_string($flags));
 	assert(is_array($tags));
 
-	$hasdepth = false;
+	$opt = [];
 	foreach($tags as $t) {
-		if(preg_match('%^Depth [1-9][0-9]*$%', $t)) {
-			$hasdepth = true;
-			break;
+		foreach(OPTIONAL_TAGS as $re) {
+			if(preg_match($re, $t)) {
+				$opt[$re] = $t;
+				break;
+			}
 		}
 	}
 
@@ -56,10 +64,10 @@ foreach($argv as $testjson) {
 		goto fail;
 	}
 
-	if(!$hasdepth) {
-		foreach($puz[2] as $k => $t) {
-			if(preg_match('%^Depth [1-9][0-9]*$%', $t)) {
-				unset($puz[2][$k]);
+	foreach($puz[2] as $k => $t) {
+		foreach(OPTIONAL_TAGS as $re) {
+			if(preg_match($re, $t)) {
+				if(!isset($opt[$re])) unset($puz[2][$k]);
 				break;
 			}
 		}

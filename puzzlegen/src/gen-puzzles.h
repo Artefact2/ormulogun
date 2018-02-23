@@ -63,6 +63,7 @@ typedef struct {
 	char fen[SAFE_FEN_LENGTH];
 	puzzle_step_t root;
 	unsigned char min_depth;
+	unsigned char max_depth;
 	unsigned char start_material;
 	char start_material_diff;
 	unsigned char end_material_min;
