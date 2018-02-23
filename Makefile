@@ -34,8 +34,8 @@ dist-clean: clean
 	rm -Rf frontend/deps
 
 host:
-	@echo "Browse to http://127.0.0.1:8080/index.xhtml in your browser..."
-	php -S 0.0.0.0:8080 -t frontend
+	@echo "Browse to http://[::1]:8080/index.xhtml in your browser..."
+	php -S '[::]:8080' -t frontend
 
 optisvg:
 	./tools/optisvg < frontend/ormulogun.css > min.css
