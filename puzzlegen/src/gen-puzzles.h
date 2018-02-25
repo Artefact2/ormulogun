@@ -84,6 +84,7 @@ typedef struct {
 		bool underpromotion:1;
 		bool pin_absolute:1;
 		bool fork:1;
+		bool skewer:1;
 		bool winning_position:1;
 	} tags;
 } puzzle_t;

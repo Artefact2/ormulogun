@@ -44,6 +44,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin");
 	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin (Absolute)");
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
+	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -222,6 +223,55 @@ static void tags_fork(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	p->tags.fork = true;
 }
 
+static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.skewer) return;
+	if(st->nextlen == 0) return;
+
+	/* Only sliders can do skewers */
+	cch_pure_piece_t pp = CCH_PURE_PIECE(CCH_GET_SQUARE(b, st->move.end));
+	if(pp != CCH_QUEEN && pp != CCH_ROOK && pp != CCH_BISHOP) return;
+
+	char ev;
+	unsigned char attacks;
+	cch_move_t moves[8];
+
+	eval_material(b, true, 0, &ev);
+
+	b->side = !b->side;
+	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
+	b->side = !b->side;
+
+	if(attacks == 0) return;
+
+	/* Is the reply moving one of the attacked pieces ? */
+	unsigned char i;
+	for(i = 0; i < attacks; ++i) {
+		if(moves[i].end == st->reply.start) {
+			break;
+		}
+	}
+	if(i == attacks) return;
+
+	char x1 = CCH_FILE(moves[i].end) - CCH_FILE(moves[i].start);
+	char y1 = CCH_RANK(moves[i].end) - CCH_RANK(moves[i].start);
+	for(unsigned char j = 0; j < st->nextlen; ++j) {
+		/* Is the follow up taking the piece behind the piece that just moved ? */
+		if(st->next[j].move.start != st->move.end) continue;
+		if(!CCH_GET_SQUARE(b, st->next[j].move.end)) continue;
+		char x2 = CCH_FILE(st->next[j].move.end) - CCH_FILE(st->next[j].move.start);
+		char y2 = CCH_RANK(st->next[j].move.end) - CCH_RANK(st->next[j].move.start);
+
+		/* Check direction */
+		if(x1 * y2 != y1 * x2) continue;
+
+		/* Check orientation */
+		if(x1 * x2 < 0 || y1 * y2 < 0) continue;
+
+		p->tags.skewer = true;
+		return;
+	}
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -246,6 +296,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 		}
 		tags_mate_threat(ctx, p, b);
 		tags_fork(p, st, b);
+		tags_skewer(p, st, b);
 
 		if(st->reply.start == 255) {
 			cch_undo_move(b, &(st->move), &um);
