@@ -8,7 +8,7 @@ before_script:
 pages:
     stage: deploy
     script:
-    - make
+    - make all-frontend
     - cp -R frontend public
     - find public/puzzles -name "*.json" -delete
     - rm -R public/index.xhtml

@@ -11,17 +11,17 @@ import-pgn:
 master.jpz:
 	echo -n | zstd -4 - -o $@
 
-puzzles-all: tools/gen-puzzles
+puzzles-all:
 	pv -cN input $(INPUT) | zstdcat | xargs -d '\n' -P $(JOBS) gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 
-puzzles-partial: tools/gen-puzzles
+puzzles-partial:
 	zstdcat $(INPUT) | tail -n +$(OFFSET) | head -n $(COUNT) | xargs -d '\n' -P $(JOBS) gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $(COUNT) -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 -o - $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 
-puzzles-split: tools/gen-puzzles
+puzzles-split:
 	(for x in $$(seq $(START) $(END)); do zstdcat $(INPUT) | tail -n +$$x | head -n 1 | xargs -d '\n' gen-puzzles --verbose $(PFLAGS) | tee >(zstd -4 -o $(TMP)); sync $(TMP); mv $(TMP) $(OUTPUT)-$$x.jpz; done) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
 
 merge-all: master.jpz $(shell find . -name "*.jpz" -not -name "master.jpz")
@@ -37,6 +37,11 @@ out/%.json: %.jpz
 
 out/%.js: out/%.json
 	cp $< $@
+
+retag-all: $(shell find . -name "*.jpz")
+	(for x in $^; do zstdcat $$x | xargs -P $(JOBS) -d '\n' retag-puzzles | tee >(zstd -4 - -o tmp.retag.$$x); done) | pv -ls `zstdcat $^ | wc -l` >/dev/null
+	sync tmp.retag.*
+	rename tmp.retag. "" tmp.retag.*
 
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
 	make out/manifest.json

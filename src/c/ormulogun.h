@@ -97,6 +97,12 @@ void puzzle_build(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const ch
 
 
 
+/* ----- load.c ----- */
+
+int puzzle_load(puzzle_t*, const char*);
+
+
+
 /* ----- tags.c ----- */
 
 void tags_print(const puzzle_t*);

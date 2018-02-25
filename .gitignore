@@ -8,3 +8,4 @@ puzzles/*.j[lz]
 puzzles/*.jpz
 puzzles/tmp.*
 bin/gen-puzzles
+bin/retag-puzzles

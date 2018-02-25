@@ -1,14 +1,14 @@
 FRONTEND:=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js
 PATH:=./bin:$(PATH)
-SOURCES:=$(shell find src -name "*.c")
+SOURCES:=$(shell find src -name "*.c" -not -name "gen-puzzles.c" -not -name "retag-puzzles.c")
 HEADERS:=$(shell find src -name "*.h")
 
-all: all-frontend bin/gen-puzzles
-
-bin/gen-puzzles: $(HEADERS) $(SOURCES) ./gumble/build/src/libenginecore.a
-	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./gumble/include $(SOURCES) ./gumble/build/src/libenginecore.a
+all: all-frontend bin/gen-puzzles bin/retag-puzzles
 
 all-frontend: js-all frontend/deps $(FRONTEND)
+
+bin/%: src/c/%.c $(HEADERS) $(SOURCES) ./gumble/build/src/libenginecore.a
+	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./gumble/include $< $(SOURCES) ./gumble/build/src/libenginecore.a
 
 frontend/deps:
 	mkdir $@ || exit 1
@@ -53,4 +53,4 @@ optisvg:
 js-all:
 	+make -C puzzles $@
 
-.PHONY: clean dist-clean host optisvg js-all
+.PHONY: all all-frontend clean dist-clean host optisvg js-all

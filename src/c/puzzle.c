@@ -100,7 +100,12 @@ static void puzzle_print_step(const puzzle_step_t* st) {
 		cch_format_lan_move(&(st->next[i].move), lan, SAFE_ALG_LENGTH);
 		printf("\"%s\":", lan);
 		if(st->next[i].nextlen == 0) {
-			putchar('0');
+			if(st->next[i].reply.start == 255) {
+				fputs("\"\"", stdout);
+			} else {
+				cch_format_lan_move(&(st->next[i].reply), lan, SAFE_ALG_LENGTH);
+				printf("\"%s\"", lan);
+			}
 		} else {
 			puzzle_print_step(&(st->next[i]));
 		}
@@ -122,6 +127,7 @@ void puzzle_init(puzzle_t* p, const cch_board_t* b, const cch_move_t* m) {
 	cch_return_t ret;
 	ret = cch_save_fen(b, p->fen, SAFE_FEN_LENGTH);
 	assert(ret == CCH_OK);
+	p->min_depth = 255;
 	p->root.reply = *m;
 	eval_material(b, true, &(p->start_material), &(p->start_material_diff));
 }
@@ -296,7 +302,6 @@ static char puzzle_prune_step(puzzle_t* p, puzzle_step_t* st, cch_board_t* b, un
 }
 
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
-	p->min_depth = 255;
 	memset(&(p->tags), 0, sizeof(p->tags));
 
 	threefold_entry_t tftable[s.max_depth << 1];
