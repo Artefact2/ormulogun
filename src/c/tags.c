@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "gen-puzzles.h"
+#include "ormulogun.h"
 
 #define MAYBE_PRINT_TAG(f, n) do {				\
 		if(f) {									\

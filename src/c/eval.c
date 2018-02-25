@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "gen-puzzles.h"
+#include "ormulogun.h"
 #include <stdbool.h>
 
 void eval_material(const cch_board_t* b, bool reverse, unsigned char* total, char* diff) {

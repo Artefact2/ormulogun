@@ -14,8 +14,8 @@
  */
 
 #pragma once
-#ifndef ORMULOGUN_GEN_PUZZLES_H
-#define ORMULOGUN_GEN_PUZZLES_H
+#ifndef ORMULOGUN_H
+#define ORMULOGUN_H
 
 #include <engine.h>
 #include <stdio.h>
@@ -102,9 +102,11 @@ void puzzle_build(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const ch
 void tags_print(const puzzle_t*);
 void tags_puzzle(puzzle_t*, cch_board_t*, const uci_engine_context_t*);
 
+
+
 /* ----- eval.c ----- */
 
-void eval_material(const cch_board_t* b, bool, unsigned char*, char*);
-char eval_quiet_material(cch_board_t* b, char, char);
+void eval_material(const cch_board_t*, bool, unsigned char*, char*);
+char eval_quiet_material(cch_board_t*, char, char);
 
 #endif

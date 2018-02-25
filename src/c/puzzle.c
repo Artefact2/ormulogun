@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "gen-puzzles.h"
+#include "ormulogun.h"
 #include <string.h>
 #include <stdbool.h>
 #include <assert.h>

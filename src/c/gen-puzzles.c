@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "gen-puzzles.h"
+#include "ormulogun.h"
 #include "config.h"
 #include <engine.h>
 #include <stdio.h>
