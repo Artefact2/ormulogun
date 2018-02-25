@@ -1,6 +1,14 @@
-DEFAULTS=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js
+FRONTEND:=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js
+PATH:=./bin:$(PATH)
+SOURCES:=$(shell find src -name "*.c")
+HEADERS:=$(shell find src -name "*.h")
 
-default: js-all frontend/deps $(DEFAULTS)
+all: all-frontend bin/gen-puzzles
+
+bin/gen-puzzles: $(HEADERS) $(SOURCES) ./gumble/build/src/libenginecore.a
+	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./gumble/include $(SOURCES) ./gumble/build/src/libenginecore.a
+
+all-frontend: js-all frontend/deps $(FRONTEND)
 
 frontend/deps:
 	mkdir $@ || exit 1
@@ -27,7 +35,7 @@ frontend/ormulogun.css: $(shell find src/scss -name "*.scss")
 	sassc -t compressed src/scss/ormulogun.scss $@
 
 clean:
-	rm -f $(DEFAULTS)
+	rm -f $(FRONTEND) bin/gen-puzzles
 	rm -Rf gumble/build gumble/build-js
 
 dist-clean: clean
@@ -38,11 +46,11 @@ host:
 	php -S '[::]:8080' -t frontend
 
 optisvg:
-	./tools/optisvg < frontend/ormulogun.css > min.css
-	while ! cmp -s min.css frontend/ormulogun.css; do mv min.css frontend/ormulogun.css; ./tools/optisvg < frontend/ormulogun.css > min.css; done
+	optisvg < frontend/ormulogun.css > min.css
+	while ! cmp -s min.css frontend/ormulogun.css; do mv min.css frontend/ormulogun.css; optisvg < frontend/ormulogun.css > min.css; done
 	rm min.css
 
 js-all:
-	+make -C puzzlegen $@
+	+make -C puzzles $@
 
 .PHONY: clean dist-clean host optisvg js-all

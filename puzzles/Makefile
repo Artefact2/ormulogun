@@ -1,0 +1,46 @@
+SHELL=/bin/bash
+TMP:=$(shell mktemp -u -p .)
+JOBS:=2
+PATH:=../bin:$(PATH)
+
+import-pgn:
+	pv -cN input $(INPUT) | chunk-pgn | xargs -d '\n' -P $(JOBS) filter-pgn | xargs -d '\n' -P $(JOBS) pgnml_to_json | pv -lcN games | zstd -4 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) $(OUTPUT)
+
+master.jpz:
+	echo -n | zstd -4 - -o $@
+
+puzzles-all: tools/gen-puzzles
+	pv -cN input $(INPUT) | zstdcat | xargs -d '\n' -P $(JOBS) gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) $(OUTPUT)
+
+puzzles-partial: tools/gen-puzzles
+	zstdcat $(INPUT) | tail -n +$(OFFSET) | head -n $(COUNT) | xargs -d '\n' -P $(JOBS) gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $(COUNT) -lcN games >/dev/null) | pv -lcN puzzles | zstd -4 -o - $(TMP)
+	sync $(TMP)
+	mv $(TMP) $(OUTPUT)
+
+puzzles-split: tools/gen-puzzles
+	(for x in $$(seq $(START) $(END)); do zstdcat $(INPUT) | tail -n +$$x | head -n 1 | xargs -d '\n' gen-puzzles --verbose $(PFLAGS) | tee >(zstd -4 -o $(TMP)); sync $(TMP); mv $(TMP) $(OUTPUT)-$$x.jpz; done) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
+
+merge-all: master.jpz $(shell find . -name "*.jpz" -not -name "master.jpz")
+	zstdcat $^ | pv -lcN in | merge-jl | pv -lcN out | zstd -4 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) master.jpz
+
+out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
+	update-manifest $@
+
+out/%.json: %.jpz
+	zstdcat $< | jl_to_json > $@
+
+out/%.js: out/%.json
+	cp $< $@
+
+json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
+	make out/manifest.json
+
+js-all: $(patsubst %.json, %.js, $(shell find out/ -name "*.json"))
+
+.PHONY: clean import-pgn puzzles-all puzzles-partial merge-all json-all js-all

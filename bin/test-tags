@@ -46,7 +46,7 @@ foreach($argv as $testjson) {
 	/* XXX: this is highly non deterministic */
 	$puzjson = trim(shell_exec($cmd = sprintf(
 		'%s %s --start-ply 0 --max-puzzles 1 --start-fen %s %s',
-		escapeshellcmd(__DIR__.'/../tools/gen-puzzles'),
+		escapeshellcmd(__DIR__.'/gen-puzzles'),
 		$flags,
 		escapeshellarg($fen),
 		escapeshellarg(json_encode([ $lan ]))
