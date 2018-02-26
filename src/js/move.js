@@ -38,6 +38,9 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 	};
 
 	if(!animate) {
+		$("div#board > div.back.move-prev").removeClass('move-prev');
+		orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
+		orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
 		work();
 		return;
 	}
@@ -66,9 +69,12 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 		psrc.removeClass("f" + psrc.data("ofile") + " r" + psrc.data("orank"));
 		psrc.addClass("moving f" + df + " r" + dr);
 		pdest.addClass("captured");
+		$("div#board > div.back.move-prev").removeClass('move-prev');
 		if(orm_move_timeoutid !== null) clearTimeout(orm_move_timeoutid);
 		orm_move_timeoutid = setTimeout(function() {
 			orm_move_timeoutid = null;
+			orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
+			orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
 			work();
 		}, 500);
 	}, 50);

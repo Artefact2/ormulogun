@@ -43,6 +43,10 @@ div.board {
 				height: 40%;
 				border-radius: 50%;
 			}
+
+			&.move-prev {
+				border: .2em solid hsl(0, 100%, 50%);
+			}
 		}
 
 		&.piece {
