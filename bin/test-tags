@@ -17,75 +17,30 @@
 
 $failures = 0;
 
-const OPTIONAL_TAGS = [
-	'%^Depth [1-9][0-9]*$%',
-	'%^Min depth [1-9][0-9]*$%',
-	'%^Max depth [1-9][0-9]*$%',
-];
-
 array_shift($argv);
-foreach($argv as $testjson) {
-	$test = json_decode($testjson, true);
-	assert(is_array($test) && count($test) === 4);
-	list($fen, $lan, $flags, $tags) = $test;
-	assert(is_string($fen));
-	assert(is_string($lan));
-	assert(is_string($flags));
-	assert(is_array($tags));
 
-	$opt = [];
-	foreach($tags as $t) {
-		foreach(OPTIONAL_TAGS as $re) {
-			if(preg_match($re, $t)) {
-				$opt[$re] = $t;
-				break;
-			}
-		}
-	}
+foreach($argv as $puzjson) {
+	$retagged = json_decode(shell_exec(escapeshellcmd(__DIR__.'/retag-puzzles').' '.escapeshellarg($puzjson)));
+	$puz = json_decode($puzjson);
 
-	/* XXX: this is highly non deterministic */
-	$puzjson = trim(shell_exec($cmd = sprintf(
-		'%s %s --start-ply 0 --max-puzzles 1 --start-fen %s %s',
-		escapeshellcmd(__DIR__.'/gen-puzzles'),
-		$flags,
-		escapeshellarg($fen),
-		escapeshellarg(json_encode([ $lan ]))
-	)));
+	if(!is_array($retagged)) goto fail;
 
-	if($puzjson === '') {
-		fprintf(STDERR, "Unexpected lack of puzzle!\nTest: %s\n", $testjson);
-		goto fail;
-	}
-
-	$puz = json_decode($puzjson, true);
-
-	if($puz[0] !== $fen || $puz[1][0] !== $lan) {
-		fprintf(STDERR, "Unexpected puzzle start!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
-		goto fail;
-	}
-
-	foreach($puz[2] as $k => $t) {
-		foreach(OPTIONAL_TAGS as $re) {
-			if(preg_match($re, $t)) {
-				if(!isset($opt[$re])) unset($puz[2][$k]);
-				break;
-			}
-		}
-	}
-
-	sort($tags);
 	sort($puz[2]);
-	if($tags !== $puz[2]) {
-		fprintf(STDERR, "Mismatched tags!\nTest: %s\nPuzzle: %s\n", $testjson, $puzjson);
+	sort($retagged[2]);
+	$epuz = json_encode($puz);
+	$eretagged = json_encode($retagged);
+
+	if($epuz !== $eretagged) {
+		fprintf(STDERR, "Test: %s\nRetagged: %s\n", $epuz, $eretagged);
 		goto fail;
 	}
 
-	printf("Test OK: %s => %s\n", $testjson, $puzjson);
+	printf("Test OK: %s\n", $puzjson);
 	continue;
 
 	fail:
 	++$failures;
-	printf("Test failed: %s\n", $testjson);
+	printf("Test failed: %s\n", $puzjson);
 }
 
 die($failures);
