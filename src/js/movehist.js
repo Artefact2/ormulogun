@@ -208,7 +208,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 };
 
 const orm_movehist_merge_from_puzzle_step = function(step) {
-	if(step === 0) return;
+	if(!Array.isArray(step)) return;
 
 	let current = orm_movehist_current();
 	let fen = gumble_save_fen(); /* XXX: undo move */

@@ -116,7 +116,7 @@ const orm_puzzle_try = function(lan) {
 		return;
 	}
 
-	if(orm_puzzle_next[lan] === 0) {
+	if(!Array.isArray(orm_puzzle_next[lan])) {
 		orm_puzzle_success();
 		return;
 	}
