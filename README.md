@@ -22,7 +22,6 @@ To-Do
 * More automatic tagging (discovered attacks, pins, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, ...)
 * Puzzle filtering (union or intersection of arbitrary tags)
 * Progress tracking, spaced repetition
-* Preferences (board appearance, Leitner tweakables)
 * Touch-friendly drag and drop
 * Find some way of rating puzzles by difficulty without relying on a central server and user tracking (if at all possible)
 
