@@ -113,6 +113,10 @@ const orm_restore_tab = function() {
 		$("div#select-puzzleset").show();
 		return;
 
+	case "#prefs":
+		$("div#preferences").show();
+		return;
+
 	case "#puzzle":
 		/* XXX */
 		if(h.length !== 3) break;

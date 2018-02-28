@@ -36,13 +36,6 @@ const orm_init = function() {
 		$("div.board.board-main").css("width", width);
 	}).resize();
 
-	$("button#start").click(function() {
-		$("div#intro").fadeOut(250, function() {
-			$("div#select-puzzleset").fadeIn(250);
-			history.replaceState(null, null, "#list");
-		});
-	}).removeAttr('disabled').removeClass('disabled');
-
 	$("p#enable-js").remove();
 };
 

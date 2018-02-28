@@ -15,27 +15,29 @@
 	</head>
 	<body>
 		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark" id="mainnav">
-			<span class="navbar-brand"><a href="./"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
+			<span class="navbar-brand"><a href="./" data-orm-tab="intro" data-orm-anchor="#"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbar-collapse">
 				<ul class="navbar-nav navbar-left">
+					<li class="nav-item"><a class="nav-link" data-orm-tab="select-puzzleset" href="#list">Puzzle sets</a></li>
 				</ul>
 				<ul class="navbar-nav ml-auto">
-					<li class="nav-item"><a class="nav-link" href="https://gitlab.com/artefact2/ormulogun">Source code</a></li>
+					<li class="nav-item"><a class="nav-link" data-orm-tab="preferences" href="#prefs">Preferences</a></li>
 				</ul>
 			</div>
 		</nav>
 		<p class="alert alert-primary" id="enable-js">
 			<strong>Ormulogun is now loading its scripts.</strong> (If this is taking forever, enable scripts and XHR for the top-level domain.)
 		</p>
-		<div id="intro" class="container mt-2">
+		<div id="intro" class="tab container mt-2">
 			<h1>What is Ormulogun?</h1>
 			<p><strong>Ormulogun is a tactics trainer for chess.</strong> It is completely free and libre.</p>
 			<p>Puzzles are generated from tactics in classical games of high-rated players on Lichess.</p>
 			<p class="alert alert-warning"><strong>Ormulogun is still under heavy developement. Some features are incomplete, or not implemented at all. Because puzzles are computer-generated and computer-tagged, some may not make sense to humans.</strong></p>
-			<p><button type="button" id="start" class="btn btn-primary btn-lg disabled" disabled="disabled">Start training</button></p>
+			<p><button type="button" class="btn btn-primary" data-orm-tab="select-puzzleset" data-orm-anchor="#list">Start training</button> or
+					<a class="btn btn-outline-secondary" href="https://gitlab.com/artefact2/ormulogun">Check out the source code</a></p>
 		</div>
 		<div id="select-puzzleset" class="tab container mt-2">
 			<h1>Choose a puzzle set</h1>
@@ -79,7 +81,12 @@
 			</div>
 		</div>
 		<div id="preferences" class="tab container mt-2">
-			<h1>Preferences</h1>
+			<form>
+				<h1>Preferences</h1>
+				<section id='lookandfeel'>
+					<h2>Look &amp; Feel</h2>
+				</section>
+			</form>
 		</div>
 		<div id="promote-modal" class="modal fade">
 			<div class="modal-dialog">
