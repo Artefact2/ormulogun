@@ -108,3 +108,7 @@ const orm_piece_at = function(alg, cl) {
 	cl += ".r" + orm_rank(alg);
 	return $("div#board > div." + cl);
 };
+
+const orm_sq = function(file, rank) {
+	return (file - 1) * 8 + (rank - 1);
+};

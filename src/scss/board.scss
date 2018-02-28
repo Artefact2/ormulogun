@@ -64,6 +64,16 @@ div.board {
 				transition: opacity .25s ease .25s !important;
 				opacity: 0;
 			}
+
+			&.king.in-check:after {
+				content: "";
+				position: absolute;
+				top: 0;
+				left: 0;
+				width: 100%;
+				height: 100%;
+				background: radial-gradient(closest-side, hsla(0, 100%, 50%, .5), hsla(0, 100%, 50%, 0));
+			}
 		}
 	}
 

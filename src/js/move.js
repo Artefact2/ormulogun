@@ -34,6 +34,15 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 
 	let work = function() {
 		orm_load_fen(endfen);
+
+		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
+		$("div#board > div.piece.king.in-check").removeClass('in-check');
+		let k = $("div#board.white > div.piece.king.white, div#board.black > div.piece.king.black");
+		console.log(k, k.data('ofile'), k.data('orank'), gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank'))));
+		if(gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank')))) {
+			k.addClass('in-check');
+		}
+
 		if(done) done();
 	};
 

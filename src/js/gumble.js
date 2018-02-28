@@ -33,26 +33,30 @@ const gumble_load_fen = function(fen) {
 const gumble_save_fen = function() {
 	Module._cch_save_fen(gumble_board, gumble_fen_str, GUMBLE_SAFE_FEN_LENGTH);
 	return Pointer_stringify(gumble_fen_str);
-}
+};
 
 const gumble_is_move_legal = function(lan) {
 	writeAsciiToMemory(lan, gumble_move_str);
 	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
 	return Module._cch_is_move_legal(gumble_board, gumble_move);
-}
+};
 
 const gumble_play_legal_lan = function(lan) {
 	writeAsciiToMemory(lan, gumble_move_str);
 	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
 	Module._cch_play_legal_move(gumble_board, gumble_move, 0);
-}
+};
 
 const gumble_lan_to_san = function(lan) {
 	writeAsciiToMemory(lan, gumble_move_str);
 	Module._cch_parse_lan_move(gumble_move_str, gumble_move);
 	Module._cch_format_san_move(gumble_board, gumble_move, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH, 1);
 	return Pointer_stringify(gumble_move_str);
-}
+};
+
+const gumble_is_square_checked = function(sq) {
+	return Module._cch_is_square_checked(gumble_board, sq);
+};
 
 orm_when_ready.push(function() {
 	gumble_board = Module._malloc(GUMBLE_BOARD_SIZE);
