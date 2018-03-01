@@ -84,7 +84,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 			orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
 			orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
 			work();
-		}, 500);
+		}, orm_pref("board_animation_speed"));
 	}, 50);
 };
 

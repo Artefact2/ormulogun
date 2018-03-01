@@ -38,7 +38,7 @@ const orm_load_puzzle = function(puz) {
 			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
 			$("ul#movehist li.new").addClass('puzzle-reply');
 		});
-	}, 500);
+	}, orm_pref("board_move_delay"));
 
 	$("p#puzzle-prompt")
 		.empty()
@@ -73,8 +73,12 @@ const orm_load_next_puzzle = function() {
 
 			/* XXX: probably slow and inefficient, maybe use bitmasks?
 			 * but it doesn't work for >32 tags */
-			if($.inArray(t, orm_tag_whitelist) === -1) continue outer;
 			if($.inArray(t, orm_tag_blacklist) !== -1) continue outer;
+		}
+
+		for(let j in orm_tag_whitelist) {
+			/* XXX */
+			if($.inArray(orm_tag_whitelist[j], orm_puzzle_set[i][2]) === -1) continue outer;
 		}
 
 		if(mindepth !== null && maxdepth !== null && depth === null) {
@@ -161,7 +165,7 @@ const orm_puzzle_try = function(lan) {
 		orm_do_legal_move(puz[0], true, function() {
 			$("ul#movehist li.new").addClass('puzzle-reply');
 		});
-	}, 500);
+	}, orm_pref("board_move_delay"));
 };
 
 orm_when_ready.push(function() {

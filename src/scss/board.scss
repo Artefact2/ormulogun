@@ -57,11 +57,11 @@ div.board {
 
 			&.moving {
 				z-index: 9;
-				transition: left .5s, top .5s !important;
+				transition-property: left, top !important;
 			}
 
 			&.captured {
-				transition: opacity .25s ease .25s !important;
+				transition-property: opacity !important;
 				opacity: 0;
 			}
 
@@ -79,7 +79,7 @@ div.board {
 
 	&.black > div.piece.black, &.white > div.piece.white {
 		cursor: grab;
-		transition: all 0s;
+		transition-property: none;
 	}
 
 	&> div {

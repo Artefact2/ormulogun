@@ -18,6 +18,8 @@ const ORM_PREFS_DEFAULTS = {
 	"highlight_check": "1",
 	"highlight_prev_move": "1",
 	"board_max_size": "0",
+	"board_animation_speed": "500",
+	"board_move_delay": "500",
 	"custom_css": "",
 
 	"puzzle_depth_min": "1",
@@ -139,6 +141,10 @@ const orm_prefs_css_update = function() {
 		css += "div.board.board-main { max-width: " + orm_prefs.board_max_size + "px; }";
 	}
 
+	let spd = orm_pref("board_animation_speed");
+	css += "div.board > div.piece.moving { transition-duration: " + spd + "ms; }";
+	css += "div.board > div.piece.captured { transition-duration: " + (spd / 2) + "ms; transition-delay: " + (spd / 2) + "ms; }";
+
 	let style = $("head > style#prefs");
 	if(style.length === 0) {
 		style = $(document.createElement('style'));
@@ -171,6 +177,8 @@ orm_when_ready.push(function() {
 						   orm_prefs_boolean("highlight_check", "Highlight check")),
 		orm_prefs_combine2(orm_prefs_boolean("highlight_prev_move", "Highlight previous move"),
 						   orm_prefs_number("board_max_size", "Maximum board size (px)")),
+		orm_prefs_combine2(orm_prefs_number("board_animation_speed", "Move animation speed (ms)"),
+						   orm_prefs_number("board_move_delay", "Delay before computer move (ms)")),
 		orm_prefs_textarea("custom_css", "Custom CSS rules")
 	);
 
