@@ -17,7 +17,7 @@ let orm_manifest = null;
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
 let orm_puzzle_idx = null;
-let orm_puzzle_filter = null;
+let orm_when_puzzle_manifest_ready = [];
 
 const orm_load_puzzle_manifest = function(done) {
 	$.getJSON("./puzzles/manifest.js").always(function() {
@@ -26,63 +26,6 @@ const orm_load_puzzle_manifest = function(done) {
 		orm_error('Could not load the puzzle set manifest, make sure no extension is blocking XHR.');
 	}).done(function(data) {
 		orm_manifest = data;
-
-		let ul = $("div#select-puzzleset > ul");
-		let hash = location.hash.split('-', 3);
-		for(let i in data) {
-			let pset = data[i];
-			let li = $(document.createElement('li'));
-			li.addClass('mb-4');
-
-			let h = $(document.createElement('h2'));
-			let span = $(document.createElement('span'));
-			let btn = $(document.createElement('button'));
-			let badge = $(document.createElement('span'));
-			h.addClass('d-flex justify-content-between border-bottom pb-1 border-dark');
-			span.text(pset.name);
-			btn.text('Start training ');
-			btn.addClass('btn btn-primary');
-			btn.data('idx', i).data('tag', null);
-			badge.addClass('badge badge-light');
-			badge.text(pset.count);
-			btn.append(badge);
-			h.append(span, btn);
-			li.append(h);
-
-			let p = $(document.createElement('p'));
-			for(let t in pset.tags) {
-				let btn = $(document.createElement('button'));
-				let span = $(document.createElement('span'));
-				btn.addClass('btn btn-sm btn-secondary mr-1 mb-1');
-				btn.text(t + ' ');
-				btn.data('tag', t).data('idx', i);
-				span.addClass('badge badge-light');
-				span.text(pset.tags[t]);
-				btn.append(span);
-				p.append(btn);
-			}
-			li.append(p);
-
-			p = $(document.createElement('p'));
-			p.text(pset.desc);
-			li.append(p);
-
-			ul.append(li);
-		}
-
-		ul.find("button").click(function() {
-			let t = $(this);
-			t.prop('disabled', 'disabled').addClass('disabled');
-			orm_puzzle_filter = t.data('tag');
-			orm_load_puzzle_set(t.data('idx'), null, null, function() {
-				$("div#select-puzzleset").fadeOut(250, function() {
-					orm_load_next_puzzle();
-					t.prop('disabled', false).removeClass('disabled');
-					$("div#play-puzzle").fadeIn(250);
-				});
-			});
-		});
-
 		done();
 	});
 };
@@ -142,7 +85,7 @@ const orm_restore_tab = function() {
 };
 
 const orm_init_board = function() {
-	let b = $("div#board");
+	let b = $("div.board");
 	let d;
 	for(let f = 1; f <= 8; ++f) {
 		for(let r = 1; r <= 8; ++r) {
@@ -157,7 +100,70 @@ const orm_init_board = function() {
 
 orm_when_ready.push(function() {
 	orm_load_puzzle_manifest(function() {
-		orm_init_board();
-		orm_restore_tab();
+		for(let i in orm_when_puzzle_manifest_ready) {
+			orm_when_puzzle_manifest_ready[i]();
+		}
 	});
+
+	orm_init_board();
+});
+
+orm_when_puzzle_manifest_ready.push(function() {
+	orm_restore_tab();
+
+	let ul = $("div#select-puzzleset > ul");
+	let hash = location.hash.split('-', 3);
+	for(let i in orm_manifest) {
+		let pset = orm_manifest[i];
+		let li = $(document.createElement('li'));
+		li.addClass('mb-4');
+
+		let h = $(document.createElement('h2'));
+		let span = $(document.createElement('span'));
+		let btn = $(document.createElement('button'));
+		let badge = $(document.createElement('span'));
+		h.addClass('d-flex justify-content-between border-bottom pb-1 border-dark');
+		span.text(pset.name);
+		btn.text('Start training ');
+		btn.addClass('btn btn-primary');
+		btn.data('idx', i).data('tag', null);
+		badge.addClass('badge badge-light');
+		badge.text(pset.count);
+		btn.append(badge);
+		h.append(span, btn);
+		li.append(h);
+
+		let p = $(document.createElement('p'));
+		for(let t in pset.tags) {
+			let btn = $(document.createElement('button'));
+			let span = $(document.createElement('span'));
+			btn.addClass('btn btn-sm btn-secondary mr-1 mb-1');
+			btn.text(t + ' ');
+			btn.data('tag', t).data('idx', i);
+			span.addClass('badge badge-light');
+			span.text(pset.tags[t]);
+			btn.append(span);
+			p.append(btn);
+		}
+		li.append(p);
+
+		p = $(document.createElement('p'));
+		p.text(pset.desc);
+		li.append(p);
+
+		ul.append(li);
+	}
+
+	ul.find("h2 > button").click(function() {
+		let t = $(this);
+		t.prop('disabled', 'disabled').addClass('disabled');
+		orm_load_puzzle_set(t.data('idx'), null, null, function() {
+			$("div#select-puzzleset").fadeOut(250, function() {
+				orm_load_next_puzzle();
+				t.prop('disabled', false).removeClass('disabled');
+				$("div#play-puzzle").fadeIn(250);
+			});
+		});
+	});
+
 });

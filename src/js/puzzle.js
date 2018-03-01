@@ -54,10 +54,40 @@ const orm_load_puzzle = function(puz) {
 const orm_load_next_puzzle = function() {
 	/* XXX: puzzle cooldown, box system, etc */
 	let cur = orm_puzzle_idx === null ? -1 : orm_puzzle_idx;
+	let mind = orm_pref("puzzle_depth_min");
+	let maxd = orm_pref("puzzle_depth_max");
+
+	outer:
 	for(let i = cur + 1; i < orm_manifest[orm_puzzle_midx].count; ++i) {
-		if(orm_puzzle_filter === null) return orm_load_puzzle(i);
-		if($.inArray(orm_puzzle_filter, orm_puzzle_set[i][2]) !== -1) return orm_load_puzzle(i);
+		let mindepth = null, maxdepth = null, depth = null;
+
+		for(let j in orm_puzzle_set[i][2]) {
+			let t = orm_puzzle_set[i][2][j];
+			let m;
+			if(m = t.match(/^(Min depth|Max depth|Depth) ([1-9][0-9]*)$/)) {
+				if(m[1] === "Min depth") mindepth = parseInt(m[2], 10);
+				else if(m[1] === "Max depth") maxdepth = parseInt(m[2], 10);
+				else depth = parseInt(m[2], 10);
+				continue;
+			}
+
+			/* XXX: probably slow and inefficient, maybe use bitmasks?
+			 * but it doesn't work for >32 tags */
+			if($.inArray(t, orm_tag_whitelist) === -1) continue outer;
+			if($.inArray(t, orm_tag_blacklist) !== -1) continue outer;
+		}
+
+		if(mindepth !== null && maxdepth !== null && depth === null) {
+			if(mindepth < mind || maxdepth > maxd) continue;
+		} else if(depth !== null && mindepth === null && maxdepth === null) {
+			if(depth < mind || depth > maxd) continue;
+		} else {
+			orm_error("Puzzle #" + i + " has invalid depth tagging.");
+		}
+
+		return orm_load_puzzle(i);
 	}
+
 	/* XXX */
 	orm_error("No more puzzles to play.");
 };

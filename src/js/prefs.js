@@ -19,13 +19,28 @@ const ORM_PREFS_DEFAULTS = {
 	"highlight_prev_move": "1",
 	"board_max_size": "0",
 	"custom_css": "",
+
+	"puzzle_depth_min": "1",
+	"puzzle_depth_max": "7",
 };
 
 let orm_prefs = null;
 let orm_prefs_prev = null;
 
+let orm_tag_whitelist = [];
+let orm_tag_blacklist = [];
 
-const orm_prefs_generic = function(section, k, lstr, element) {
+const orm_pref = function(k) {
+	return (k in orm_prefs) ? orm_prefs[k] : ORM_PREFS_DEFAULTS[k];
+};
+
+const orm_prefs_combine2 = function(d1, d2) {
+	d1.children('div.col-sm-9').addClass('col-lg-3 mb-3');
+	d2.children('div.col-sm-9').addClass('col-lg-3 mb-3');
+	return d1.append(d2.children()).toggleClass('mb-3 mb-0');
+};
+
+const orm_prefs_generic = function(k, lstr, element) {
 	let d = $(document.createElement('div'));
 	let label = $(document.createElement('label'));
 	let override = $(document.createElement('input'));
@@ -35,11 +50,12 @@ const orm_prefs_generic = function(section, k, lstr, element) {
 	element.addClass('form-control save-pref');
 	element.data('k', k);
 
-	d.addClass('form-row form-group');
+	d.addClass('form-row form-group mb-3');
 	group.addClass('input-group');
 
 	label.text(lstr);
-	label.prop('for', element.prop('id'));
+	label.attr('for', element.prop('id'));
+	label.addClass('text-sm-right');
 
 	override.prop('type', 'checkbox');
 	override.prop('id', 'override_s_' + k);
@@ -79,90 +95,32 @@ const orm_prefs_generic = function(section, k, lstr, element) {
 	}
 	override.prop('checked', k in orm_prefs).change();
 
-	d.append(label.addClass('col-md-3 col-form-label'));
-	d.append($(document.createElement('div')).addClass('col-md-9').append(group));
-	$("section#" + section).append(d);
+	d.append(label.addClass('col-sm-3 col-form-label'));
+	d.append($(document.createElement('div')).addClass('col-sm-9').append(group));
+	return d;
 };
 
-const orm_prefs_boolean = function(section, k, lstr) {
+const orm_prefs_boolean = function(k, lstr) {
 	let select = $(document.createElement('select'));
 	select.addClass('custom-select');
 	select.prop('id', 's_' + k);
 	select.append($(document.createElement('option')).prop('value', 1).text('yes'));
 	select.append($(document.createElement('option')).prop('value', 0).text('no'));
-	return orm_prefs_generic(section, k, lstr, select);
+	return orm_prefs_generic(k, lstr, select);
 };
 
-const orm_prefs_number = function(section, k, lstr) {
+const orm_prefs_number = function(k, lstr) {
 	let input = $(document.createElement('input'));
 	input.prop('id', 's_' + k);
 	input.prop('type', 'number');
-	return orm_prefs_generic(section, k, lstr, input);
+	return orm_prefs_generic(k, lstr, input);
 };
 
-const orm_prefs_textarea = function(section, k, lstr) {
+const orm_prefs_textarea = function(k, lstr) {
 	let ta = $(document.createElement('textarea'));
 	ta.prop('id', 's_' + k);
-	return orm_prefs_generic(section, k, lstr, ta);
+	return orm_prefs_generic(k, lstr, ta);
 }
-
-orm_when_ready.push(function() {
-	orm_prefs = orm_state_get('prefs', {});
-	orm_prefs_prev = orm_state_get('prefs_prev', {});
-
-	orm_prefs_boolean("lookandfeel", "highlight_moves", "Highlight legal moves");
-	orm_prefs_boolean("lookandfeel", "highlight_check", "Highlight check");
-	orm_prefs_boolean("lookandfeel", "highlight_prev_move", "Highlight previous move");
-	orm_prefs_number("lookandfeel", "board_max_size", "Maximum board size (pixels, 0=unlimited)");
-	orm_prefs_textarea("lookandfeel", "custom_css", "Custom CSS rules");
-
-	$("div#preferences > form > section").each(function() {
-		let input = $(document.createElement('input'));
-		input.prop('type', 'submit');
-		input.prop('value', 'Save preferences');
-		input.addClass('btn btn-primary');
-		input.click(function() {
-			let span = $(document.createElement('span'));
-			span.text('Preferences saved!');
-			span.addClass('ml-2 text-success');
-			input.find('+ span').remove();
-			input.after(span);
-			span.hide().fadeIn(250).delay(2000).fadeOut(1000);
-			input.blur();
-		});
-		$(this).append($(document.createElement('div')).addClass('form-row').append(
-			$(document.createElement('div')).addClass('col-md-9').append(input)
-		));
-	});
-
-	$("div#preferences > form").submit(function(e) {
-		e.preventDefault();
-
-		$(this).find('.save-pref').each(function() {
-			let e = $(this);
-			let k = e.data('k');
-			if(typeof(k) === "undefined") return;
-
-			if(e.hasClass('disabled')) {
-				delete orm_prefs[k];
-				if(typeof(e.data('prev-val')) !== "undefined") {
-					orm_prefs_prev[k] = e.data('prev-val');
-				} else {
-					delete orm_prefs_prev[k];
-				}
-			} else {
-				delete orm_prefs_prev[k];
-				orm_prefs[k] = e.val();
-			}
-		});
-
-		orm_state_set('prefs', orm_prefs);
-		orm_state_set('prefs_prev', orm_prefs_prev);
-		orm_prefs_css_update();
-	});
-
-	orm_prefs_css_update();
-});
 
 const orm_prefs_css_update = function() {
 	let css = '';
@@ -189,3 +147,130 @@ const orm_prefs_css_update = function() {
 	}
 	style.text(css);
 };
+
+const orm_prefs_apply = function() {
+	orm_prefs_css_update();
+
+	orm_tag_whitelist = [];
+	orm_tag_blacklist = [];
+	for(let k in orm_prefs) {
+		if(orm_prefs[k] !== "0" && orm_prefs[k] !== "2") continue;
+		if(!k.match(/^puzzletag:/)) continue;
+		let t = k.split(':', 2)[1];
+		if(orm_prefs[k] === "0") orm_tag_blacklist.push(t);
+		else orm_tag_whitelist.push(t);
+	}
+};
+
+orm_when_ready.push(function() {
+	orm_prefs = orm_state_get('prefs', {});
+	orm_prefs_prev = orm_state_get('prefs_prev', {});
+
+	$("section#prefs-lookandfeel > form").append(
+		orm_prefs_combine2(orm_prefs_boolean("highlight_moves", "Highlight legal moves"),
+						   orm_prefs_boolean("highlight_check", "Highlight check")),
+		orm_prefs_combine2(orm_prefs_boolean("highlight_prev_move", "Highlight previous move"),
+						   orm_prefs_number("board_max_size", "Maximum board size (px)")),
+		orm_prefs_textarea("custom_css", "Custom CSS rules")
+	);
+
+	$("section#prefs-puzzlefilters > form").append(
+		orm_prefs_combine2(orm_prefs_number("puzzle_depth_min", "Minimum puzzle depth"),
+						   orm_prefs_number("puzzle_depth_max", "Maximum puzzle depth"))
+	);
+
+	$("div#preferences > section > form").each(function() {
+		let input = $(document.createElement('input'));
+		let span = $(document.createElement('span'));
+		input.prop('type', 'submit');
+		input.prop('value', 'Save preferences');
+		input.addClass('btn btn-primary');
+		span.text('Preferences saved!');
+		span.addClass('ml-2 text-success');
+		span.hide();
+		input.click(function() {
+			span.hide().fadeIn(250).delay(2000).fadeOut(1000);
+			input.blur();
+		});
+		$(this).append($(document.createElement('div')).addClass('form-row').append(
+			$(document.createElement('div')).addClass('col-md-3'),
+			$(document.createElement('div')).addClass('col-md-9').append(input, span)
+		));
+	});
+
+	$("div#preferences > section > form").submit(function(e) {
+		e.preventDefault();
+
+		$("div#preferences .save-pref").each(function() {
+			let e = $(this);
+			let k = e.data('k');
+			if(typeof(k) === "undefined") return;
+
+			if(e.hasClass('disabled')) {
+				delete orm_prefs[k];
+				if(typeof(e.data('prev-val')) !== "undefined") {
+					orm_prefs_prev[k] = e.data('prev-val');
+				} else {
+					delete orm_prefs_prev[k];
+				}
+			} else {
+				delete orm_prefs_prev[k];
+				orm_prefs[k] = e.val();
+			}
+		});
+
+		orm_state_set('prefs', orm_prefs);
+		orm_state_set('prefs_prev', orm_prefs_prev);
+		orm_prefs_apply();
+	});
+
+	orm_prefs_apply();
+});
+
+orm_when_puzzle_manifest_ready.push(function() {
+	/* There's better ways, probably. */
+	let tmap = {};
+	let tags = [];
+
+	for(let k in orm_prefs) {
+		if(!k.match(/^puzzletag:/)) continue;
+		let t = k.split(':', 2)[1];
+		tmap[t] = true;
+		tags.push(t);
+	}
+
+	for(let i in orm_manifest) {
+		for(let t in orm_manifest[i].tags) {
+			if(t in tmap) continue;
+			tmap[t] = true;
+			tags.push(t);
+		}
+	}
+
+	tags.sort();
+	let d = $("section#prefs-puzzlefilters > form > div.form-row:last-child");
+	let d1 = null, d2 = null;
+
+	for(let i in tags) {
+		if(tags[i].match(/^(Depth|Min depth|Max depth) [1-9][0-9]*$/)) continue;
+
+		let select = $(document.createElement('select'));
+		let k = 'puzzletag:' + tags[i];
+		select.append(
+			$(document.createElement('option')).prop('value', '1').text('allowed'),
+			$(document.createElement('option')).prop('value', '2').text('mandatory'),
+			$(document.createElement('option')).prop('value', '0').text('forbidden')
+		);
+		ORM_PREFS_DEFAULTS[k] = '1';
+		d2 = orm_prefs_generic(k, tags[i] + " tag", select);
+
+		if(d1 === null) {
+			d1 = d2;
+		} else {
+			d.before(orm_prefs_combine2(d1, d2));
+			d1 = d2 = null;
+		}
+	}
+
+	if(d1 !== null) d.before(d1);
+});
