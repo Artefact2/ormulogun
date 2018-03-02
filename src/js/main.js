@@ -19,8 +19,15 @@ let orm_when_ready = [];
 
 const orm_error = function(str) {
 	let err = $(document.createElement('p'));
-	err.addClass('alert alert-danger');
+	err.addClass('alert alert-danger alert-dismissable fade show');
 	err.text(str);
+	err.append(
+		$(document.createElement('button'))
+			.addClass('close')
+			.attr('data-dismiss', 'alert')
+			.prop('title', 'Close this alert')
+			.append($(document.createElement('span')).text('×'))
+	);
 	$("nav#mainnav").after(err);
 };
 
