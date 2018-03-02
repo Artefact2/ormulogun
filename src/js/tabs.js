@@ -17,7 +17,9 @@ const orm_load_tab = function(id, anchor, animate, after) {
 	if(typeof(animate) === "undefined") animate = true;
 
 	let work = function() {
-		history.replaceState(null, null, anchor);
+		if(anchor !== null) {
+			history.replaceState(null, null, anchor);
+		}
 		if(after) after();
 	};
 

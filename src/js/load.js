@@ -18,6 +18,7 @@ let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
 let orm_puzzle_idx = null;
 let orm_when_puzzle_manifest_ready = [];
+let orm_temp_filter = false;
 
 const orm_load_puzzle_manifest = function(done) {
 	$.getJSON("./puzzles/manifest.js").always(function() {
@@ -154,16 +155,23 @@ orm_when_puzzle_manifest_ready.push(function() {
 		ul.append(li);
 	}
 
-	ul.find("h2 > button").click(function() {
+	ul.find("button").click(function() {
 		let t = $(this);
 		t.prop('disabled', 'disabled').addClass('disabled');
 		orm_load_puzzle_set(t.data('idx'), null, null, function() {
-			$("div#select-puzzleset").fadeOut(250, function() {
-				orm_load_next_puzzle();
+			if(orm_temp_filter === true) {
+				orm_temp_filter = false;
+				orm_tag_whitelist.pop();
+			}
+			if(t.data('tag') !== null) {
+				orm_temp_filter = true;
+				orm_tag_whitelist.push(t.data('tag'));
+			}
+			orm_puzzle_idx = null;
+			orm_load_next_puzzle();
+			orm_load_tab("play-puzzle", null, true, function() {
 				t.prop('disabled', false).removeClass('disabled');
-				$("div#play-puzzle").fadeIn(250);
 			});
 		});
 	});
-
 });
