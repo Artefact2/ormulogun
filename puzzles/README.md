@@ -11,10 +11,10 @@ Generating puzzles
 
    ~~~
    # Analyze all games for all kinds of puzzles
-   make puzzles-all INPUT=games.jz OUTPUT=puzzles-all.jpz JOBS=2 # all games
+   make puzzles-all INPUT=games.jz OUTPUT=puzzles-all.jpz # all games
 
    # Analyze only games 100-149
-   make puzzles-partial INPUT=games.jz OUTPUT=puzzles-100-50.jpz JOBS=2 OFFSET=100 COUNT=50
+   make puzzles INPUT=games.jz OUTPUT=p START=100 END=149
 
    # Analyze all games for checkmate puzzles, up to 6 moves ahead
    make puzzles-all INPUT=games.jz OUTPUT=mates.jpz PFLAGS="--best-eval-cutoff-start 100000 --uci-engine-limiter-probe 'depth 12' --uci-engine-limiter 'depth 12' --max-depth 6"

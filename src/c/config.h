@@ -4,12 +4,10 @@
 static const char* uci_engine = "stockfish";
 
 static const char* uci_engine_opts[] = {
-	"Threads", "8",
-	/* XXX: with stockfish at least, a large hashtable means wildly
-	 * nondeterministic results even with a fixed depth, because of
-	 * pruning and seldepth. This doesn't completely eliminate the
-	 * issue, but it helps. */
-	"Hash", "1",
+	"Threads", "1", /* Use more than 1 thread with stockfish at your
+					 * own risk, the eval fluctuates wildly and the
+					 * output becomes highly nondeterministic */
+	"Hash", "512",
 	0
 };
 
@@ -19,7 +17,7 @@ static const char* uci_engine_opts[] = {
 static const char* uci_limiter_probe = "nodes 1000000";
 
 /* When building puzzles */
-static const char* uci_limiter = "nodes 10000000";
+static const char* uci_limiter = "depth 22";
 
 static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* Abort if puzzle is longer than this number of turns */
