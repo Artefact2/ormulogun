@@ -86,6 +86,7 @@ typedef struct {
 		bool fork:1;
 		bool skewer:1;
 		bool winning_position:1;
+		bool endgame:1;
 	} tags;
 } puzzle_t;
 

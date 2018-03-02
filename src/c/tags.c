@@ -45,6 +45,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin (Absolute)");
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
+	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -272,6 +273,16 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	}
 }
 
+static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
+	if(p->tags.endgame) return;
+	unsigned char pieces[] = { 0, 0 };
+	/* XXX: assumes a lot about gumble internals */
+	for(unsigned char i = CCH_BISHOP_W; i <= CCH_QUEEN_B; ++i) {
+		pieces[i & 1] += __builtin_popcountll(b->pieces[i]);
+	}
+	p->tags.endgame = pieces[0] <= 1 || pieces[1] <= 1;
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -336,5 +347,6 @@ void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
 	p->end_material_diff_min = 127;
 	p->end_material_diff_max = -127;
 
+	tags_endgame(p, b);
 	tags_step(p, &(p->root), b, ctx, 0);
 }
