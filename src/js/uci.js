@@ -19,10 +19,7 @@ let orm_analyse = false;
 
 const orm_uci_handle_message = function(msg) {
 	if(msg === "uciok") {
-		let b = $("button#engine-start");
-		b.prop('disabled', false).removeClass('disabled');
-		b.text('Stop engine');
-		b.addClass('running');
+		$("p#loading-engine").remove();
 		return;
 	}
 
@@ -44,6 +41,10 @@ const orm_uci_handle_message = function(msg) {
 
 const orm_uci_init = function() {
 	if(orm_engine === null) {
+		let p = $(document.createElement('p'));
+		p.attr('id', 'loading-engine').addClass('alert alert-primary').text('Loading stockfish.js…');
+		$("nav#mainnav").after(p);
+
 		if(typeof WebAssembly === "object" && WebAssembly.validate(Uint8Array.of(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))) {
 			orm_engine = new Worker('stockfish.wasm.js');
 		} else {
@@ -83,20 +84,26 @@ const orm_uci_go_practice = function() {
 };
 
 orm_when_ready.push(function() {
-	$("button#engine-start").click(function() {
+	$("button#engine-analyse, button#engine-practice").each(function() {
+		let t = $(this);
+		t.data('start-text', t.text());
+	});
+
+	$("button#engine-analyse").click(function() {
 		let t = $(this);
 
-		if(t.hasClass('running')) {
+		if(orm_practice !== false) $("button#engine-practice").click();
+		if(orm_analyse === true) {
 			orm_analyse = false;
 			orm_engine.postMessage('stop');
 			t.text(t.data('start-text'));
-			t.removeClass('running');
+			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
 			return;
 		}
 
-		t.data('start-text', t.text());
-		t.prop('disabled', true).addClass('disabled').text('Loading engine…');
 		orm_analyse = true;
+		t.text('Stop analysis');
+		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
 		orm_uci_init();
 		orm_uci_go();
 	});
@@ -105,18 +112,19 @@ orm_when_ready.push(function() {
 		let t = $(this);
 		let b = orm_get_board();
 
+		if(orm_analyse === true) $("button#engine-analyse").click();
 		if(orm_practice !== false) {
-			if(!b.hasClass('white black')) b.addClass(orm_practice);
 			orm_practice = false;
 			orm_engine.postMessage('stop');
 			t.text(t.data('start-text'));
+			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
 			return;
-		} else {
-			orm_practice = b.hasClass('white') ? 'black' : 'white';
-			t.data('start-text', t.text());
-			t.text('Stop practicing');
-			$("div#engine-stuff > ul").empty();
-			orm_uci_init(); /* XXX: race condition with go called from move.js? */
 		}
+
+		orm_practice = b.hasClass('white') ? 'black' : 'white';
+		t.text('Stop practicing');
+		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
+		$("div#engine-stuff > ul").empty();
+		orm_uci_init(); /* XXX: race condition with go called from move.js? */
 	});
 });

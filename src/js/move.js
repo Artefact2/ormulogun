@@ -111,7 +111,6 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 			orm_puzzle_try(lan);
 
 			if(orm_practice !== false && b.hasClass(orm_practice)) {
-				b.removeClass('white black');
 				orm_uci_go_practice();
 			}
 		}
@@ -120,7 +119,7 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 };
 
 const orm_can_move_piece = function(p, b) {
-	return (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
+	return (orm_practice === false || !b.hasClass(orm_practice)) && (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
 };
 
 const orm_highlight_move_squares = function(sf, sr, b) {
