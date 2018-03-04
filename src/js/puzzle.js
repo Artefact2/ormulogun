@@ -17,6 +17,8 @@ let orm_puzzle = null;
 let orm_puzzle_next = null;
 
 const orm_load_puzzle = function(puz) {
+	let b = orm_get_board();
+
 	if(typeof(puz) === "number") {
 		orm_puzzle_idx = puz;
 		puz = orm_puzzle = orm_puzzle_set[puz];
@@ -28,16 +30,16 @@ const orm_load_puzzle = function(puz) {
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + orm_puzzle_idx);
 
 	puz.side = puz[0].split(' ', 3)[1] === 'b';
-	orm_get_board().toggleClass('flipped', !puz.side);
+	b.toggleClass('flipped', !puz.side);
 
 	orm_movehist_reset();
 	gumble_load_fen(puz[0]);
-	orm_load_fen(puz[0]);
+	orm_load_fen(puz[0], b);
 	setTimeout(function() {
 		orm_do_legal_move(puz[1][0], true, function() {
 			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
 			$("ul#movehist li.new").addClass('puzzle-reply');
-		});
+		}, undefined, undefined, b);
 	}, orm_pref("board_move_delay"));
 
 	$("p#puzzle-prompt")
@@ -60,7 +62,7 @@ const orm_unload_puzzle = function() {
 	orm_movehist_reset();
 	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */
-	orm_load_fen(gumble_save_fen());
+	orm_load_fen(gumble_save_fen(), orm_get_board());
 };
 
 const orm_load_next_puzzle = function() {
@@ -176,7 +178,7 @@ const orm_puzzle_try = function(lan) {
 	setTimeout(function() {
 		orm_do_legal_move(puz[0], true, function() {
 			$("ul#movehist li.new").addClass('puzzle-reply');
-		});
+		}, undefined, undefined, orm_get_board());
 	}, orm_pref("board_move_delay"));
 };
 

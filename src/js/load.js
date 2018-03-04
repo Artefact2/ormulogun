@@ -86,8 +86,7 @@ const orm_restore_tab = function() {
 	}
 };
 
-const orm_init_board = function() {
-	let b = $("div.board");
+const orm_init_board = function(b) {
 	let d;
 	for(let f = 1; f <= 8; ++f) {
 		for(let r = 1; r <= 8; ++r) {
@@ -98,6 +97,10 @@ const orm_init_board = function() {
 			b.append(d);
 		}
 	}
+	if(b.data('fen')) {
+		if(b.data('fen').split(' ', 3)[1] === 'b') b.addClass('flipped');
+		orm_load_fen(b.data('fen'), b);
+	}
 };
 
 orm_when_ready.push(function() {
@@ -107,7 +110,7 @@ orm_when_ready.push(function() {
 		}
 	});
 
-	orm_init_board();
+	$("div.board").each(function() { orm_init_board($(this)); });
 });
 
 orm_when_puzzle_manifest_ready.push(function() {

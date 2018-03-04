@@ -19,7 +19,6 @@ const orm_get_board = function(b) {
 };
 
 const orm_load_fen = function(fen, b) {
-	b = orm_get_board(b);
 	let p, r = 8, f = 1, cl;
 	b.children("div.piece").remove();
 
@@ -111,7 +110,7 @@ const orm_piece_at = function(alg, cl, b) {
 	if(!cl) cl = "piece";
 	cl += ".f" + orm_file(alg);
 	cl += ".r" + orm_rank(alg);
-	return orm_get_board(b).children("div." + cl);
+	return b.children("div." + cl);
 };
 
 const orm_sq = function(file, rank) {

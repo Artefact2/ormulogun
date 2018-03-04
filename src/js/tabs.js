@@ -17,6 +17,8 @@ const orm_load_tab = function(id, animate, between, after) {
 	if(typeof(animate) === "undefined") animate = true;
 
 	let bwork = function() {
+		history.replaceState(null, null, "#" + id);
+
 		if(id === "board") {
 			orm_unload_puzzle();
 		}
@@ -24,7 +26,6 @@ const orm_load_tab = function(id, animate, between, after) {
 	};
 
 	let work = function() {
-		history.replaceState(null, null, "#" + id);
 		if(after) after();
 	};
 

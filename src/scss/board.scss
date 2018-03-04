@@ -1,7 +1,7 @@
 div.board {
 	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAQAAAAnZu5uAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4gICEQQVU8RjagAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAADklEQVQI12NggIH/pDAAhrAE/LwPpvYAAAAASUVORK5CYII=);
-	display: inline-block;
 	position: relative;
+	max-width: 90vmin;
 
 	&> span.board-pad {
 		display: block;

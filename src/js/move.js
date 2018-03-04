@@ -13,12 +13,10 @@
  * limitations under the License.
  */
 
-let orm_candidate_move = null;
 let orm_move_timeoutid = null;
 let orm_promote_context = null;
 
 const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
-	b = orm_get_board(b);
 	pushhist = typeof(pushhist) === "undefined" || pushhist;
 	reverse = typeof(reverse) !== "undefined" && reverse;
 
@@ -34,7 +32,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	}
 
 	let work = function() {
-		orm_load_fen(endfen);
+		orm_load_fen(endfen, b);
 
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
 		b.children("div.piece.king.in-check").removeClass('in-check');
@@ -48,28 +46,28 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 
 	if(!animate) {
 		b.children("div.back.move-prev").removeClass('move-prev');
-		orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
-		orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
+		orm_piece_at(lan.substring(0, 2), 'back', b).addClass('move-prev');
+		orm_piece_at(lan.substring(2), 'back', b).addClass('move-prev');
 		work();
 		return;
 	}
 
 	if(reverse) {
-		orm_load_fen(endfen);
+		orm_load_fen(endfen, b);
 		endfen = startfen;
 	} else {
-		orm_load_fen(startfen);
+		orm_load_fen(startfen, b);
 	}
 
 	let psrc, pdest, df, dr;
 	if(reverse) {
-		psrc = orm_piece_at(lan.substring(2));
-		pdest = orm_piece_at(lan.substring(0, 2));
+		psrc = orm_piece_at(lan.substring(2), null, b);
+		pdest = orm_piece_at(lan.substring(0, 2), null, b);
 		df = orm_file(lan.substring(0, 2));
 		dr = orm_rank(lan.substring(0, 2));
 	} else {
-		psrc = orm_piece_at(lan.substring(0, 2));
-		pdest = orm_piece_at(lan.substring(2));
+		psrc = orm_piece_at(lan.substring(0, 2), null, b);
+		pdest = orm_piece_at(lan.substring(2), null, b);
 		df = orm_file(lan.substring(2));
 		dr = orm_rank(lan.substring(2));
 	}
@@ -82,15 +80,15 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 		if(orm_move_timeoutid !== null) clearTimeout(orm_move_timeoutid);
 		orm_move_timeoutid = setTimeout(function() {
 			orm_move_timeoutid = null;
-			orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
-			orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
+			orm_piece_at(lan.substring(0, 2), 'back', b).addClass('move-prev');
+			orm_piece_at(lan.substring(2), 'back', b).addClass('move-prev');
 			work();
 		}, orm_pref("board_animation_speed"));
 	}, 50);
 };
 
 const orm_do_puzzle_move = function(lan, animate, done, b) {
-	let piece = orm_piece_at(lan.substring(0, 2));
+	let piece = orm_piece_at(lan.substring(0, 2), null, b);
 	if(lan.length === 4 && piece.hasClass("pawn")
 	   && ((piece.hasClass("white") && orm_rank(lan.substring(2)) === 8)
 		   || (piece.hasClass("black") && orm_rank(lan.substring(2)) === 1))) {
@@ -102,21 +100,23 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 		orm_promote_context = [ lan, animate, done, b ];
 		m.modal('show');
 	}
+	gumble_load_fen(b.data('fen'));
 	if(!gumble_is_move_legal(lan)) return;
 	orm_do_legal_move(lan, animate, function() {
-		orm_puzzle_try(lan);
+		if(b.hasClass('board-main')) {
+			orm_puzzle_try(lan);
+		}
 		if(done) done();
-	}, b);
+	}, undefined, undefined, b);
 };
 
 const orm_can_move_piece = function(p, b) {
-	b = orm_get_board(b);
 	return (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
 };
 
 const orm_highlight_move_squares = function(sf, sr, b) {
 	let sq = (sf - 1) * 8 + (sr - 1);
-	b = orm_get_board(b);
+	gumble_load_fen(b.data('fen'));
 
 	/* XXX: refactor me */
 	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, sq, sq + 1);
@@ -154,7 +154,7 @@ orm_when_ready.push(function() {
 
 		if(!p.hasClass("dragged")) {
 			p.addClass("dragged");
-			orm_highlight_move_squares(p.data('ofile'), p.data('orank'));
+			orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
 		}
 		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
@@ -173,28 +173,28 @@ orm_when_ready.push(function() {
 		p.removeClass('dragging');
 		b.children("div.back").removeClass("move-source move-target");
 
-		orm_do_puzzle_move(orm_alg(p) + orm_alg(file, rank), false, b);
+		orm_do_puzzle_move(orm_alg(p) + orm_alg(file, rank), false, null, b);
 	}).on("click", "> div", function() {
 		let p = $(this);
 		let b = p.parent();
 		if(p.hasClass("dragged")) {
-			orm_candidate_move = null;
+			b.data('candidate-move', null);
 			p.removeClass("dragged");
 			return;
 		}
 
-		if(orm_candidate_move === null) {
-			if(p.hasClass("back") || (p.hasClass("piece") && !orm_can_move_piece(p))) return;
+		if(!b.data('candidate-move')) {
+			if(p.hasClass("back") || (p.hasClass("piece") && !orm_can_move_piece(p, b))) return;
 			let bg = b.children("div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
-			orm_candidate_move = orm_alg(p);
-			orm_highlight_move_squares(p.data('ofile'), p.data('orank'));
+			b.data('candidate-move', orm_alg(p));
+			orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
 		} else {
 			b.children("div.back").removeClass("move-source move-target");
 			let tgt = orm_alg(p);
-			if(tgt !== orm_candidate_move) {
-				orm_do_puzzle_move(orm_candidate_move + tgt, true, b);
+			if(tgt !== b.data('candidate-move')) {
+				orm_do_puzzle_move(b.data('candidate-move') + tgt, true, null, b);
 			}
-			orm_candidate_move = null;
+			b.data('candidate-move', null);
 		}
 	});
 
