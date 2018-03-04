@@ -1,5 +1,8 @@
 frontend/deps
 frontend/gumble.js
+frontend/stockfish.js
+frontend/stockfish.wasm.js
+frontend/stockfish.wasm
 frontend/index.html
 frontend/ormulogun.css
 frontend/ormulogun.js

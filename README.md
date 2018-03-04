@@ -32,3 +32,4 @@ Credits
 * [Colin M.L. Burnett](https://en.wikipedia.org/wiki/User:Cburnett) for releasing his chess pieces as SVG (full license in `COPYING.pieces`)
 * Pablo Impallari for releasing the [Kaushan Script](https://fontlibrary.org/en/font/kaushan-script) under the SIL Open Font License
 * [GitHub Octicons](https://octicons.github.com/) for the "fork" icon, released under the SIL Open Font License, version 1.1
+* [stockfish.js](https://github.com/niklasf/stockfish.js) and all the contributors of Stockfish
