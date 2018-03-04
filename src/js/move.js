@@ -17,7 +17,8 @@ let orm_candidate_move = null;
 let orm_move_timeoutid = null;
 let orm_promote_context = null;
 
-const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
+const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
+	b = orm_get_board(b);
 	pushhist = typeof(pushhist) === "undefined" || pushhist;
 	reverse = typeof(reverse) !== "undefined" && reverse;
 
@@ -36,8 +37,8 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 		orm_load_fen(endfen);
 
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
-		$("div#board > div.piece.king.in-check").removeClass('in-check');
-		let k = $("div#board.white > div.piece.king.white, div#board.black > div.piece.king.black");
+		b.children("div.piece.king.in-check").removeClass('in-check');
+		let k = b.hasClass('white') ? b.children('div.piece.king.white') : b.children('div.piece.king.black');
 		if(gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank')))) {
 			k.addClass('in-check');
 		}
@@ -46,7 +47,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 	};
 
 	if(!animate) {
-		$("div#board > div.back.move-prev").removeClass('move-prev');
+		b.children("div.back.move-prev").removeClass('move-prev');
 		orm_piece_at(lan.substring(0, 2), 'back').addClass('move-prev');
 		orm_piece_at(lan.substring(2), 'back').addClass('move-prev');
 		work();
@@ -77,7 +78,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 		psrc.removeClass("f" + psrc.data("ofile") + " r" + psrc.data("orank"));
 		psrc.addClass("moving f" + df + " r" + dr);
 		pdest.addClass("captured");
-		$("div#board > div.back.move-prev").removeClass('move-prev');
+		b.children("div.back.move-prev").removeClass('move-prev');
 		if(orm_move_timeoutid !== null) clearTimeout(orm_move_timeoutid);
 		orm_move_timeoutid = setTimeout(function() {
 			orm_move_timeoutid = null;
@@ -88,7 +89,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse) {
 	}, 50);
 };
 
-const orm_do_puzzle_move = function(lan, animate, done) {
+const orm_do_puzzle_move = function(lan, animate, done, b) {
 	let piece = orm_piece_at(lan.substring(0, 2));
 	if(lan.length === 4 && piece.hasClass("pawn")
 	   && ((piece.hasClass("white") && orm_rank(lan.substring(2)) === 8)
@@ -98,24 +99,24 @@ const orm_do_puzzle_move = function(lan, animate, done) {
 		if(piece.hasClass("black")) m.find("div.piece").removeClass('white').addClass('black');
 		else m.find("div.piece").removeClass('black').addClass('white');
 
-		orm_promote_context = [ lan, animate, done ];
+		orm_promote_context = [ lan, animate, done, b ];
 		m.modal('show');
 	}
 	if(!gumble_is_move_legal(lan)) return;
 	orm_do_legal_move(lan, animate, function() {
 		orm_puzzle_try(lan);
 		if(done) done();
-	});
+	}, b);
 };
 
-const orm_can_move_piece = function(p) {
-	let b = $("div#board");
+const orm_can_move_piece = function(p, b) {
+	b = orm_get_board(b);
 	return (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
 };
 
-const orm_highlight_move_squares = function(sf, sr) {
+const orm_highlight_move_squares = function(sf, sr, b) {
 	let sq = (sf - 1) * 8 + (sr - 1);
-	let b = $("div#board");
+	b = orm_get_board(b);
 
 	/* XXX: refactor me */
 	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, sq, sq + 1);
@@ -131,22 +132,24 @@ const orm_highlight_move_squares = function(sf, sr) {
 
 orm_when_ready.push(function() {
 	$("button#flip-board").click(function() {
-		$("div#board").toggleClass('flipped');
+		orm_get_board().toggleClass('flipped');
 	});
 
 	/* XXX not touch-friendly */
-	$("div#board").on("mousedown", "> div.piece", function(e) {
+	$("div.board").on("mousedown", "> div.piece", function(e) {
 		let p = $(this);
-		if(!orm_can_move_piece(p)) return;
+		let b = p.parent();
+		if(!orm_can_move_piece(p, b)) return;
 
-		let bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
+		let bg = b.children("div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
 		p.data("origx", e.pageX);
 		p.data("origy", e.pageY);
 		p.data("origtop", p.position().top);
 		p.data("origleft", p.position().left);
 		p.addClass("dragging");
 	}).on("mousemove", function(e) {
-		let p = $("div#board > div.piece.dragging");
+		let b = $(this);
+		let p = b.children("div.piece.dragging");
 		if(p.length === 0) return;
 
 		if(!p.hasClass("dragged")) {
@@ -157,22 +160,23 @@ orm_when_ready.push(function() {
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
 	}).on("mouseup", "> div.piece.dragging", function(e) {
 		let p = $(this);
-		let b = $("div#board"), pos = p.position();
+		let b = p.parent(), pos = p.position();
 		let file = 1 + Math.round(8 * pos.left / b.width());
 		let rank = 9 - Math.round(1 + 8 * pos.top / b.height());
 
-		if($("div#board").hasClass('flipped')) {
+		if(b.hasClass('flipped')) {
 			file = 9 - file;
 			rank = 9 - rank;
 		}
 
 		p.removeAttr('style');
 		p.removeClass('dragging');
-		$("div#board > div.back").removeClass("move-source move-target");
+		b.children("div.back").removeClass("move-source move-target");
 
-		orm_do_puzzle_move(orm_alg(p) + orm_alg(file, rank), false);
+		orm_do_puzzle_move(orm_alg(p) + orm_alg(file, rank), false, b);
 	}).on("click", "> div", function() {
 		let p = $(this);
+		let b = p.parent();
 		if(p.hasClass("dragged")) {
 			orm_candidate_move = null;
 			p.removeClass("dragged");
@@ -181,14 +185,14 @@ orm_when_ready.push(function() {
 
 		if(orm_candidate_move === null) {
 			if(p.hasClass("back") || (p.hasClass("piece") && !orm_can_move_piece(p))) return;
-			let bg = $("div#board > div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
+			let bg = b.children("div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
 			orm_candidate_move = orm_alg(p);
 			orm_highlight_move_squares(p.data('ofile'), p.data('orank'));
 		} else {
-			$("div#board > div.back").removeClass("move-source move-target");
+			b.children("div.back").removeClass("move-source move-target");
 			let tgt = orm_alg(p);
 			if(tgt !== orm_candidate_move) {
-				orm_do_puzzle_move(orm_candidate_move + tgt, true);
+				orm_do_puzzle_move(orm_candidate_move + tgt, true, b);
 			}
 			orm_candidate_move = null;
 		}
@@ -205,7 +209,7 @@ orm_when_ready.push(function() {
 				orm_promote_context[2]();
 			}
 			orm_promote_context = null;
-		});
+		}, orm_promote_context[3]);
 	}).on('click', 'div.piece', function() {
 		let p = $(this);
 		let append = null;

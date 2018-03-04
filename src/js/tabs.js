@@ -13,8 +13,15 @@
  * limitations under the License.
  */
 
-const orm_load_tab = function(id, animate, after) {
+const orm_load_tab = function(id, animate, between, after) {
 	if(typeof(animate) === "undefined") animate = true;
+
+	let bwork = function() {
+		if(id === "board") {
+			orm_unload_puzzle();
+		}
+		if(between) between();
+	};
 
 	let work = function() {
 		history.replaceState(null, null, "#" + id);
@@ -28,20 +35,22 @@ const orm_load_tab = function(id, animate, after) {
 
 	if(!animate) {
 		visible.hide();
+		bwork();
 		want.show();
 		work();
 		return;
 	}
 
 	visible.fadeOut(250, function() {
+		bwork();
 		want.fadeIn(250, work);
 	});
 };
 
 orm_when_ready.push(function() {
-	$("[data-orm-tab]").click(function(e) {
+	$("a.to-tab, button[data-orm-tab]").click(function(e) {
 		let t = $(this);
-		orm_load_tab(t.data('orm-tab'));
+		orm_load_tab(t.data('orm-tab') || t.prop('href').split('#', 2)[1]);
 		e.preventDefault();
 		t.blur();
 	});

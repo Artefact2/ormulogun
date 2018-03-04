@@ -68,19 +68,22 @@ const orm_restore_tab = function() {
 		}, function() {
 			let idx = parseInt(h[2], 10);
 			orm_load_puzzle(idx);
-			$("div#puzzle").show();
+			$("div#board").show();
 		});
 		return;
 
-	default:
-		let d = $("body > div.tab" + h[0]);
-		if(d.length === 1) {
-			d.show();
-			return;
-		}
+	case "#board":
+		/* XXX: refactor with orm_load_tab() */
+		orm_unload_puzzle();
+		break;
 	}
 
-	$("div#intro").show();
+	let d = $("body > div.tab" + h[0]);
+	if(d.length === 1) {
+		d.show();
+	} else {
+		$("div#intro").show();
+	}
 };
 
 const orm_init_board = function() {
@@ -165,7 +168,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 				orm_temp_filter = true;
 				orm_tag_whitelist.push(t.data('tag'));
 			}
-			orm_load_tab("puzzle", true, function() {
+			orm_load_tab("board", true, function() {
 				t.prop('disabled', false).removeClass('disabled');
 				orm_puzzle_idx = null;
 				orm_load_next_puzzle();

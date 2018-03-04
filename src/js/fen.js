@@ -13,8 +13,13 @@
  * limitations under the License.
  */
 
-const orm_load_fen = function(fen) {
-	let b = $("div#board");
+const orm_get_board = function(b) {
+	if(typeof(b) === "undefined" || b.length === 0) return $("div#board div.board.board-main");
+	else return b;
+};
+
+const orm_load_fen = function(fen, b) {
+	b = orm_get_board(b);
 	let p, r = 8, f = 1, cl;
 	b.children("div.piece").remove();
 
@@ -102,11 +107,11 @@ const orm_alg = function(file, rank, file2, rank2) {
 	);
 };
 
-const orm_piece_at = function(alg, cl) {
+const orm_piece_at = function(alg, cl, b) {
 	if(!cl) cl = "piece";
 	cl += ".f" + orm_file(alg);
 	cl += ".r" + orm_rank(alg);
-	return $("div#board > div." + cl);
+	return orm_get_board(b).children("div." + cl);
 };
 
 const orm_sq = function(file, rank) {

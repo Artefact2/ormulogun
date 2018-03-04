@@ -15,17 +15,18 @@
 	</head>
 	<body>
 		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark" id="mainnav">
-			<span class="navbar-brand"><a href="./" data-orm-tab="intro"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
+			<span class="navbar-brand"><a href="#intro" class="to-tab"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbar-collapse">
 				<ul class="navbar-nav navbar-left">
-					<li class="nav-item"><a class="nav-link" data-orm-tab="puzzlesets" href="#">Puzzle sets</a></li>
-					<li class="nav-item"><a class="nav-link" data-orm-tab="endgames" href="#">Endgame training</a></li>
+					<li class="nav-item"><a class="nav-link to-tab" href="#puzzlesets">Puzzle sets</a></li>
+					<li class="nav-item"><a class="nav-link to-tab" href="#endgames">Endgame training</a></li>
+					<li class="nav-item"><a class="nav-link to-tab" href="#board">Analysis board</a></li>
 				</ul>
 				<ul class="navbar-nav ml-auto">
-					<li class="nav-item"><a class="nav-link" data-orm-tab="preferences" href="#">Preferences</a></li>
+					<li class="nav-item"><a class="nav-link to-tab" href="#preferences">Preferences</a></li>
 				</ul>
 			</div>
 		</nav>
@@ -40,15 +41,10 @@
 			<p><button type="button" class="btn btn-primary" data-orm-tab="puzzlesets">Start training</button> or
 					<a class="btn btn-outline-secondary" href="https://gitlab.com/artefact2/ormulogun">Check out the source code</a></p>
 		</div>
-		<div id="puzzlesets" class="tab container mt-2">
-			<h1>Choose a puzzle set</h1>
-			<p class="alert alert-primary">Loading the puzzle set manifest…</p>
-			<ul class="m-0 p-0"></ul>
-		</div>
-		<div id="puzzle" class="tab container-fluid p-0 mt-2">
+		<div id="board" class="tab container-fluid p-0 mt-2">
 			<div class="row justify-content-lg-center m-0">
 				<div class="col-lg-auto text-center p-0">
-					<div class="board board-main" id="board"><span class="board-pad"></span></div>
+					<div class="board board-main"><span class="board-pad"></span></div>
 				</div>
 				<div class="col-lg-3 p-0">
 					<div class="row m-2">
@@ -63,7 +59,7 @@
 						</div>
 						<ul id="movehist" class="row w-100"></ul>
 					</div>
-					<div class="row m-2">
+					<div class="row m-2" id="puzzle-stuff">
 						<p id="puzzle-prompt"></p>
 						<div class="container" id="puzzle-actions-after">
 							<div class="row">
@@ -80,6 +76,11 @@
 					</div>
 				</div>
 			</div>
+		</div>
+		<div id="puzzlesets" class="tab container mt-2">
+			<h1>Choose a puzzle set</h1>
+			<p class="alert alert-primary">Loading the puzzle set manifest…</p>
+			<ul class="m-0 p-0"></ul>
 		</div>
 		<div id="endgames" class="tab container mt-2">
 			<h1>Endgame training</h1>

@@ -28,7 +28,7 @@ const orm_load_puzzle = function(puz) {
 	history.replaceState(null, null, "#puzzle-" + orm_manifest[orm_puzzle_midx].id + "-" + orm_puzzle_idx);
 
 	puz.side = puz[0].split(' ', 3)[1] === 'b';
-	$("div#board").toggleClass('flipped', !puz.side);
+	orm_get_board().toggleClass('flipped', !puz.side);
 
 	orm_movehist_reset();
 	gumble_load_fen(puz[0]);
@@ -49,6 +49,18 @@ const orm_load_puzzle = function(puz) {
 	$("button#puzzle-next").hide();
 	$("nav#mainnav").removeClass("bg-success bg-danger");
 	orm_puzzle_next = puz[1][1];
+
+	$("div#puzzle-stuff").show();
+};
+
+const orm_unload_puzzle = function() {
+	orm_puzzle = null;
+	orm_puzzle_next = null;
+	$("div#puzzle-stuff").hide();
+	orm_movehist_reset();
+	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
+	Module._cch_init_board(gumble_board); /* XXX: refactor me */
+	orm_load_fen(gumble_save_fen());
 };
 
 const orm_load_next_puzzle = function() {

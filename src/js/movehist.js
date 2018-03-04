@@ -15,6 +15,8 @@
 
 const orm_movehist_reset = function() {
 	$("ul#movehist").empty();
+	$("button#movehist-first, button#movehist-prev, button#movehist-next, button#movehist-last")
+		.prop('disabled', 'disabled').addClass('disabled');
 };
 
 const orm_movehist_in_rootline = function(e) {
@@ -277,7 +279,7 @@ orm_when_ready.push(function() {
 		e.preventDefault();
 	});
 
-	$("div#board").on("wheel", function(e) {
+	orm_get_board().on("wheel", function(e) {
 		let tgt = null;
 		if(e.originalEvent.deltaY > 0) {
 			/* Scroll down */
