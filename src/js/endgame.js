@@ -17,9 +17,19 @@ const orm_square_color = function(sq) {
 	return ((sq & 7) + (sq >> 3)) & 1;
 };
 
-const orm_generate_endgame = function(s) {
+const orm_generate_endgame = function(s, tries) {
+	if(typeof(tries) === "undefined") tries = 0;
+	else ++tries;
+
+	if(tries >= 50) {
+		/* Too many tries, position is likely unachievable */
+		return false;
+	}
+
 	let side = Math.random() > .5 ? "w" : "b";
 	let ss = s.split('/', 2);
+	if(ss.length !== 2) return false;
+
 	if(side === "w") {
 		ss[1] = ss[1].toLowerCase();
 	} else {
@@ -67,12 +77,10 @@ const orm_generate_endgame = function(s) {
 	fen += ' ' + side + ' - -';
 	gumble_load_fen(fen);
 
-	/* Is the position legal? Check if we can "take" the enemy king or have no legal moves
-	 * (XXX: this relies on gumble movegen internals) */
 	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, 0, 64); /* XXX: refactor me */
 	if(stop === 0) {
 		/* Checkmate or stalemate, this position is stupid */
-		return orm_generate_endgame(s);
+		return orm_generate_endgame(s, tries);
 	}
 	for(let i = 0; i < stop; ++i) {
 		/* XXX */
@@ -80,18 +88,17 @@ const orm_generate_endgame = function(s) {
 		let dest = Pointer_stringify(gumble_move_str).substring(2);
 		if(board[orm_sq(orm_file(dest), orm_rank(dest))] !== '1') {
 			/* Position is not quiet */
-			return orm_generate_endgame(s);
+			return orm_generate_endgame(s, tries);
 		}
 	}
 
 	let k = board.indexOf('k');
 	let K = board.indexOf('K');
-	if(k >= 0 && K >= 0) {
-		let dist = Math.abs((k & 7) - (K & 7)) + Math.abs(((k >> 3) & 7) - ((K >> 3) & 7));
-		if(dist <= 2) {
-			/* Kings are in an illegal position */
-			return orm_generate_endgame(s);
-		}
+	if(k === -1 || K === -1) return false; /* No kings?! */
+	let dist = Math.abs((k & 7) - (K & 7)) + Math.abs(((k >> 3) & 7) - ((K >> 3) & 7));
+	if(dist <= 2) {
+		/* Kings are in an illegal position */
+		return orm_generate_endgame(s, tries);
 	}
 
 	/* FEN canonicalization, gumble will happily parse "11R11111" as
@@ -102,19 +109,21 @@ const orm_generate_endgame = function(s) {
 orm_when_ready.push(function() {
 	$("div#endgames a[data-endgame]").click(function() {
 		let a = $(this);
-		a.prop('href', 'https://lichess.org/analysis/' + orm_generate_endgame(a.data('endgame')).replace(/\s/g, '_'));
+		let fen = orm_generate_endgame(a.data('endgame'));
+		if(fen === false) orm_error("Could not generate endgame for " + a.data('endgame') + ".");
+		a.prop('href', 'https://lichess.org/analysis/' + fen.replace(/\s/g, '_'));
 	});
 
 	$("div#endgames form").submit(function(e) {
 		let f = $(this);
 		let i = f.children('input');
-		let v = i.val();
-		if(!v || v.indexOf('/') === -1) {
+		let fen = orm_generate_endgame(i.val());
+		if(fen === false) {
 			e.preventDefault();
 			i.addClass('is-invalid');
 			return;
 		}
 		i.removeClass('is-invalid');
-		f.prop('action', 'https://lichess.org/analysis/' + orm_generate_endgame(v).replace(/\s/g, '_'));
+		f.prop('action', 'https://lichess.org/analysis/' + fen.replace(/\s/g, '_'));
 	});
 });
