@@ -39,7 +39,6 @@ const orm_generate_endgame = function(s) {
 		squares[i] = temp;
 	}
 
-	let eking = null;
 	let bishops = [ null, null ];
 	for(let i = 0; i < 2; ++i) {
 		let len = ss[i].length;
@@ -54,7 +53,6 @@ const orm_generate_endgame = function(s) {
 
 			board[squares[sqidx]] = ss[i][j];
 			if(p === "B") bishops[i] = squares[sqidx];
-			if(p === "K" && i === 1) eking = squares[sqidx];
 			++sqidx;
 		}
 	}
@@ -80,8 +78,18 @@ const orm_generate_endgame = function(s) {
 		/* XXX */
 		Module._cch_format_lan_move(gumble_movelist + 4 * i, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH);
 		let dest = Pointer_stringify(gumble_move_str).substring(2);
-		if(orm_sq(orm_file(dest), orm_rank(dest)) === eking) {
-			/* Enemy king is already in check and it is our turn! Illegal position. */
+		if(board[orm_sq(orm_file(dest), orm_rank(dest))] !== '1') {
+			/* Position is not quiet */
+			return orm_generate_endgame(s);
+		}
+	}
+
+	let k = board.indexOf('k');
+	let K = board.indexOf('K');
+	if(k >= 0 && K >= 0) {
+		let dist = Math.abs((k & 7) - (K & 7)) + Math.abs(((k >> 3) & 7) - ((K >> 3) & 7));
+		if(dist <= 2) {
+			/* Kings are in an illegal position */
 			return orm_generate_endgame(s);
 		}
 	}
