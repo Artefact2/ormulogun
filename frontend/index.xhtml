@@ -48,7 +48,12 @@
 				</div>
 				<div class="col-lg-3 p-0">
 					<div class="row m-2">
-						<button type="button" id="flip-board" class="btn btn-secondary btn-sm">Flip board</button>
+						<button type="button" id="engine-start" class="btn btn-sm btn-outline-secondary ml-2">Start engine analysis</button>
+						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary ml-2">Practice against engine</button>
+						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm ml-2">Flip board</button>
+					</div>
+					<div class="row m-2" id="engine-stuff">
+						<ul></ul>
 					</div>
 					<div class="row m-2">
 						<div class="btn-group btn-group-sm w-100 mb-1">
@@ -61,16 +66,7 @@
 					</div>
 					<div class="row m-2" id="puzzle-stuff">
 						<p id="puzzle-prompt"></p>
-						<div class="container" id="puzzle-actions-after">
-							<div class="row">
-								<div class="col pl-0 pr-1">
-									<a role="button" target="_blank" id="puzzle-analysis" class="btn btn-block btn-secondary">Analysis board</a>
-								</div>
-								<div class="col pr-0 pl-1">
-									<button type="button" id="puzzle-retry" class="btn btn-block btn-secondary">Retry</button>
-								</div>
-							</div>
-						</div>
+						<button type="button" id="puzzle-retry" class="btn btn-sm btn-block btn-secondary">Retry</button>
 						<button type="button" id="puzzle-abandon" class="btn btn-lg btn-block btn-warning">Give up</button>
 						<button type="button" id="puzzle-next" class="btn btn-lg btn-block btn-primary">Next puzzle</button>
 					</div>
@@ -123,6 +119,10 @@
 			</section>
 			<section class="mt-4" id="prefs-puzzlefilters">
 				<h2>Puzzle filtering</h2>
+				<form></form>
+			</section>
+			<section class="mt-4" id="prefs-uci">
+				<h2>Engine settings</h2>
 				<form></form>
 			</section>
 		</div>

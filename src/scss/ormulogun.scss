@@ -23,18 +23,6 @@ div#puzzlesets > ul {
 	list-style-type: none;
 }
 
-
-div#puzzle-actions-after {
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity .25s;
-
-	&.visible {
-		visibility: visible;
-		opacity: 1;
-	}
-}
-
 div#promote-modal {
 	display: none;
 
@@ -60,6 +48,22 @@ div#endgames span.piece {
 
 div#board div#puzzle-stuff {
 	display: none;
+}
+
+div#board div#engine-stuff {
+	&> ul, &> ul > li {
+		overflow: hidden;
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	&> ul > li {
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+		font-family: monospace;
+	}
 }
 
 span.ormulogun-brand:before {

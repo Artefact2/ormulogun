@@ -34,6 +34,10 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	let work = function() {
 		orm_load_fen(endfen, b);
 
+		if(orm_analyse === true) {
+			orm_uci_go();
+		}
+
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
 		b.children("div.piece.king.in-check").removeClass('in-check');
 		let k = b.hasClass('white') ? b.children('div.piece.king.white') : b.children('div.piece.king.black');
@@ -105,6 +109,11 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 	orm_do_legal_move(lan, animate, function() {
 		if(b.hasClass('board-main')) {
 			orm_puzzle_try(lan);
+
+			if(orm_practice !== false && b.hasClass(orm_practice)) {
+				b.removeClass('white black');
+				orm_uci_go_practice();
+			}
 		}
 		if(done) done();
 	}, undefined, undefined, b);

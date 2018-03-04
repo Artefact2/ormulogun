@@ -319,6 +319,6 @@ orm_when_ready.push(function() {
 		li.data('reverse', false);
 		orm_movehist_make_active(reverse ? orm_movehist_prev(li) : li);
 		gumble_load_fen(li.data('fen'));
-		orm_do_legal_move(li.data('lan'), true, null, false, reverse);
+		orm_do_legal_move(li.data('lan'), true, null, false, reverse, orm_get_board());
 	});
 });
