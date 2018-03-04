@@ -117,10 +117,12 @@ const orm_highlight_move_squares = function(sf, sr) {
 	let sq = (sf - 1) * 8 + (sr - 1);
 	let b = $("div#board");
 
+	/* XXX: refactor me */
 	let stop = Module._cch_generate_moves(gumble_board, gumble_movelist, 0, sq, sq + 1);
 
 	b.children('div.back.f' + sf + '.r' + sr).addClass('move-source');
 	for(let i = 0; i < stop; ++i) {
+		/* XXX */
 		Module._cch_format_lan_move(gumble_movelist + 4 * i, gumble_move_str, GUMBLE_SAFE_ALG_LENGTH);
 		let dest = Pointer_stringify(gumble_move_str).substring(2);
 		b.children('div.back.f' + orm_file(dest) + '.r' + orm_rank(dest)).addClass('move-target');

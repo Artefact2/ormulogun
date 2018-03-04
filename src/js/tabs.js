@@ -13,13 +13,11 @@
  * limitations under the License.
  */
 
-const orm_load_tab = function(id, anchor, animate, after) {
+const orm_load_tab = function(id, animate, after) {
 	if(typeof(animate) === "undefined") animate = true;
 
 	let work = function() {
-		if(anchor !== null) {
-			history.replaceState(null, null, anchor);
-		}
+		history.replaceState(null, null, "#" + id);
 		if(after) after();
 	};
 
@@ -43,7 +41,7 @@ const orm_load_tab = function(id, anchor, animate, after) {
 orm_when_ready.push(function() {
 	$("[data-orm-tab]").click(function(e) {
 		let t = $(this);
-		orm_load_tab(t.data('orm-tab'), t.data('orm-anchor') || t.prop('href'));
+		orm_load_tab(t.data('orm-tab'));
 		e.preventDefault();
 		t.blur();
 	});

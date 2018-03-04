@@ -22,7 +22,7 @@ let orm_temp_filter = false;
 
 const orm_load_puzzle_manifest = function(done) {
 	$.getJSON("./puzzles/manifest.js").always(function() {
-		$("div#select-puzzleset > p.alert").remove();
+		$("div#puzzlesets > p.alert").remove();
 	}).fail(function() {
 		orm_error('Could not load the puzzle set manifest, make sure no extension is blocking XHR.');
 	}).done(function(data) {
@@ -53,14 +53,6 @@ const orm_restore_tab = function() {
 	$("div#intro").hide();
 	let h = location.hash.split("-", 3);
 	switch(h[0]) {
-	case "#list":
-		$("div#select-puzzleset").show();
-		return;
-
-	case "#prefs":
-		$("div#preferences").show();
-		return;
-
 	case "#puzzle":
 		/* XXX */
 		if(h.length !== 3) break;
@@ -77,9 +69,16 @@ const orm_restore_tab = function() {
 		}, function() {
 			let idx = parseInt(h[2], 10);
 			orm_load_puzzle(idx);
-			$("div#play-puzzle").show();
+			$("div#puzzle").show();
 		});
 		return;
+
+	default:
+		let d = $("body > div.tab" + h[0]);
+		if(d.length === 1) {
+			d.show();
+			return;
+		}
 	}
 
 	$("div#intro").show();
@@ -112,7 +111,7 @@ orm_when_ready.push(function() {
 orm_when_puzzle_manifest_ready.push(function() {
 	orm_restore_tab();
 
-	let ul = $("div#select-puzzleset > ul");
+	let ul = $("div#puzzlesets > ul");
 	let hash = location.hash.split('-', 3);
 	for(let i in orm_manifest) {
 		let pset = orm_manifest[i];
@@ -167,10 +166,10 @@ orm_when_puzzle_manifest_ready.push(function() {
 				orm_temp_filter = true;
 				orm_tag_whitelist.push(t.data('tag'));
 			}
-			orm_puzzle_idx = null;
-			orm_load_next_puzzle();
-			orm_load_tab("play-puzzle", null, true, function() {
+			orm_load_tab("puzzle", true, function() {
 				t.prop('disabled', false).removeClass('disabled');
+				orm_puzzle_idx = null;
+				orm_load_next_puzzle();
 			});
 		});
 	});

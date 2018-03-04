@@ -15,16 +15,17 @@
 	</head>
 	<body>
 		<nav class="navbar navbar-expand-lg navbar-fixed-top navbar-dark" id="mainnav">
-			<span class="navbar-brand"><a href="./" data-orm-tab="intro" data-orm-anchor="#"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
+			<span class="navbar-brand"><a href="./" data-orm-tab="intro"><span class="ormulogun-brand"></span><span class="sr-only">Ormulogun</span><sup class="text-uppercase badge badge-danger">Alpha</sup></a></span>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse" id="navbar-collapse">
 				<ul class="navbar-nav navbar-left">
-					<li class="nav-item"><a class="nav-link" data-orm-tab="select-puzzleset" href="#list">Puzzle sets</a></li>
+					<li class="nav-item"><a class="nav-link" data-orm-tab="puzzlesets" href="#">Puzzle sets</a></li>
+					<li class="nav-item"><a class="nav-link" data-orm-tab="endgames" href="#">Endgame training</a></li>
 				</ul>
 				<ul class="navbar-nav ml-auto">
-					<li class="nav-item"><a class="nav-link" data-orm-tab="preferences" href="#prefs">Preferences</a></li>
+					<li class="nav-item"><a class="nav-link" data-orm-tab="preferences" href="#">Preferences</a></li>
 				</ul>
 			</div>
 		</nav>
@@ -36,15 +37,15 @@
 			<p><strong>Ormulogun is a tactics trainer for chess.</strong> It is completely free and libre.</p>
 			<p>Puzzles are generated from tactics in classical games of high-rated players on Lichess.</p>
 			<p class="alert alert-warning"><strong>Ormulogun is still under heavy developement. Some features are incomplete, or not implemented at all. Because puzzles are computer-generated and computer-tagged, some may not make sense to humans.</strong></p>
-			<p><button type="button" class="btn btn-primary" data-orm-tab="select-puzzleset" data-orm-anchor="#list">Start training</button> or
+			<p><button type="button" class="btn btn-primary" data-orm-tab="puzzlesets">Start training</button> or
 					<a class="btn btn-outline-secondary" href="https://gitlab.com/artefact2/ormulogun">Check out the source code</a></p>
 		</div>
-		<div id="select-puzzleset" class="tab container mt-2">
+		<div id="puzzlesets" class="tab container mt-2">
 			<h1>Choose a puzzle set</h1>
 			<p class="alert alert-primary">Loading the puzzle set manifest…</p>
 			<ul class="m-0 p-0"></ul>
 		</div>
-		<div id="play-puzzle" class="tab container-fluid p-0 mt-2">
+		<div id="puzzle" class="tab container-fluid p-0 mt-2">
 			<div class="row justify-content-lg-center m-0">
 				<div class="col-lg-auto text-center p-0">
 					<div class="board board-main" id="board"><span class="board-pad"></span></div>
@@ -79,6 +80,39 @@
 					</div>
 				</div>
 			</div>
+		</div>
+		<div id="endgames" class="tab container mt-2">
+			<h1>Endgame training</h1>
+			<p class="alert alert-warning">This feature is still considered experimental. Once you are on the analysis board page, click the "practice with computer" button at the bottom-right of the page.</p>
+			<p>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KQ/K" title="King and queen versus king">
+					<div class="piece white queen"></div>
+				</a>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KR/K" title="King and rook versus king">
+					<div class="piece white rook"></div>
+				</a>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KBB/K" title="King and two bishops versus king">
+					<div class="piece white bishop"></div>
+					<div class="piece white bishop"></div>
+				</a>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KBN/K" title="King, bishop and knight versus king">
+					<div class="piece white bishop"></div>
+					<div class="piece white knight"></div>
+				</a>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KQ/KR" title="King and queen versus king and rook">
+					<div class="piece white queen"></div>
+					<div class="piece black rook"></div>
+				</a>
+				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KP/K" title="King and pawn versus king">
+					<div class="piece white pawn"></div>
+				</a>
+			</p>
+			<p>
+				<form class="form-inline" target="_blank" method="get">
+					<input type="text" placeholder="KQ/KP" class="form-control form-control-sm" />
+					<button type="submit" class="btn btn-primary btn-sm ml-2">Generate custom endgame</button>
+				</form>
+			</p>
 		</div>
 		<div id="preferences" class="tab container mt-2">
 			<h1>Preferences</h1>

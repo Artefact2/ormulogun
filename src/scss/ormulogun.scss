@@ -19,7 +19,7 @@ body {
 	}
 }
 
-div#select-puzzleset > ul {
+div#puzzlesets > ul {
 	list-style-type: none;
 }
 
@@ -51,6 +51,13 @@ div#promote-modal {
 			outline: .1em solid black;
 		}
 	}
+}
+
+div#endgames div.piece {
+	display: inline-block;
+	vertical-align: middle;
+	width: 4em;
+	height: 4em;
 }
 
 span.ormulogun-brand:before {
