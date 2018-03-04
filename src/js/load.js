@@ -17,7 +17,6 @@ let orm_manifest = null;
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
 let orm_puzzle_idx = null;
-let orm_when_puzzle_manifest_ready = [];
 let orm_temp_filter = false;
 
 const orm_load_puzzle_manifest = function(done) {

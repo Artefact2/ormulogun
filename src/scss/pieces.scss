@@ -1,4 +1,4 @@
-div.piece {
+div.piece, span.piece {
 	background-size: cover;
 	background-repeat: no-repeat;
 
@@ -53,4 +53,9 @@ div.piece {
 			background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NSIgaGVpZ2h0PSI0NSI+PHBhdGggZD0iTTIyIDljLTIuMjEgMC00IDEuNzktNCA0IDAgLjg5LjI5IDEuNzEuNzggMi4zOC0xLjk1IDEuMTItMy4yOCAzLjIxLTMuMjggNS42MiAwIDIuMDMuOTQgMy44NCAyLjQxIDUuMDMtMyAxLjA2LTcuNDEgNS41NS03LjQxIDEzLjQ3aDIzYzAtNy45Mi00LjQxLTEyLjQxLTcuNDEtMTMuNDcgMS40Ny0xLjE5IDIuNDEtMyAyLjQxLTUuMDMgMC0yLjQxLTEuMzMtNC41LTMuMjgtNS42Mi40OS0uNjcuNzgtMS40OS43OC0yLjM4IDAtMi4yMS0xLjc5LTQtNC00eiIgZmlsbD0iI2ZmZiIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9zdmc+Cg==);
 		}
 	}
+}
+
+span.piece {
+	display: inline-block;
+	vertical-align: middle;
 }

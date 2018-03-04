@@ -16,6 +16,7 @@
 "use strict";
 
 let orm_when_ready = [];
+let orm_when_puzzle_manifest_ready = [];
 
 const orm_error = function(str) {
 	let err = $(document.createElement('p'));
