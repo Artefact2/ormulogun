@@ -71,13 +71,14 @@ const orm_movehist_make_active = function(e) {
 	if(e.length === 0) {
 		$("button#movehist-first, button#movehist-prev").prop('disabled', 'disabled').addClass('disabled');
 		$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
+		return;
+	}
+
+	$("button#movehist-first, button#movehist-prev").prop('disabled', false).removeClass('disabled');
+	if(orm_movehist_next(e).length === 0) {
+		$("button#movehist-next, button#movehist-last").prop('disabled', 'disabled').addClass('disabled');
 	} else {
-		$("button#movehist-first, button#movehist-prev").prop('disabled', false).removeClass('disabled');
-		if(orm_movehist_next(e).length === 0) {
-			$("button#movehist-next, button#movehist-last").prop('disabled', 'disabled').addClass('disabled');
-		} else {
-			$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
-		}
+		$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
 	}
 
 	const btn = e.children('button');
@@ -89,6 +90,10 @@ const orm_movehist_make_active = function(e) {
 	} else {
 		btn.addClass('btn-primary');
 	}
+
+	/* Try to scroll to the center, see https://stackoverflow.com/a/33193694/615776 */
+	let p = $("ul#movehist");
+	p.scrollTop(p.scrollTop() + e.position().top - .5 * p.height() + .5 * e.height());
 };
 
 const orm_movehist_push = function(startfen, lan, san) {
@@ -140,8 +145,6 @@ const orm_movehist_push = function(startfen, lan, san) {
 	li.addClass('new mb-1');
 	btn.addClass('btn btn-sm');
 	btn.text(san);
-
-	orm_movehist_make_active(li);
 
 	if(startfen.split(' ', 3)[1] === 'w') {
 		li.addClass('white');
@@ -205,6 +208,8 @@ const orm_movehist_push = function(startfen, lan, san) {
 			}
 		}
 	}
+
+	orm_movehist_make_active(li);
 };
 
 const orm_movehist_merge_from_puzzle_step = function(step) {
