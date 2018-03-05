@@ -51,6 +51,21 @@ div#board div#puzzle-stuff {
 }
 
 div#board div#engine-stuff {
+	font-size: 70%;
+
+	div#engine-depth, div#engine-nodes, div#engine-nps {
+		text-align: center;
+	}
+
+	button#engine-toggle {
+		border: 0;
+		padding: 0;
+	}
+
+	&> div.progress {
+		height: .3em;
+	}
+
 	&> ul, &> ul > li {
 		overflow: hidden;
 		list-style-type: none;

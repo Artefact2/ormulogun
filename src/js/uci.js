@@ -33,7 +33,7 @@ const orm_uci_handle_message = function(msg) {
 		return;
 	}
 
-	if(orm_analyse === true && msg.match(/^info /)) {
+	if(orm_analyse === true && msg.match(/^info\s/)) {
 		let depth = msg.match(/\sdepth\s+([1-9][0-9]*)\s/);
 		let nodes = msg.match(/\snodes\s+([1-9][0-9]*)\s/);
 		let nps = msg.match(/\snps\s+([1-9][0-9]*)\s/);
@@ -41,6 +41,22 @@ const orm_uci_handle_message = function(msg) {
 		if(depth) $("div#engine-depth").text("depth " + depth[1]);
 		if(nodes) $("div#engine-nodes").text(orm_uci_format_node_count(parseInt(nodes[1], 10)) + " nodes");
 		if(nps) $("div#engine-nps").text(orm_uci_format_node_count(parseInt(nps[1], 10)) + " nps");
+
+		let m, p = 0.0;
+		if(depth && (m = orm_pref('uci_hard_limiter').match(/^depth\s+([1-9][0-9]*)$/))) {
+			p = parseInt(depth[1], 10) / parseInt(m[1], 10);
+		} else if(nodes && (m = orm_pref('uci_hard_limiter').match(/^nodes\s+([1-9][0-9]*)$/))) {
+			p = parseInt(nodes[1], 10) / parseInt(m[1], 10);
+		} else if(m = orm_pref('uci_hard_limiter').match(/^movetime\s+([1-9][0-9]*)$/)) {
+			let time = msg.match(/\stime\s+([1-9][0-9]*)\s/);
+			if(time) {
+				p = parseInt(time[1], 10) / parseInt(m[1], 10);
+			}
+		} else if(depth && nodes) {
+			/* Fallback progress */
+			p = parseInt(depth[1], 10) / 100.0 + parseInt(nodes[1], 10) / 1000000000.0;
+		}
+		$("div#engine-stuff > div.progress > div.progress-bar").css('width', 95.0 * Math.min(1.0, p) + '%');
 
 		let idx = msg.match(/\smultipv\s+([1-9][0-9]*)\s/, msg);
 		let score = msg.match(/\sscore\s+(cp|mate) (-?[1-9][0-9]*)\s/);
@@ -52,9 +68,15 @@ const orm_uci_handle_message = function(msg) {
 		return;
 	}
 
-	if(orm_practice !== false && msg.match(/^bestmove /)) {
-		let lan = msg.split(' ', 3)[1]; /* XXX: handle checkmate */
-		orm_do_legal_move(lan, true, null, undefined, undefined, orm_get_board());
+	if(msg.match(/^bestmove\s/)) {
+		if(orm_practice !== false) {
+			let lan = msg.split(' ', 3)[1]; /* XXX: handle checkmate */
+			orm_do_legal_move(lan, true, null, undefined, undefined, orm_get_board());
+		} else if(orm_analyse === true) {
+			$("div#engine-stuff > div.progress > div.progress-bar").css('width', '100%').addClass('bg-success');
+			$("button#engine-toggle").text('Go deeper').data('running', false).prop('disabled', false).removeClass('disabled');
+		}
+		return;
 	}
 };
 
@@ -78,8 +100,9 @@ const orm_uci_init = function() {
 	orm_engine.postMessage('uci');
 };
 
-const orm_uci_go = function() {
+const orm_uci_go = function(limiter) {
 	if(orm_analyse === false) return;
+	if(typeof(limiter) === "undefined") limiter = orm_pref('uci_hard_limiter');
 
 	let ul = $("div#engine-stuff > ul");
 	let n = parseInt(orm_pref('uci_multipv'), 10);
@@ -87,10 +110,13 @@ const orm_uci_go = function() {
 	for(let i = 0; i < n; ++i) {
 		ul.append($(document.createElement('li')));
 	}
+	$("div#engine-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
+	$("button#engine-toggle").text('Stop').data('running', true).prop('disabled', false).removeClass('disabled');
+
 	orm_engine.postMessage('stop');
 	orm_engine.postMessage('setoption name MultiPV value ' + orm_pref('uci_multipv'));
 	orm_engine.postMessage('position fen ' + orm_get_board().data('fen'));
-	orm_engine.postMessage('go ' + orm_pref('uci_hard_limiter'));
+	orm_engine.postMessage('go ' + limiter);
 };
 
 const orm_uci_go_practice = function() {
@@ -145,5 +171,15 @@ orm_when_ready.push(function() {
 		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
 		$("div#engine-stuff > ul").empty();
 		orm_uci_init(); /* XXX: race condition with go called from move.js? */
+	});
+
+	$("button#engine-toggle").click(function() {
+		let t = $(this);
+		t.prop('disabled', true).addClass('disabled').blur();
+		if(t.data('running')) {
+			orm_engine.postMessage('stop');
+		} else {
+			orm_uci_go('infinite');
+		}
 	});
 });
