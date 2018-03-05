@@ -2,7 +2,7 @@ image: alpine:edge
 
 before_script:
 - echo 'http://dl-cdn.alpinelinux.org/alpine/edge/testing' >> /etc/apk/repositories
-- apk add --no-cache coreutils bash make wget git gzip php7 build-base cmake clang emscripten sassc
+- apk add --no-cache coreutils bash make wget git gzip php7 build-base cmake clang emscripten binaryen sassc
 - git submodule update --recursive --init
 
 pages:
