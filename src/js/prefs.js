@@ -24,6 +24,10 @@ const ORM_PREFS_DEFAULTS = {
 
 	"puzzle_depth_min": "1",
 	"puzzle_depth_max": "7",
+
+	"uci_multipv": "5",
+	"uci_hard_limiter": "depth 22",
+	"uci_practice_limiter": "movetime 1000",
 };
 
 let orm_prefs = null;
@@ -118,6 +122,13 @@ const orm_prefs_number = function(k, lstr) {
 	return orm_prefs_generic(k, lstr, input);
 };
 
+const orm_prefs_string = function(k, lstr) {
+	let input = $(document.createElement('input'));
+	input.prop('id', 's_' + k);
+	input.prop('type', 'text');
+	return orm_prefs_generic(k, lstr, input);
+}
+
 const orm_prefs_textarea = function(k, lstr) {
 	let ta = $(document.createElement('textarea'));
 	ta.prop('id', 's_' + k);
@@ -166,6 +177,15 @@ const orm_prefs_apply = function() {
 		if(orm_prefs[k] === "0") orm_tag_blacklist.push(t);
 		else orm_tag_whitelist.push(t);
 	}
+
+	let ul = $("div#analysis-stuff > ul").empty();
+	let nlines = orm_pref('uci_multipv');
+	for(let i = 0; i < nlines; ++i) {
+		ul.append($(document.createElement('li')).append(
+			document.createElement('strong'),
+			document.createElement('span')
+		));
+	}
 };
 
 orm_when_ready.push(function() {
@@ -185,6 +205,12 @@ orm_when_ready.push(function() {
 	$("section#prefs-puzzlefilters > form").append(
 		orm_prefs_combine2(orm_prefs_number("puzzle_depth_min", "Minimum puzzle depth"),
 						   orm_prefs_number("puzzle_depth_max", "Maximum puzzle depth"))
+	);
+
+	$("section#prefs-uci > form").append(
+		orm_prefs_number("uci_multipv", "Maximum number of lines"),
+		orm_prefs_combine2(orm_prefs_string("uci_hard_limiter", "Analysis limiter"),
+						   orm_prefs_string("uci_practice_limiter", "Practice limiter"))
 	);
 
 	$("div#preferences > section > form").each(function() {

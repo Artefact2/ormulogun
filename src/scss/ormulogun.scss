@@ -23,18 +23,6 @@ div#puzzlesets > ul {
 	list-style-type: none;
 }
 
-
-div#puzzle-actions-after {
-	opacity: 0;
-	visibility: hidden;
-	transition: opacity .25s;
-
-	&.visible {
-		visibility: visible;
-		opacity: 1;
-	}
-}
-
 div#promote-modal {
 	display: none;
 
@@ -58,8 +46,52 @@ div#endgames span.piece {
 	height: 4em;
 }
 
-div#board div#puzzle-stuff {
+div#board div#puzzle-stuff, div#board div#analysis-stuff {
 	display: none;
+}
+
+div#board div#analysis-stuff {
+	font-size: 80%;
+
+	div#engine-depth, div#engine-nodes, div#engine-nps {
+		text-align: center;
+	}
+
+	button#engine-toggle {
+		border: 0;
+		padding: 0;
+	}
+
+	&> div.progress {
+		height: .3em;
+	}
+
+	&> ul, &> ul > li {
+		overflow: hidden;
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		width: 100%;
+	}
+
+	&> ul > li {
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+
+		border-bottom: .15em solid #e9ecef;
+
+		&> strong {
+			display: inline-block;
+			text-align: center;
+			width: 3em;
+		}
+
+		&.pv:hover {
+			cursor: pointer;
+			background-color: #e9ecef;
+		}
+	}
 }
 
 span.ormulogun-brand:before {

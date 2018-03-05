@@ -37,7 +37,6 @@ const orm_load_puzzle = function(puz) {
 	orm_load_fen(puz[0], b);
 	setTimeout(function() {
 		orm_do_legal_move(puz[1][0], true, function() {
-			$("a#puzzle-analysis").prop('href', 'https://lichess.org/analysis/' + gumble_save_fen().replace(/\s/g, '_'));
 			$("ul#movehist li.new").addClass('puzzle-reply');
 		}, undefined, undefined, b);
 	}, orm_pref("board_move_delay"));
@@ -46,19 +45,22 @@ const orm_load_puzzle = function(puz) {
 		.empty()
 		.removeClass("text-success text-danger")
 		.text("Find the best move for " + (puz.side ? 'White' : 'Black') + ".");
-	$("div#puzzle-actions-after").removeClass("visible");
 	$("button#puzzle-abandon").show();
-	$("button#puzzle-next").hide();
+	$("button#puzzle-next, button#puzzle-retry").hide();
 	$("nav#mainnav").removeClass("bg-success bg-danger");
 	orm_puzzle_next = puz[1][1];
 
+	/* XXX: refactor all this, a single .puzzle-cheat class maybe? */
 	$("div#puzzle-stuff").show();
+	$("button#engine-analyse, button#engine-practice").hide();
+	orm_uci_stopall();
 };
 
 const orm_unload_puzzle = function() {
 	orm_puzzle = null;
 	orm_puzzle_next = null;
 	$("div#puzzle-stuff").hide();
+	$("button#engine-analyse, button#engine-practice").show();
 	orm_movehist_reset();
 	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */
@@ -113,7 +115,8 @@ const orm_load_next_puzzle = function() {
 const orm_puzzle_over = function() {
 	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
-	$("button#puzzle-next").show();
+	$("button#puzzle-next, button#puzzle-retry").show();
+	$("button#engine-analyse, button#engine-practice").show();
 
 	let prompt = $("p#puzzle-prompt");
 	prompt.append($(document.createElement('br')));

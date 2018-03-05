@@ -12,7 +12,7 @@ pages:
     - cp -R frontend public
     - find public/puzzles -name "*.json" -delete
     - rm -R public/index.xhtml
-    - find public -type f -exec gzip --best --keep '{}' ';'
+    - find public -type f -name "*.js" -o -name "*.html" -o -name "*.css" -exec gzip --best --keep '{}' ';'
     artifacts:
         paths:
         - public

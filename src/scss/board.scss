@@ -22,13 +22,13 @@ div.board {
 				background-color: hsla(0, 0%, 100%, .5);
 			}
 
-			&.move-source:before, &.move-target:before {
+			&.move-source:before, &.move-target:before, &.pv-move-source:before, &.pv-move-target:before {
 				content: " ";
 				position: absolute;
 				background-color: hsla(60, 100%, 50%, .5);
 			}
 
-			&.move-source:before {
+			&.move-source:before, &.pv-move-source:before, &.pv-move-target:before {
 				top: 0;
 				left: 0;
 				width: 100%;

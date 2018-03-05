@@ -106,24 +106,34 @@ const orm_generate_endgame = function(s, tries) {
 	return gumble_save_fen();
 };
 
+const orm_practice_fen = function(fen) {
+	let b = orm_get_board();
+	if(orm_practice !== false) $("button#engine-practice").click();
+
+	orm_load_tab("board", true, function() {
+		orm_load_fen(fen, orm_get_board());
+		$("button#engine-practice").click();
+	});
+};
+
 orm_when_ready.push(function() {
-	$("div#endgames a[data-endgame]").click(function() {
+	$("div#endgames button[data-endgame]").click(function() {
 		let a = $(this);
 		let fen = orm_generate_endgame(a.data('endgame'));
 		if(fen === false) orm_error("Could not generate endgame for " + a.data('endgame') + ".");
-		a.prop('href', 'https://lichess.org/analysis/' + fen.replace(/\s/g, '_'));
+		orm_practice_fen(fen);
 	});
 
 	$("div#endgames form").submit(function(e) {
 		let f = $(this);
 		let i = f.children('input');
 		let fen = orm_generate_endgame(i.val());
+		e.preventDefault();
 		if(fen === false) {
-			e.preventDefault();
 			i.addClass('is-invalid');
 			return;
 		}
 		i.removeClass('is-invalid');
-		f.prop('action', 'https://lichess.org/analysis/' + fen.replace(/\s/g, '_'));
+		orm_practice_fen(fen);
 	});
 });

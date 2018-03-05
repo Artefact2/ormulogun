@@ -1,4 +1,4 @@
-FRONTEND:=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js
+FRONTEND:=frontend/index.html frontend/ormulogun.css frontend/ormulogun.js frontend/gumble.js frontend/stockfish.js
 PATH:=./bin:$(PATH)
 SOURCES:=$(shell find src -name "*.c" -not -name "gen-puzzles.c" -not -name "retag-puzzles.c")
 HEADERS:=$(shell find src -name "*.h")
@@ -19,11 +19,22 @@ frontend/index.html: frontend/index.xhtml
 	echo '<!DOCTYPE html>' > $@
 	tail -n +2 $< >> $@
 
+frontend/stockfish.js:
+	git submodule init
+	git submodule update
+	make -C stockfish.js/src clean
+	make -C stockfish.js/src build COMP=emscripten ARCH=js
+	cat stockfish.js/preamble.js stockfish.js/src/stockfish.js > $@
+	make -C stockfish.js/src clean
+	make -C stockfish.js/src build COMP=emscripten ARCH=wasm
+	cp stockfish.js/src/stockfish.wasm frontend
+	cat stockfish.js/preamble.js stockfish.js/src/stockfish.js > frontend/stockfish.wasm.js
+
 frontend/gumble.js:
 	git submodule init
 	git submodule update
 	cd gumble && make clean test/PerftSuite.cmake
-	mkdir gumble/build gumble/build-js
+	mkdir -p gumble/build gumble/build-js
 	cd gumble/build && cmake .. && make enginecore gumble
 	cd gumble/build-js && CFLAGS="-Oz -DNDEBUG" emcmake cmake .. && emmake make enginecore
 	emcc -Oz --memory-init-file 0 -s EXPORTED_FUNCTIONS="['_cch_init_board', '_cch_load_fen', '_cch_save_fen', '_cch_play_legal_move', '_cch_parse_lan_move', '_cch_format_lan_move', '_cch_format_san_move', '_cch_generate_moves', '_cch_is_move_legal', '_cch_is_square_checked']" gumble/build-js/src/libenginecore.a -o $@

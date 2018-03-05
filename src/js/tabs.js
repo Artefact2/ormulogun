@@ -19,6 +19,8 @@ const orm_load_tab = function(id, animate, between, after) {
 	let bwork = function() {
 		history.replaceState(null, null, "#" + id);
 
+		orm_uci_stopall();
+
 		if(id === "board") {
 			orm_unload_puzzle();
 		}

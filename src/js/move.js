@@ -34,9 +34,14 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	let work = function() {
 		orm_load_fen(endfen, b);
 
+		if(orm_analyse === true) {
+			orm_uci_go();
+		}
+
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
 		b.children("div.piece.king.in-check").removeClass('in-check');
 		let k = b.hasClass('white') ? b.children('div.piece.king.white') : b.children('div.piece.king.black');
+		gumble_load_fen(endfen);
 		if(gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank')))) {
 			k.addClass('in-check');
 		}
@@ -105,13 +110,17 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 	orm_do_legal_move(lan, animate, function() {
 		if(b.hasClass('board-main')) {
 			orm_puzzle_try(lan);
+
+			if(orm_practice !== false && b.hasClass(orm_practice)) {
+				orm_uci_go_practice();
+			}
 		}
 		if(done) done();
 	}, undefined, undefined, b);
 };
 
 const orm_can_move_piece = function(p, b) {
-	return (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
+	return (orm_practice === false || !b.hasClass(orm_practice)) && (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
 };
 
 const orm_highlight_move_squares = function(sf, sr, b) {
@@ -226,5 +235,22 @@ orm_when_ready.push(function() {
 			orm_promote_context[0] += append;
 		}
 		$("div#promote-modal").modal('hide');
+	});
+
+	$("div#analysis-stuff > ul").on('mouseenter', '> li.pv', function() {
+		let li = $(this);
+		let b = orm_get_board();
+		let src = orm_piece_at(li.data('pv').substr(0, 2), 'back', b);
+		let dest = orm_piece_at(li.data('pv').substr(2, 2), 'back', b);
+		src.addClass('pv-move-source');
+		dest.addClass('pv-move-target');
+	}).on('mouseleave', '> li.pv', function() {
+		let b = orm_get_board();
+		b.children('div.pv-move-source, div.pv-move-target').removeClass('pv-move-source pv-move-target');
+	}).on('click', '> li.pv', function() {
+		let li = $(this);
+		let b = orm_get_board();
+		orm_do_puzzle_move(li.data('pv').split(' ', 2)[0], true, null, b);
+		li.trigger('mouseleave');
 	});
 });

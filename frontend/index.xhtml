@@ -48,7 +48,23 @@
 				</div>
 				<div class="col-lg-3 p-0">
 					<div class="row m-2">
-						<button type="button" id="flip-board" class="btn btn-secondary btn-sm">Flip board</button>
+						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary ml-2">Start engine analysis</button>
+						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary ml-2">Practice against engine</button>
+						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm ml-2">Flip board</button>
+					</div>
+					<div class="row m-2" id="analysis-stuff">
+						<div class="container p-0">
+							<div class="row justify-content-around">
+								<div class="col-auto" id="engine-depth"></div>
+								<div class="col-auto" id="engine-nodes"></div>
+								<div class="col-auto" id="engine-nps"></div>
+								<div class="col-auto"><button type="button" class="btn-link w-100" id="engine-toggle"></button></div>
+							</div>
+						</div>
+						<div class="progress container p-0">
+							<div class="progress-bar"></div>
+						</div>
+						<ul></ul>
 					</div>
 					<div class="row m-2">
 						<div class="btn-group btn-group-sm w-100 mb-1">
@@ -61,16 +77,7 @@
 					</div>
 					<div class="row m-2" id="puzzle-stuff">
 						<p id="puzzle-prompt"></p>
-						<div class="container" id="puzzle-actions-after">
-							<div class="row">
-								<div class="col pl-0 pr-1">
-									<a role="button" target="_blank" id="puzzle-analysis" class="btn btn-block btn-secondary">Analysis board</a>
-								</div>
-								<div class="col pr-0 pl-1">
-									<button type="button" id="puzzle-retry" class="btn btn-block btn-secondary">Retry</button>
-								</div>
-							</div>
-						</div>
+						<button type="button" id="puzzle-retry" class="btn btn-sm btn-block btn-secondary">Retry</button>
 						<button type="button" id="puzzle-abandon" class="btn btn-lg btn-block btn-warning">Give up</button>
 						<button type="button" id="puzzle-next" class="btn btn-lg btn-block btn-primary">Next puzzle</button>
 					</div>
@@ -84,32 +91,32 @@
 		</div>
 		<div id="endgames" class="tab container mt-2">
 			<h1>Endgame training</h1>
-			<p class="alert alert-warning">This feature is still considered experimental. Once you are on the analysis board page, click the "practice with computer" button at the bottom-right of the page.</p>
+			<p class="alert alert-warning">This feature is still considered experimental.</p>
 			<p>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KQ/K" title="King and queen versus king">
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KQ/K" title="King and queen versus king">
 					<span class="piece white queen"></span>
-				</a>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KR/K" title="King and rook versus king">
+				</button>
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KR/K" title="King and rook versus king">
 					<span class="piece white rook"></span>
-				</a>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KBB/K" title="King and two bishops versus king">
+				</button>
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KBB/K" title="King and two bishops versus king">
 					<span class="piece white bishop"></span>
 					<span class="piece white bishop"></span>
-				</a>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KBN/K" title="King, bishop and knight versus king">
+				</button>
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KBN/K" title="King, bishop and knight versus king">
 					<span class="piece white bishop"></span>
 					<span class="piece white knight"></span>
-				</a>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KQ/KR" title="King and queen versus king and rook">
+				</button>
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KQ/KR" title="King and queen versus king and rook">
 					<span class="piece white queen"></span>
 					<span class="piece black rook"></span>
-				</a>
-				<a role="button" href="#" target="_blank" class="btn btn-primary p-1 m-1" data-endgame="KP/K" title="King and pawn versus king">
+				</button>
+				<button role="button" class="btn btn-primary p-1 m-1" data-endgame="KP/K" title="King and pawn versus king">
 					<span class="piece white pawn"></span>
-				</a>
+				</button>
 			</p>
 			<p>
-				<form class="form-inline" target="_blank" method="get">
+				<form class="form-inline">
 					<input type="text" placeholder="KQ/KP" class="form-control form-control-sm" />
 					<button type="submit" class="btn btn-primary btn-sm ml-2">Generate custom endgame</button>
 				</form>
@@ -123,6 +130,10 @@
 			</section>
 			<section class="mt-4" id="prefs-puzzlefilters">
 				<h2>Puzzle filtering</h2>
+				<form></form>
+			</section>
+			<section class="mt-4" id="prefs-uci">
+				<h2>Engine settings</h2>
 				<form></form>
 			</section>
 		</div>
