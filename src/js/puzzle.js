@@ -60,6 +60,7 @@ const orm_unload_puzzle = function() {
 	orm_puzzle_next = null;
 	$("div#puzzle-stuff").hide();
 	$("button#engine-analyse, button#engine-practice, div#engine-stuff").show();
+	$("div#engine-stuff > ul").empty();
 	orm_movehist_reset();
 	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */

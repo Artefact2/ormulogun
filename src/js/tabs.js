@@ -15,6 +15,9 @@
 
 const orm_load_tab = function(id, animate, between, after) {
 	if(typeof(animate) === "undefined") animate = true;
+	if(orm_engine) orm_engine.postMessage('stop');
+	if(orm_analyse) $("button#engine-analyse").click();
+	if(orm_practice) $("button#engine-practice").click();
 
 	let bwork = function() {
 		history.replaceState(null, null, "#" + id);

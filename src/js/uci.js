@@ -17,6 +17,16 @@ let orm_engine = null;
 let orm_practice = false;
 let orm_analyse = false;
 
+const orm_uci_format_node_count = function(nc) {
+	if(nc > 10000000) {
+		return (nc / 1000000.0).toFixed(1).toString() + 'M';
+	} else if(nc > 10000) {
+		return (nc / 1000.0).toFixed(1).toString() + 'K';
+	}
+
+	return nc.toString();
+};
+
 const orm_uci_handle_message = function(msg) {
 	if(msg === "uciok") {
 		$("p#loading-engine").remove();
@@ -24,9 +34,18 @@ const orm_uci_handle_message = function(msg) {
 	}
 
 	if(orm_analyse === true && msg.match(/^info /)) {
+		let depth = msg.match(/\sdepth\s+([1-9][0-9]*)\s/);
+		let nodes = msg.match(/\snodes\s+([1-9][0-9]*)\s/);
+		let nps = msg.match(/\snps\s+([1-9][0-9]*)\s/);
+
+		if(depth) $("div#engine-depth").text("depth " + depth[1]);
+		if(nodes) $("div#engine-nodes").text(orm_uci_format_node_count(parseInt(nodes[1], 10)) + " nodes");
+		if(nps) $("div#engine-nps").text(orm_uci_format_node_count(parseInt(nps[1], 10)) + " nps");
+
 		let idx = msg.match(/\smultipv\s+([1-9][0-9]*)\s/, msg);
 		let score = msg.match(/\sscore\s+(cp|mate) (-?[1-9][0-9]*)\s/);
 		let pv = msg.match(/\spv\s+(.+)$/);
+		if(!idx || !score || !pv) return;
 
 		let li = $("div#engine-stuff > ul > li").eq(parseInt(idx[1], 10) - 1);
 		li.text(score[1] + ' ' + score[2] + ' ' + pv[1]);
