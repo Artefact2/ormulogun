@@ -13,7 +13,6 @@ Dependencies
 * Any UCI engine (eg stockfish)
 * CMake
 * LLVM, clang
-* Emscripten
 * sassc
 
 To-Do

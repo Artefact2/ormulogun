@@ -1,6 +1,6 @@
 [submodule "gumble"]
 	path = gumble
 	url = https://gitlab.com/artefact2/gumble
-[submodule "stockfish.js"]
-	path = stockfish.js
-	url = https://github.com/niklasf/stockfish.js
+[submodule "ext"]
+	path = ext
+	url = https://gitlab.com/artefact2/ormulogun-ext
