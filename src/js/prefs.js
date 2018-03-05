@@ -177,6 +177,15 @@ const orm_prefs_apply = function() {
 		if(orm_prefs[k] === "0") orm_tag_blacklist.push(t);
 		else orm_tag_whitelist.push(t);
 	}
+
+	let ul = $("div#analysis-stuff > ul").empty();
+	let nlines = orm_pref('uci_multipv');
+	for(let i = 0; i < nlines; ++i) {
+		ul.append($(document.createElement('li')).append(
+			document.createElement('strong'),
+			document.createElement('span')
+		));
+	}
 };
 
 orm_when_ready.push(function() {

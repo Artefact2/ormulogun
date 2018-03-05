@@ -50,8 +50,8 @@ div#board div#puzzle-stuff {
 	display: none;
 }
 
-div#board div#engine-stuff {
-	font-size: 70%;
+div#board div#analysis-stuff {
+	font-size: 80%;
 
 	div#engine-depth, div#engine-nodes, div#engine-nps {
 		text-align: center;
@@ -71,13 +71,26 @@ div#board div#engine-stuff {
 		list-style-type: none;
 		margin: 0;
 		padding: 0;
+		width: 100%;
 	}
 
 	&> ul > li {
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		overflow: hidden;
-		font-family: monospace;
+
+		border-bottom: .15em solid #e9ecef;
+
+		&> strong {
+			display: inline-block;
+			text-align: center;
+			width: 3em;
+		}
+
+		&.pv:hover {
+			cursor: pointer;
+			background-color: #e9ecef;
+		}
 	}
 }
 

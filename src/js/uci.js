@@ -14,8 +14,11 @@
  */
 
 let orm_engine = null;
+let orm_engine_loaded_once = false;
 let orm_practice = false;
 let orm_analyse = false;
+let orm_analyse_fen = null;
+let orm_score_sign = 1;
 
 const orm_uci_format_node_count = function(nc) {
 	if(nc > 10000000) {
@@ -27,7 +30,22 @@ const orm_uci_format_node_count = function(nc) {
 	return nc.toString();
 };
 
+const orm_format_san_pv = function(pv) {
+	gumble_load_fen(orm_analyse_fen);
+	let ret = [];
+	pv = pv.split(' ');
+
+	for(let i in pv) {
+		ret.push(gumble_lan_to_san(pv[i]));
+		gumble_play_legal_lan(pv[i]);
+	}
+
+	return ret.join(' ');
+};
+
 const orm_uci_handle_message = function(msg) {
+	if("data" in msg) msg = msg.data;
+
 	if(msg === "uciok") {
 		$("p#loading-engine").remove();
 		return;
@@ -56,15 +74,20 @@ const orm_uci_handle_message = function(msg) {
 			/* Fallback progress */
 			p = parseInt(depth[1], 10) / 100.0 + parseInt(nodes[1], 10) / 1000000000.0;
 		}
-		$("div#engine-stuff > div.progress > div.progress-bar").css('width', 95.0 * Math.min(1.0, p) + '%');
+		$("div#analysis-stuff > div.progress > div.progress-bar").css('width', 95.0 * Math.min(1.0, p) + '%');
 
 		let idx = msg.match(/\smultipv\s+([1-9][0-9]*)\s/, msg);
 		let score = msg.match(/\sscore\s+(cp|mate) (-?[1-9][0-9]*)\s/);
 		let pv = msg.match(/\spv\s+(.+)$/);
 		if(!idx || !score || !pv) return;
 
-		let li = $("div#engine-stuff > ul > li").eq(parseInt(idx[1], 10) - 1);
-		li.text(score[1] + ' ' + score[2] + ' ' + pv[1]);
+		let li = $("div#analysis-stuff > ul > li").eq(parseInt(idx[1], 10) - 1).addClass('pv').data('pv', pv);
+		score[2] = parseInt(score[2], 10) * orm_score_sign;
+		li.children('strong').text(
+			score[1] === "cp" ? (
+				score[2] === 0 ? '0' : (score[2] > 0 ? '+' : '') + (score[2] / 100.0).toFixed(1).toString()
+			) : '#' + score[2]);
+		li.children('span').text(orm_format_san_pv(pv[1]));
 		return;
 	}
 
@@ -73,7 +96,7 @@ const orm_uci_handle_message = function(msg) {
 			let lan = msg.split(' ', 3)[1]; /* XXX: handle checkmate */
 			orm_do_legal_move(lan, true, null, undefined, undefined, orm_get_board());
 		} else if(orm_analyse === true) {
-			$("div#engine-stuff > div.progress > div.progress-bar").css('width', '100%').addClass('bg-success');
+			$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '100%').addClass('bg-success');
 			$("button#engine-toggle").text('Go deeper').data('running', false).prop('disabled', false).removeClass('disabled');
 		}
 		return;
@@ -82,9 +105,12 @@ const orm_uci_handle_message = function(msg) {
 
 const orm_uci_init = function() {
 	if(orm_engine === null) {
-		let p = $(document.createElement('p'));
-		p.attr('id', 'loading-engine').addClass('alert alert-primary').text('Loading stockfish.js…');
-		$("nav#mainnav").after(p);
+		if(orm_engine_loaded_once === false) {
+			let p = $(document.createElement('p'));
+			p.attr('id', 'loading-engine').addClass('alert alert-primary').text('Loading stockfish.js…');
+			$("nav#mainnav").after(p);
+			orm_engine_loaded_once = true;
+		}
 
 		if(typeof WebAssembly === "object" && WebAssembly.validate(Uint8Array.of(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))) {
 			orm_engine = new Worker('stockfish.wasm.js');
@@ -92,30 +118,31 @@ const orm_uci_init = function() {
 			orm_engine = new Worker('stockfish.js');
 		}
 
-		orm_engine.addEventListener("message", function(e) {
-			orm_uci_handle_message(e.data);
-		});
+		orm_engine.addEventListener("message", orm_uci_handle_message);
 	}
 
 	orm_engine.postMessage('uci');
+};
+
+const orm_uci_stopall = function() {
+	if(orm_analyse) $("button#engine-analyse").click();
+	if(orm_practice) $("button#engine-practice").click();
+	if(orm_engine) orm_engine.postMessage('stop');
 };
 
 const orm_uci_go = function(limiter) {
 	if(orm_analyse === false) return;
 	if(typeof(limiter) === "undefined") limiter = orm_pref('uci_hard_limiter');
 
-	let ul = $("div#engine-stuff > ul");
-	let n = parseInt(orm_pref('uci_multipv'), 10);
-	ul.empty();
-	for(let i = 0; i < n; ++i) {
-		ul.append($(document.createElement('li')));
-	}
-	$("div#engine-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
+	$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
+	$("div#analysis-stuff > ul > li").removeClass('pv').children().text('');
 	$("button#engine-toggle").text('Stop').data('running', true).prop('disabled', false).removeClass('disabled');
+
+	orm_score_sign = orm_get_board().hasClass('white') ? 1 : - 1; /* XXX */
 
 	orm_engine.postMessage('stop');
 	orm_engine.postMessage('setoption name MultiPV value ' + orm_pref('uci_multipv'));
-	orm_engine.postMessage('position fen ' + orm_get_board().data('fen'));
+	orm_engine.postMessage('position fen ' + (orm_analyse_fen = orm_get_board().data('fen')));
 	orm_engine.postMessage('go ' + limiter);
 };
 
@@ -143,12 +170,14 @@ orm_when_ready.push(function() {
 			orm_engine.postMessage('stop');
 			t.text(t.data('start-text'));
 			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
+			$("div#analysis-stuff").hide();
 			return;
 		}
 
 		orm_analyse = true;
 		t.text('Stop analysis');
 		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
+		$("div#analysis-stuff").show();
 		orm_uci_init();
 		orm_uci_go();
 	});
@@ -169,7 +198,6 @@ orm_when_ready.push(function() {
 		orm_practice = b.hasClass('white') ? 'black' : 'white';
 		t.text('Stop practicing');
 		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
-		$("div#engine-stuff > ul").empty();
 		orm_uci_init(); /* XXX: race condition with go called from move.js? */
 	});
 

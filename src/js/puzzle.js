@@ -52,15 +52,15 @@ const orm_load_puzzle = function(puz) {
 
 	/* XXX: refactor all this, a single .puzzle-cheat class maybe? */
 	$("div#puzzle-stuff").show();
-	$("button#engine-analyse, button#engine-practice, div#engine-stuff").hide();
+	$("button#engine-analyse, button#engine-practice").hide();
+	orm_uci_stopall();
 };
 
 const orm_unload_puzzle = function() {
 	orm_puzzle = null;
 	orm_puzzle_next = null;
 	$("div#puzzle-stuff").hide();
-	$("button#engine-analyse, button#engine-practice, div#engine-stuff").show();
-	$("div#engine-stuff > ul").empty();
+	$("button#engine-analyse, button#engine-practice").show();
 	orm_movehist_reset();
 	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */
@@ -116,7 +116,7 @@ const orm_puzzle_over = function() {
 	$("div#puzzle-actions-after").addClass('visible');
 	$("button#puzzle-abandon").hide();
 	$("button#puzzle-next, button#puzzle-retry").show();
-	$("button#engine-analyse, button#engine-practice, div#engine-stuff").show();
+	$("button#engine-analyse, button#engine-practice").show();
 
 	let prompt = $("p#puzzle-prompt");
 	prompt.append($(document.createElement('br')));
