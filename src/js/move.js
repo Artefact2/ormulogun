@@ -41,6 +41,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */
 		b.children("div.piece.king.in-check").removeClass('in-check');
 		let k = b.hasClass('white') ? b.children('div.piece.king.white') : b.children('div.piece.king.black');
+		gumble_load_fen(endfen);
 		if(gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank')))) {
 			k.addClass('in-check');
 		}
