@@ -21,6 +21,9 @@ let orm_analyse = false;
 let orm_analyse_fen = null;
 let orm_score_sign = 1;
 
+let orm_uci_stop_timeout = null;
+let orm_uci_stop_payload = null;
+
 const orm_uci_format_node_count = function(nc) {
 	if(nc > 10000000) {
 		return (nc / 1000000.0).toFixed(1).toString() + 'M';
@@ -94,15 +97,13 @@ const orm_uci_handle_message = function(msg) {
 	}
 
 	if(msg.match(/^bestmove\s/)) {
-		orm_engine_going = false;
+		orm_uci_done_running();
 
 		if(orm_practice !== false) {
 			let lan = msg.split(' ', 3)[1]; /* XXX: handle checkmate */
 			orm_do_legal_move(lan, true, null, undefined, undefined, orm_get_board());
-		} else if(orm_analyse === true) {
-			$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '100%').addClass('bg-success');
-			$("button#engine-toggle").text('Go deeper').prop('disabled', false).removeClass('disabled');
 		}
+
 		return;
 	}
 };
@@ -128,13 +129,47 @@ const orm_uci_init = function() {
 	orm_engine.postMessage('uci');
 };
 
-const orm_uci_stop = function(then) {
-	if(orm_engine_going) {
-		orm_engine.postMessage('stop');
-		/* XXX: kill in timeout, etc. */
+const orm_uci_prepare_running = function() {
+	orm_engine_going = true;
+
+	$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
+	$("div#analysis-stuff > ul > li").removeClass('pv').children().text('');
+	$("button#engine-toggle").text('Stop').prop('disabled', false).removeClass('disabled');
+};
+
+const orm_uci_done_running = function() {
+	orm_engine_going = false;
+
+	if(orm_uci_stop_timeout !== null) {
+		clearTimeout(orm_uci_stop_timeout);
+		orm_uci_stop_timeout = null;
 	}
 
-	if(then) then();
+	$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '100%').addClass('bg-success');
+	$("button#engine-toggle").text('Go deeper').prop('disabled', false).removeClass('disabled');
+
+	if(orm_uci_stop_payload) {
+		orm_uci_stop_payload();
+		orm_uci_stop_payload = null;
+	}
+}
+
+const orm_uci_stop = function(then) {
+	if(!orm_engine_going) {
+		if(then) then();
+		return;
+	}
+
+	orm_engine.postMessage('stop');
+	orm_uci_stop_payload = then;
+	orm_uci_stop_timeout = setTimeout(function() {
+		/* Engine didn't stop in time, kill it the hard way and spawn a new one */
+		orm_engine.removeEventListener('message', orm_uci_handle_message);
+		orm_engine.postMessage('quit');
+		orm_engine = null;
+		orm_uci_init();
+		orm_uci_done_running();
+	}, 500);
 };
 
 const orm_uci_stopall = function() {
@@ -147,12 +182,8 @@ const orm_uci_go = function(limiter) {
 	if(orm_analyse === false) return;
 	if(typeof(limiter) === "undefined") limiter = orm_pref('uci_hard_limiter');
 
-	$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
-	$("div#analysis-stuff > ul > li").removeClass('pv').children().text('');
-	$("button#engine-toggle").text('Stop').prop('disabled', false).removeClass('disabled');
-
 	orm_uci_stop(function() {
-		orm_engine_going = true;
+		orm_uci_prepare_running();
 		orm_score_sign = orm_get_board().hasClass('white') ? 1 : - 1; /* XXX */
 		orm_engine.postMessage('setoption name MultiPV value ' + orm_pref('uci_multipv'));
 		orm_engine.postMessage('position fen ' + (orm_analyse_fen = orm_get_board().data('fen')));
@@ -164,7 +195,7 @@ const orm_uci_go_practice = function() {
 	if(orm_practice === false) return;
 
 	orm_uci_stop(function() {
-		orm_engine_going = true;
+		orm_uci_prepare_running();
 		orm_engine.postMessage('setoption name MultiPV value 1');
 		orm_engine.postMessage('position fen ' + orm_get_board().data('fen'));
 		orm_engine.postMessage('go ' + orm_pref('uci_practice_limiter'));
@@ -183,7 +214,7 @@ orm_when_ready.push(function() {
 		if(orm_practice !== false) $("button#engine-practice").click();
 		if(orm_analyse === true) {
 			orm_analyse = false;
-			orm_engine.postMessage('stop');
+			orm_uci_stop();
 			t.text(t.data('start-text'));
 			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
 			$("div#analysis-stuff").hide();
@@ -205,7 +236,7 @@ orm_when_ready.push(function() {
 		if(orm_analyse === true) $("button#engine-analyse").click();
 		if(orm_practice !== false) {
 			orm_practice = false;
-			orm_engine.postMessage('stop');
+			orm_uci_stop();
 			t.text(t.data('start-text'));
 			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
 			return;
@@ -221,7 +252,7 @@ orm_when_ready.push(function() {
 		let t = $(this);
 		t.prop('disabled', true).addClass('disabled').blur();
 		if(orm_engine_going) {
-			orm_engine.postMessage('stop');
+			orm_uci_stop();
 		} else {
 			orm_uci_go('infinite');
 		}
