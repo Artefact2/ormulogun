@@ -46,14 +46,33 @@
 				<div class="col-lg-auto text-center p-0">
 					<div class="board board-main"><span class="board-pad"></span></div>
 				</div>
-				<div class="col-lg-3 p-0">
-					<div class="row m-2">
-						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary ml-2">Start engine analysis</button>
-						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary ml-2">Practice against engine</button>
-						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm ml-2">Flip board</button>
+				<div class="col-lg-3 pl-0 pr-0 pt-2 pt-lg-0">
+					<div class="row ml-2 mr-2 mb-2" id="puzzle-stuff">
+						<button type="button" id="puzzle-abandon" class="btn btn-block btn-warning puzzle-during">Give up</button>
+						<div class="container-fluid puzzle-after">
+							<div class="row">
+								<div class="col-xl-6 pl-0 pr-0 pr-xl-1 mb-2 mb-xl-0">
+									<button type="button" id="puzzle-next" class="btn btn-block btn-primary">Next puzzle</button>
+								</div>
+								<div class="col-xl-6 pr-0 pl-0 pl-xl-1">
+									<button type="button" id="puzzle-retry" class="btn btn-block btn-secondary">Retry</button>
+								</div>
+							</div>
+						</div>
+						<p id="puzzle-prompt"></p>
+					</div>
+					<div class="row ml-2 mr-2 mb-2">
+						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Start engine analysis</button>
+						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Practice against engine</button>
+						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm mr-2 mb-2">Flip board</button>
+					</div>
+					<div class="row m-2 puzzle-cheat" id="board-fen">
+						<form class="w-100">
+							<input type="text" class="form-control form-control-sm w-100" title="Copy or paste board FEN" />
+						</form>
 					</div>
 					<div class="row m-2" id="analysis-stuff">
-						<div class="container p-0">
+						<div class="container-fluid p-0">
 							<div class="row justify-content-around">
 								<div class="col-auto" id="engine-depth"></div>
 								<div class="col-auto" id="engine-nodes"></div>
@@ -61,7 +80,7 @@
 								<div class="col-auto"><button type="button" class="btn-link w-100" id="engine-toggle"></button></div>
 							</div>
 						</div>
-						<div class="progress container p-0">
+						<div class="progress container-fluid p-0">
 							<div class="progress-bar"></div>
 						</div>
 						<ul></ul>
@@ -74,12 +93,6 @@
 							<button type="button" class="btn btn-light w-25" id="movehist-last" title="Jump to last move in variation"></button>
 						</div>
 						<ul id="movehist" class="row w-100"></ul>
-					</div>
-					<div class="row m-2" id="puzzle-stuff">
-						<p id="puzzle-prompt"></p>
-						<button type="button" id="puzzle-retry" class="btn btn-sm btn-block btn-secondary">Retry</button>
-						<button type="button" id="puzzle-abandon" class="btn btn-lg btn-block btn-warning">Give up</button>
-						<button type="button" id="puzzle-next" class="btn btn-lg btn-block btn-primary">Next puzzle</button>
 					</div>
 				</div>
 			</div>

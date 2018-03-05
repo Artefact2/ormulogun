@@ -78,6 +78,9 @@ const orm_load_fen = function(fen, b) {
 	}
 
 	b.data('fen', fen);
+	if(b.hasClass('board-main')) {
+		$("div#board-fen > form > input").val(fen);
+	}
 };
 
 
@@ -116,3 +119,10 @@ const orm_piece_at = function(alg, cl, b) {
 const orm_sq = function(file, rank) {
 	return (file - 1) * 8 + (rank - 1);
 };
+
+orm_when_ready.push(function() {
+	$("div#board-fen > form").submit(function() {
+		let f = $(this).children('input').val();
+		orm_load_fen(f, orm_get_board());
+	});
+});

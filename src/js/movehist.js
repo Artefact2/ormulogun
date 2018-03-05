@@ -97,12 +97,12 @@ const orm_movehist_push = function(startfen, lan, san) {
 		/* Insert dummy button for turn counter */
 		let li = $(document.createElement('li'));
 		let tn = $(document.createElement('span'));
-		let btn = $(document.createElement('btn'));
+		let btn = $(document.createElement('button'));
 		li.append(tn, btn);
 		li.addClass('dummy col-6');
 		tn.text(startfen.split(' ', 6)[5] + ". ");
 		btn.text('…');
-		btn.addClass('btn btn-light disabled');
+		btn.addClass('btn btn-sm btn-light disabled');
 		btn.prop('disabled', 'disabled');
 		mh.append(li);
 	}
@@ -138,7 +138,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 	li.append(btn);
 	li.data('fen', startfen).data('lan', lan);
 	li.addClass('new mb-1');
-	btn.addClass('btn');
+	btn.addClass('btn btn-sm');
 	btn.text(san);
 
 	orm_movehist_make_active(li);
@@ -161,7 +161,6 @@ const orm_movehist_push = function(startfen, lan, san) {
 			li.addClass('col-6');
 		} else {
 			li.addClass('mr-1');
-			btn.addClass('btn-sm');
 		}
 
 		if(current.length === 0) {
@@ -177,7 +176,6 @@ const orm_movehist_push = function(startfen, lan, san) {
 		ul.append(li);
 		vli.addClass('variation w-100');
 		li.addClass('mr-1');
-		btn.addClass('btn-sm');
 
 		if(li.hasClass('black')) vli.addClass('black');
 
