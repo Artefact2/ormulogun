@@ -87,7 +87,7 @@ div#board div#analysis-stuff {
 			width: 3em;
 		}
 
-		&.pv:hover {
+		&.pv.active {
 			cursor: pointer;
 			background-color: #e9ecef;
 		}

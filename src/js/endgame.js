@@ -174,7 +174,6 @@ const orm_generate_endgame = function(s, tries) {
 		for(let i in squares) {
 			if(board[squares[i]] !== "1") continue;
 			if((piece === "p" || piece === "P") && ((squares[i] & 7) === 0 || (squares[i] & 7) === 7)) continue;
-			if(piece === "p" || piece === "P") console.log(piece, squares[i], squares[i] & 7);
 			board[squares[i]] = piece;
 			placed.push([ piece, squares[i] ]);
 			continue outer;

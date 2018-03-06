@@ -81,7 +81,7 @@ const orm_uci_handle_message = function(msg) {
 		$("div#analysis-stuff > div.progress > div.progress-bar").css('width', 95.0 * Math.min(1.0, p) + '%');
 
 		let idx = msg.match(/\smultipv\s+([1-9][0-9]*)\s/, msg);
-		let score = msg.match(/\sscore\s+(cp|mate) (-?[1-9][0-9]*)\s/);
+		let score = msg.match(/\sscore\s+(cp|mate) (0|-?[1-9][0-9]*)\s/);
 		let pv = msg.match(/\spv\s+(.+)$/);
 		if(!idx || !score || !pv) return;
 
@@ -89,10 +89,10 @@ const orm_uci_handle_message = function(msg) {
 		score[2] = parseInt(score[2], 10) * orm_score_sign;
 		li.children('strong').text(
 			score[1] === "cp" ? (
-				score[2] === 0 ? '0' : (score[2] > 0 ? '+' : '') + (score[2] / 100.0).toFixed(1).toString()
+				score[2] === 0 ? '0' : ((score[2] > 0 ? '+' : '') + (score[2] / 100.0).toFixed(1).toString())
 			) : '#' + score[2]);
 		li.children('span').text(orm_format_san_pv(pv[1]));
-		if(li.is(':hover')) li.trigger('mouseleave').trigger('mouseenter');
+		if(li.hasClass('active')) li.trigger('mouseleave').trigger('mouseenter');
 		return;
 	}
 

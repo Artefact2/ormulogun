@@ -245,13 +245,14 @@ orm_when_ready.push(function() {
 		let dest = orm_piece_at(li.data('pv').substr(2, 2), 'back', b);
 		src.addClass('pv-move-source');
 		dest.addClass('pv-move-target');
+		li.addClass('active');
 	}).on('mouseleave', '> li.pv', function() {
 		let b = orm_get_board();
 		b.children('div.pv-move-source, div.pv-move-target').removeClass('pv-move-source pv-move-target');
+		$(this).removeClass('active');
 	}).on('click', '> li.pv', function() {
 		let li = $(this);
 		let b = orm_get_board();
 		orm_do_puzzle_move(li.data('pv').split(' ', 2)[0], true, null, b);
-		li.trigger('mouseleave');
 	});
 });
