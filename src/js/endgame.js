@@ -13,10 +13,6 @@
  * limitations under the License.
  */
 
-const orm_square_color = function(sq) {
-	return ((sq & 7) + (sq >> 3)) & 1;
-};
-
 const orm_array_shuffle = function(a) {
 	/* Knuth shuffle algorithm */
 	for(let i = a.length - 1; i >= 1; --i) {
@@ -36,16 +32,6 @@ const orm_generate_endgame = function(s, tries) {
 		return false;
 	}
 
-	let side = Math.random() > .5 ? "w" : "b";
-	let ss = s.split('/', 2);
-	if(ss.length !== 2) return false;
-
-	if(side === "w") {
-		ss[1] = ss[1].toLowerCase();
-	} else {
-		ss[0] = ss[0].toLowerCase();
-	}
-
 	let squares = [], sqidx = 0, board = [];
 	for(let i = 0; i < 64; ++i) {
 		squares.push(i);
@@ -54,20 +40,38 @@ const orm_generate_endgame = function(s, tries) {
 	orm_array_shuffle(squares);
 
 	let bishops = [ null, null ];
-	for(let i = 0; i < 2; ++i) {
-		let len = ss[i].length;
-		for(let j = 0; j < len; ++j) {
-			let p = ss[i][j].toUpperCase();
+	const square_color = function(sq) {
+		return ((sq & 7) + (sq >> 3)) & 1;
+	};
+	let len = s.length;
+	for(let j = 0; j < len; ++j) {
+		let p = s[j].toUpperCase();
 
-			/* Don't put pawns on the first or last rank */
-			while(p === "P" && (squares[sqidx] % 8 === 0 || squares[sqidx] % 8 === 7)) ++sqidx;
+		/* Don't put pawns on the first or last rank */
+		while(p === "P" && (squares[sqidx] % 8 === 0 || squares[sqidx] % 8 === 7)) ++sqidx;
 
-			/* Put bishops on opposite colors */
-			while(p === "B" && bishops[i] !== null && orm_square_color(squares[sqidx]) === orm_square_color(bishops[i])) ++sqidx;
+		/* Put bishops on opposite colors. XXX: find good way to refactor this */
+		while(s[j] === "b" && bishops[0] !== null && square_color(squares[sqidx]) === square_color(bishops[0])) ++sqidx;
+		if(s[j] === "b") bishops[0] = squares[sqidx];
+		while(s[j] === "B" && bishops[1] !== null && square_color(squares[sqidx]) === square_color(bishops[1])) ++sqidx;
+		if(s[j] === "B") bishops[1] = squares[sqidx];
 
-			board[squares[sqidx]] = ss[i][j];
-			if(p === "B") bishops[i] = squares[sqidx];
-			++sqidx;
+		board[squares[sqidx]] = s[j];
+		++sqidx;
+	}
+
+	let side = Math.random() > .5 ? 'b' : 'w';
+	if(side === 'b') {
+		/* Flip the board colors */
+		let swap = function(p) {
+			if(p.toUpperCase() === p) return p.toLowerCase();
+			return p.toUpperCase();
+		};
+
+		for(let i = 0; i < 32; ++i) {
+			let temp = board[i];
+			board[i] = swap(board[63 - i]);
+			board[63 - i] = swap(temp);
 		}
 	}
 
