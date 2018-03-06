@@ -17,6 +17,16 @@ const orm_square_color = function(sq) {
 	return ((sq & 7) + (sq >> 3)) & 1;
 };
 
+const orm_array_shuffle = function(a) {
+	/* Knuth shuffle algorithm */
+	for(let i = a.length - 1; i >= 1; --i) {
+		let j = Math.floor(Math.random() * (i+1));
+		let temp = a[j];
+		a[j] = a[i];
+		a[i] = temp;
+	}
+};
+
 const orm_generate_endgame = function(s, tries) {
 	if(typeof(tries) === "undefined") tries = 0;
 	else ++tries;
@@ -41,13 +51,7 @@ const orm_generate_endgame = function(s, tries) {
 		squares.push(i);
 		board.push('1'); /* FEN-speak for "empty square" */
 	}
-	/* Knuth shuffle algorithm */
-	for(let i = 63; i >= 1; --i) {
-		let j = Math.floor(Math.random() * (i+1));
-		let temp = squares[j];
-		squares[j] = squares[i];
-		squares[i] = temp;
-	}
+	orm_array_shuffle(squares);
 
 	let bishops = [ null, null ];
 	for(let i = 0; i < 2; ++i) {
