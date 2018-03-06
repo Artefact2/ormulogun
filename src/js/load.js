@@ -98,7 +98,7 @@ const orm_init_board = function(b) {
 		}
 	}
 	if(b.data('fen')) {
-		if(b.data('fen').split(' ', 3)[1] === 'b') b.addClass('flipped');
+		b.toggleClass('flipped', b.data('fen').split(' ', 3)[1] === 'b');
 		orm_load_fen(b.data('fen'), b);
 	}
 };

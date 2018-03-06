@@ -239,7 +239,8 @@ const orm_practice_fen = function(fen) {
 	if(orm_practice !== false) $("button#engine-practice").click();
 
 	orm_load_tab("board", true, function() {
-		orm_load_fen(fen, orm_get_board());
+		orm_load_fen(fen, b);
+		b.toggleClass('flipped', fen.split(' ', 3)[1] === 'b');
 		$("button#engine-practice").click();
 	});
 };
