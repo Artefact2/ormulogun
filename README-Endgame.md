@@ -58,8 +58,7 @@ BNF grammar
 <position-filter-element> ::= <file-or-rank-list> "|" <file-or-rank-list>
 
 <file-or-rank-list> ::= "*" | <file-or-rank-list> <file-or-rank> <file-or-rank-modifier>
-<file-or-rank>      ::= "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h"
-                      | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8"
+<file-or-rank>      ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
                       | <relative-file-or-rank>
 
 <file-or-rank-modifier> ::= "+" <file-or-rank> | "-" <file-or-rank>
