@@ -133,6 +133,7 @@ const orm_uci_prepare_running = function() {
 	orm_engine_going = true;
 
 	$("div#analysis-stuff > div.progress > div.progress-bar").css('width', '0%').removeClass('bg-success');
+	$("div#analysis-stuff > ul > li.pv.active").trigger('mouseleave').addClass('active');
 	$("div#analysis-stuff > ul > li").removeClass('pv').children().text('');
 	$("button#engine-toggle").text('Stop').prop('disabled', false).removeClass('disabled');
 };
