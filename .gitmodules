@@ -1,6 +1,3 @@
-[submodule "gumble"]
-	path = gumble
-	url = https://gitlab.com/artefact2/gumble
 [submodule "ext"]
 	path = ext
 	url = https://gitlab.com/artefact2/ormulogun-ext

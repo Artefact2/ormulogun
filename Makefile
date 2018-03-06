@@ -7,20 +7,18 @@ all: all-frontend bin/gen-puzzles bin/retag-puzzles
 
 all-frontend: js-all frontend-ext frontend/deps $(FRONTEND)
 
-bin/%: src/c/%.c $(HEADERS) $(SOURCES) gumble/build/src/libenginecore.a
-	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./gumble/include $< $(SOURCES) ./gumble/build/src/libenginecore.a
+bin/%: src/c/%.c $(HEADERS) $(SOURCES) ext/gumble/build/src/libenginecore.a
+	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./ext/gumble/include $< $(SOURCES) ./ext/gumble/build/src/libenginecore.a
 
-gumble/build/src/libenginecore.a:
-	git submodule init
-	git submodule update
-	make -C gumble clean test/PerftSuite.cmake
-	mkdir -p gumble/build
-	cd gumble/build && cmake ..
-	make -C gumble/build enginecore
+ext/gumble/build/src/libenginecore.a:
+	git submodule update --recursive --init
+	make -C ext/gumble clean test/PerftSuite.cmake
+	mkdir -p ext/gumble/build
+	cd ext/gumble/build && cmake ..
+	make -C ext/gumble/build enginecore
 
 frontend-ext:
-	git submodule init
-	git submodule update
+	git submodule update --recursive --init
 	cp -a ext/frontend/* frontend
 
 frontend/deps:
@@ -39,8 +37,8 @@ frontend/ormulogun.css: $(shell find src/scss -name "*.scss")
 	sassc -t compressed src/scss/ormulogun.scss $@
 
 clean:
-	rm -f $(FRONTEND) bin/gen-puzzles
-	rm -Rf gumble/build gumble/build-js
+	make -C ext clean
+	rm -f $(FRONTEND) bin/gen-puzzles bin/retag-puzzles
 
 dist-clean: clean
 	rm -Rf frontend/deps
