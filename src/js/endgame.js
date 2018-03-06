@@ -32,32 +32,128 @@ const orm_generate_endgame = function(s, tries) {
 		return false;
 	}
 
-	let squares = [], sqidx = 0, board = [];
+	let board = [], placed = [];
 	for(let i = 0; i < 64; ++i) {
-		squares.push(i);
 		board.push('1'); /* FEN-speak for "empty square" */
 	}
-	orm_array_shuffle(squares);
 
-	let bishops = [ null, null ];
-	const square_color = function(sq) {
-		return ((sq & 7) + (sq >> 3)) & 1;
+	const parse_filter = function(filter) {
+		let ret = [];
+		let mode = 'push', push = null;
+
+		while(filter !== '') {
+			lsw:
+			switch(filter[0]) {
+			case '*':
+				return [ 0, 1, 2, 3, 4, 5, 6, 7 ];
+
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				push = filter[0].charCodeAt(0) - '0'.charCodeAt(0);
+				filter = filter.substring(1);
+				break;
+
+			case 'F':
+			case 'R':
+				if(filter.length < 2) return false;
+				for(let i = placed.length - 1; i >= 0; --i) {
+					if(placed[i][0] !== filter[1]) continue;
+					push = filter[0] === 'F' ? (placed[i][1] >> 3) : (placed[i][1] & 7);
+					filter = filter.substring(2);
+					break lsw;
+				}
+				return false; /* Piece not found */
+
+			case '+':
+				mode = 'plus';
+				filter = filter.substring(1);
+				continue;
+
+			case '-':
+				mode = 'minus';
+				filter = filter.substring(1);
+				continue;
+			}
+
+			if(push === null) return false;
+			if(mode === 'push') {
+				ret.push(push);
+			} else if(mode === 'plus') {
+				if(ret === []) return false;
+				ret.push(ret.pop() + push);
+				mode = 'push';
+			} else if(mode === 'minus') {
+				if(ret === []) return false;
+				ret.push(ret.pop() - push);
+				mode = 'push';
+			} else {
+				return false;
+			}
+		}
+
+		return ret;
 	};
-	let len = s.length;
-	for(let j = 0; j < len; ++j) {
-		let p = s[j].toUpperCase();
 
-		/* Don't put pawns on the first or last rank */
-		while(p === "P" && (squares[sqidx] % 8 === 0 || squares[sqidx] % 8 === 7)) ++sqidx;
+	let ps = s, piece, ranks, files, msquares, squares;
+	outer:
+	while(ps !== '') {
+		let piece = ps[0], ranks = [], files = [], msquares = {}, squares = [];
 
-		/* Put bishops on opposite colors. XXX: find good way to refactor this */
-		while(s[j] === "b" && bishops[0] !== null && square_color(squares[sqidx]) === square_color(bishops[0])) ++sqidx;
-		if(s[j] === "b") bishops[0] = squares[sqidx];
-		while(s[j] === "B" && bishops[1] !== null && square_color(squares[sqidx]) === square_color(bishops[1])) ++sqidx;
-		if(s[j] === "B") bishops[1] = squares[sqidx];
+		if(ps.length > 1 && ps[1] === "{") {
+			/* Position filter */
+			let m = ps.match(/^[a-zA-Z]\{([^}]+)\}/);
+			let filters = m[1].split(',');
+			for(let i in filters) {
+				let f = filters[i].split('|'), ret;
+				if(f.length !== 2) return false;
+				if((ret = parse_filter(f[0])) === false) return false;
+				files.push(ret);
+				if((ret = parse_filter(f[1])) === false) return false;
+				ranks.push(ret);
+			}
+			ps = ps.substring(m[0].length);
+		} else {
+			/* No filter: default to {*|*} */
+			files.push([ 0, 1, 2, 3, 4, 5, 6, 7 ]);
+			ranks.push([ 0, 1, 2, 3, 4, 5, 6, 7 ]);
+			ps = ps.substring(1);
+		}
 
-		board[squares[sqidx]] = s[j];
-		++sqidx;
+		/* Generate possible squares */
+		for(let i in ranks) {
+			for(let j in ranks[i]) {
+				if(ranks[i][j] < 0 || ranks[i][j] > 7) continue;
+				for(let k in files[i]) {
+					if(files[i][k] < 0 || files[i][k] > 7) continue;
+					let sq = 8 * files[i][k] + ranks[i][j];
+					if(sq in msquares) continue;
+					msquares[sq] = true;
+					squares.push(sq);
+				}
+			}
+		}
+		if(squares === []) return false;
+
+		/* Try to place the piece */
+		orm_array_shuffle(squares);
+		for(let i in squares) {
+			if(board[squares[i]] !== "1") continue;
+			if((piece === "p" || piece === "P") && (squares[i] & 7 === 0 || squares[i] & 7 === 7)) continue;
+			board[squares[i]] = piece;
+			placed.push([ piece, squares[i] ]);
+			continue outer;
+		}
+
+		/* Couldn't place piece, no room left */
+		return false;
 	}
 
 	let side = Math.random() > .5 ? 'b' : 'w';
@@ -100,12 +196,10 @@ const orm_generate_endgame = function(s, tries) {
 		}
 	}
 
-	let k = board.indexOf('k');
-	let K = board.indexOf('K');
-	if(k === -1 || K === -1) return false; /* No kings?! */
-	let dist = Math.abs((k & 7) - (K & 7)) + Math.abs(((k >> 3) & 7) - ((K >> 3) & 7));
-	if(dist <= 2) {
-		/* Kings are in an illegal position */
+	let ownK = board.indexOf(side === 'w' ? 'K' : 'k');
+	if(ownK === -1) return false; /* No king?! */
+	if(gumble_is_square_checked(ownK)) {
+		/* Position is not quiet */
 		return orm_generate_endgame(s, tries);
 	}
 
