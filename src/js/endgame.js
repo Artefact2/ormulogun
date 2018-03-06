@@ -37,7 +37,7 @@ const orm_generate_endgame = function(s, tries) {
 		board.push('1'); /* FEN-speak for "empty square" */
 	}
 
-	const parse_filter = function(filter) {
+	const parse_filter = function(filter, at) {
 		let ret = [];
 		let mode = 'push', push = null;
 
@@ -58,6 +58,11 @@ const orm_generate_endgame = function(s, tries) {
 			case '8':
 			case '9':
 				push = filter[0].charCodeAt(0) - '0'.charCodeAt(0);
+				filter = filter.substring(1);
+				break;
+
+			case '@':
+				push = at;
 				filter = filter.substring(1);
 				break;
 
@@ -112,12 +117,34 @@ const orm_generate_endgame = function(s, tries) {
 			let m = ps.match(/^[a-zA-Z]\{([^}]+)\}/);
 			let filters = m[1].split(',');
 			for(let i in filters) {
-				let f = filters[i].split('|'), ret;
+				let f = filters[i].split('|'), ret, ret2;
 				if(f.length !== 2) return false;
-				if((ret = parse_filter(f[0])) === false) return false;
-				files.push(ret);
-				if((ret = parse_filter(f[1])) === false) return false;
-				ranks.push(ret);
+				if(f[0].indexOf('@') !== -1 && f[1].indexOf('@') !== -1) return false; /* Unsupported */
+
+				/* XXX: refactor this in a prettier way */
+				if(f[1].indexOf('@') !== -1) {
+					/* File first */
+					if((ret = parse_filter(f[0])) === false) return false;
+					for(let j in ret) {
+						if((ret2 = parse_filter(f[1], ret[j])) === false) return false;
+						files.push([ ret[j] ]);
+						ranks.push(ret2);
+					}
+				} else if(f[0].indexOf('@') !== -1) {
+					/* Rank first */
+					if((ret = parse_filter(f[1])) === false) return false;
+					for(let j in ret) {
+						if((ret2 = parse_filter(f[0], ret[j])) === false) return false;
+						ranks.push([ ret[j] ]);
+						files.push(ret2);
+					}
+				} else {
+					/* Doesn't matter */
+					if((ret = parse_filter(f[0])) === false) return false;
+					files.push(ret);
+					if((ret = parse_filter(f[1])) === false) return false;
+					ranks.push(ret);
+				}
 			}
 			ps = ps.substring(m[0].length);
 		} else {
@@ -146,7 +173,8 @@ const orm_generate_endgame = function(s, tries) {
 		orm_array_shuffle(squares);
 		for(let i in squares) {
 			if(board[squares[i]] !== "1") continue;
-			if((piece === "p" || piece === "P") && (squares[i] & 7 === 0 || squares[i] & 7 === 7)) continue;
+			if((piece === "p" || piece === "P") && ((squares[i] & 7) === 0 || (squares[i] & 7) === 7)) continue;
+			if(piece === "p" || piece === "P") console.log(piece, squares[i], squares[i] & 7);
 			board[squares[i]] = piece;
 			placed.push([ piece, squares[i] ]);
 			continue outer;
