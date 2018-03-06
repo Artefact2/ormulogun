@@ -20,12 +20,11 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	pushhist = typeof(pushhist) === "undefined" || pushhist;
 	reverse = typeof(reverse) !== "undefined" && reverse;
 
-	let startfen = gumble_save_fen();
-	if(pushhist) {
-		orm_movehist_push(startfen, lan, gumble_lan_to_san(lan));
-	}
-
+	let startfen = gumble_save_fen(), san;
+	if(pushhist) san = gumble_lan_to_san(lan);
 	gumble_play_legal_lan(lan);
+	if(pushhist) orm_movehist_push(startfen, lan, san);
+
 	let endfen = gumble_save_fen();
 	if(reverse) {
 		gumble_load_fen(startfen); /* XXX: is it worth using cch_undo_move? */
@@ -42,7 +41,7 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 		b.children("div.piece.king.in-check").removeClass('in-check');
 		let k = b.hasClass('white') ? b.children('div.piece.king.white') : b.children('div.piece.king.black');
 		gumble_load_fen(endfen);
-		if(gumble_is_square_checked(orm_sq(k.data('ofile'), k.data('orank')))) {
+		if(gumble_is_own_king_checked()) {
 			k.addClass('in-check');
 		}
 
@@ -111,7 +110,7 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 		if(b.hasClass('board-main')) {
 			orm_puzzle_try(lan);
 
-			if(orm_practice !== false && b.hasClass(orm_practice)) {
+			if(orm_practice !== false && b.hasClass(orm_practice) && !b.hasClass('game-over')) {
 				orm_uci_go_practice();
 			}
 		}
@@ -120,7 +119,9 @@ const orm_do_puzzle_move = function(lan, animate, done, b) {
 };
 
 const orm_can_move_piece = function(p, b) {
-	return (orm_practice === false || !b.hasClass(orm_practice)) && (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
+	if(b.hasClass('game-over')) return false;
+	if(orm_practice === true && b.hasClass(orm_practice)) return false;
+	return (p.hasClass("white") === b.hasClass("white")) && (p.hasClass("black") === b.hasClass("black"));
 };
 
 const orm_highlight_move_squares = function(sf, sr, b) {

@@ -224,9 +224,7 @@ const orm_generate_endgame = function(s, tries) {
 		}
 	}
 
-	let ownK = board.indexOf(side === 'w' ? 'K' : 'k');
-	if(ownK === -1) return false; /* No king?! */
-	if(gumble_is_square_checked(ownK)) {
+	if(gumble_is_own_king_checked()) {
 		/* Position is not quiet */
 		return orm_generate_endgame(s, tries);
 	}

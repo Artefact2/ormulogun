@@ -59,7 +59,7 @@ const orm_unload_puzzle = function() {
 	$("div#puzzle-stuff").hide();
 	$(".puzzle-cheat").show();
 	orm_movehist_reset();
-	orm_get_board().children("div.back.move-prev").removeClass('move-prev');
+	orm_get_board().removeClass('game-over').children("div.back.move-prev").removeClass('move-prev');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */
 	orm_load_fen(gumble_save_fen(), orm_get_board());
 };

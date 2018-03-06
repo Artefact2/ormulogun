@@ -54,8 +54,15 @@ const gumble_lan_to_san = function(lan) {
 	return Pointer_stringify(gumble_move_str);
 };
 
-const gumble_is_square_checked = function(sq) {
-	return Module._cch_is_square_checked(gumble_board, sq);
+const gumble_is_own_king_checked = function(sq) {
+	/* XXX: relies a lot on structure packing, padding, and ordering */
+	let side = Module.getValue(gumble_board + 196, 'i8');
+	let k = Module.getValue(gumble_board + 192 + side, 'i8');
+	return Module._cch_is_square_checked(gumble_board, k);
+};
+
+const gumble_smoves = function() {
+	return Module.getValue(gumble_board + 188, 'i32');
 };
 
 orm_when_ready.push(function() {

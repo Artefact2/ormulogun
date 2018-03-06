@@ -71,6 +71,7 @@ const orm_movehist_make_active = function(e) {
 	if(e.length === 0) {
 		$("button#movehist-first, button#movehist-prev").prop('disabled', 'disabled').addClass('disabled');
 		$("button#movehist-next, button#movehist-last").prop('disabled', false).removeClass('disabled');
+		orm_get_board().removeClass('game-over'); /* XXX */
 		return;
 	}
 
@@ -90,6 +91,8 @@ const orm_movehist_make_active = function(e) {
 	} else {
 		btn.addClass('btn-primary');
 	}
+
+	orm_get_board().toggleClass('game-over', e.hasClass('game-over')); /* XXX */
 
 	/* Try to scroll to the center, see https://stackoverflow.com/a/33193694/615776 */
 	let p = $("ul#movehist");
@@ -209,6 +212,30 @@ const orm_movehist_push = function(startfen, lan, san) {
 		}
 	}
 
+	if(Module._cch_generate_moves(gumble_board, gumble_movelist, 0, 0, 64) === 0) {
+		li.addClass('game-over');
+		let sp = $(document.createElement('small')).addClass('eg ml-1');
+		li.append(sp);
+
+		if(gumble_is_own_king_checked()) {
+			if(li.hasClass('black')) {
+				sp.prop('title', 'Checkmate, Black wins.').text('0 – 1');
+			} else {
+				sp.prop('title', 'Checkmate, White wins.').text('1 – 0');
+			}
+		} else {
+			sp.prop('title', 'Draw caused by stalemate.').text('½ – ½');
+		}
+	} else if(gumble_smoves() > 100) {
+		/* XXX: refactor this boilerplate */
+		li.addClass('game-over');
+		let sp = $(document.createElement('small')).addClass('eg ml-1');
+		li.append(sp);
+		sp.prop('title', 'Draw caused by 50-move rule.').text('½ – ½');
+	} else {
+		/* XXX: draw by 3-fold repetition. endfen? */
+	}
+
 	orm_movehist_make_active(li);
 };
 
@@ -219,17 +246,17 @@ const orm_movehist_merge_from_puzzle_step = function(step) {
 	let fen = gumble_save_fen(); /* XXX: undo move */
 
 	let san = gumble_lan_to_san(step[0]);
-	orm_movehist_push(fen, step[0], san);
 	gumble_play_legal_lan(step[0]);
+	orm_movehist_push(fen, step[0], san);
 
 	let current2 = orm_movehist_current();
 	let fen2 = gumble_save_fen();
 
 	for(let lan in step[1]) {
 		san = gumble_lan_to_san(lan);
+		gumble_play_legal_lan(lan);
 		orm_movehist_push(fen2, lan, san);
 		orm_movehist_current().addClass('good-move');
-		gumble_play_legal_lan(lan);
 
 		orm_movehist_merge_from_puzzle_step(step[1][lan]);
 
