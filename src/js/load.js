@@ -20,31 +20,37 @@ let orm_puzzle_idx = null;
 let orm_temp_filter = false;
 
 const orm_load_puzzle_manifest = function(done) {
-	$.getJSON("./puzzles/manifest.js").always(function() {
-		$("div#puzzlesets > p.alert").remove();
-	}).fail(function() {
-		orm_error('Could not load the puzzle set manifest, make sure no extension is blocking XHR.');
+	let alert = $(document.createElement('p'));
+	$("div#puzzlesets > h1").after(alert);
+	alert.addClass('alert alert-primary');
+	alert.text('Loading the puzzle set manifest…');
+
+	$.getJSON("./puzzles/manifest.js").fail(function() {
+		alert.toggleClass('alert-primary alert-danger');
+		alert.text('Error while fetching the puzzle set manifest. Make sure no extension is blocking XHR.');
 	}).done(function(data) {
 		orm_manifest = data;
 		done();
+		alert.remove();
 	});
 };
 
 const orm_load_puzzle_set = function(m_idx, always, fail, done) {
-	let p = $(document.createElement('p'));
-	p.addClass("alert alert-primary").text("Loading the puzzle set…");
-	$("nav#mainnav").after(p);
+	let alert = $(document.createElement('p'));
+	$("div#puzzlesets > h1").after(alert);
+	alert.addClass("alert alert-primary").text("Loading puzzle set…");
 
 	$.getJSON("./puzzles/" + orm_manifest[m_idx].src.replace(/\.json$/, '.js')).always(function() {
-		p.remove();
 		if(always) always();
 	}).fail(function() {
-		orm_error("Could not load the puzzle set : " + orm_manifest[m_idx].id + ".");
+		alert.toggleClass('alert-primary alert-danger');
+		alert.text("Could not load the puzzle set : " + orm_manifest[m_idx].id + ".");
 		if(fail) fail();
 	}).done(function(data) {
 		orm_puzzle_set = data;
 		orm_puzzle_midx = m_idx;
 		if(done) done();
+		alert.remove();
 	});
 };
 
@@ -55,20 +61,23 @@ const orm_restore_tab = function() {
 	case "#puzzle":
 		/* XXX */
 		if(h.length !== 3) break;
-		let manifest_idx = null;
-		for(let i in orm_manifest) {
-			if(orm_manifest[i].id === h[1]) {
-				manifest_idx = i;
-				break;
+		$("div#puzzlesets").show();
+		orm_when_puzzle_manifest_ready.push(function() {
+			let manifest_idx = null;
+			for(let i in orm_manifest) {
+				if(orm_manifest[i].id === h[1]) {
+					manifest_idx = i;
+					break;
+				}
 			}
-		}
-		if(manifest_idx === null) break;
-		orm_load_puzzle_set(manifest_idx, null, function() {
-			$("div#intro").show();
-		}, function() {
-			let idx = parseInt(h[2], 10);
-			orm_load_puzzle(idx);
-			$("div#board").show();
+			if(manifest_idx === null) return;
+			orm_load_puzzle_set(manifest_idx, null, null, function() {
+				let idx = parseInt(h[2], 10);
+				orm_load_tab("board", false, function() {
+					history.replaceState(null, null, h.join('-')); /* XXX */
+					orm_load_puzzle(idx);
+				});
+			});
 		});
 		return;
 
@@ -128,6 +137,10 @@ let orm_format_integer = function(n) {
 };
 
 orm_when_ready.push(function() {
+	/* Important: this may push stuff into orm_load_puzzle_manifest,
+	 * so it has to come before */
+	orm_restore_tab();
+
 	orm_load_puzzle_manifest(function() {
 		for(let i in orm_when_puzzle_manifest_ready) {
 			orm_when_puzzle_manifest_ready[i]();
@@ -138,8 +151,6 @@ orm_when_ready.push(function() {
 });
 
 orm_when_puzzle_manifest_ready.push(function() {
-	orm_restore_tab();
-
 	let ul = $("div#puzzlesets > ul");
 	let hash = location.hash.split('-', 3);
 	for(let i in orm_manifest) {

@@ -112,15 +112,22 @@ const orm_uci_init = function() {
 	if(orm_engine === null) {
 		if(orm_engine_loaded_once === false) {
 			let p = $(document.createElement('p'));
-			p.attr('id', 'loading-engine').addClass('alert alert-primary').text('Loading stockfish.js…');
-			$("nav#mainnav").after(p);
+			p.attr('id', 'loading-engine').addClass('alert alert-primary')
+				.text('Loading engine. If this is taking forever, enable Web Workers for the top domain and check the console.');
+			$("button#engine-analyse").parent().append(p);
 			orm_engine_loaded_once = true;
 		}
 
-		if(typeof WebAssembly === "object" && WebAssembly.validate(Uint8Array.of(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))) {
-			orm_engine = new Worker('stockfish.wasm.js');
-		} else {
-			orm_engine = new Worker('stockfish.js');
+		try {
+			if(typeof WebAssembly === "object" && WebAssembly.validate(Uint8Array.of(0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00))) {
+				orm_engine = new Worker('stockfish.wasm.js');
+			} else {
+				orm_engine = new Worker('stockfish.js');
+			}
+		} catch(e) {
+			console.log(e);
+			$("p#loading-engine").toggleClass('alert-primary alert-danger')
+				.text('Error while creating the Web Worker, check the console for more details.');
 		}
 
 		orm_engine.addEventListener("message", orm_uci_handle_message);
