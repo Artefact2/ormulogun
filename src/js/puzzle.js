@@ -115,9 +115,12 @@ const orm_puzzle_over = function() {
 
 	let prompt = $("p#puzzle-prompt");
 	prompt.append($(document.createElement('br')));
+	orm_puzzle[2].sort(function(a, b) {
+		return orm_tag_priority(a) - orm_tag_priority(b);
+	});
 	for(let i in orm_puzzle[2]) {
 		let span = $(document.createElement('span'));
-		span.addClass('d-inline-block mr-1 badge badge-secondary');
+		span.addClass('d-inline-block mr-1 badge text-dark tag-prio-' + orm_tag_priority(orm_puzzle[2][i]));
 		span.text(orm_puzzle[2][i]);
 		prompt.append(span);
 	}

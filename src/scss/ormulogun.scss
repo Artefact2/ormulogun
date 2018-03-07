@@ -21,7 +21,16 @@ body {
 
 div#puzzlesets > ul {
 	list-style-type: none;
+
+	&> li > ul {
+		list-style-type: none;
+	}
 }
+
+.tag-prio-0 { background-color: hsl(0, 0%, 75%); }
+.tag-prio-1 { background-color: hsl(0, 0%, 85%); }
+.tag-prio-2 { background-color: hsl(0, 0%, 90%); }
+.tag-prio-3 { background-color: hsl(0, 0%, 95%); }
 
 div#promote-modal {
 	display: none;

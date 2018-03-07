@@ -103,6 +103,30 @@ const orm_init_board = function(b) {
 	}
 };
 
+const orm_tag_priority = function(t) {
+	t = t.match(/^([^(]+)( \([^)]+\))?$/)[1];
+
+	/* General puzzle categories, usually mutually exclusive */
+	if(t.match(/^(Checkmate|Winning position|Draw|Material gain|Trade|Quiet)$/)) return 1;
+
+	/* Depth stuff, very spammy as there's lots of them */
+	if(t.match(/^(Depth|Min depth|Max depth) /)) return 3;
+
+	/* Tactical motifs */
+	if(t.match(/^(Pin|Fork|Skewer|Discovered check|Double check)$/)) return 0;
+
+	/* Fallback */
+	return 2;
+};
+
+let orm_format_integer = function(n) {
+	if(n < 0) return '-' + orm_format_integer(-n);
+	if(n < 1000) return n.toString();
+
+	let m = n % 1000;
+	return orm_format_integer((n - m) / 1000) + ',' + (m < 10 ? ('00' + m) : (m < 100 ? '0' + m : m));
+};
+
 orm_when_ready.push(function() {
 	orm_load_puzzle_manifest(function() {
 		for(let i in orm_when_puzzle_manifest_ready) {
@@ -133,26 +157,39 @@ orm_when_puzzle_manifest_ready.push(function() {
 		btn.addClass('btn btn-primary');
 		btn.data('idx', i).data('tag', null);
 		badge.addClass('badge badge-light');
-		badge.text(pset.count);
+		badge.text(orm_format_integer(pset.count));
 		btn.append(badge);
 		h.append(span, btn);
 		li.append(h);
 
-		let p = $(document.createElement('p'));
-		for(let t in pset.tags) {
+		let tul = $(document.createElement('ul')), lastprio = null, tli = null;
+		let sortedtags = [];
+		for(let t in pset.tags) sortedtags.push(t); /* XXX: .keys() ? */
+		sortedtags.sort(function(a, b) {
+			return orm_tag_priority(a) - orm_tag_priority(b);
+		});
+		for(let j in sortedtags) {
+			let prio = orm_tag_priority(sortedtags[j]);
+			if(prio !== lastprio) {
+				tul.append(tli = $(document.createElement('li')));
+				lastprio = prio;
+			}
+
 			let btn = $(document.createElement('button'));
 			let span = $(document.createElement('span'));
-			btn.addClass('btn btn-sm btn-secondary mr-1 mb-1');
-			btn.text(t + ' ');
-			btn.data('tag', t).data('idx', i);
+			btn.addClass('btn btn-sm mr-1 mb-1');
+			btn.addClass('tag-prio-' + lastprio);
+			btn.text(sortedtags[j] + ' ');
+			btn.data('tag', sortedtags[j]).data('idx', i);
 			span.addClass('badge badge-light');
-			span.text(pset.tags[t]);
+			span.text(orm_format_integer(pset.tags[sortedtags[j]]));
 			btn.append(span);
-			p.append(btn);
+			tli.append(btn);
 		}
-		li.append(p);
+		tul.addClass('m-0 p-0');
+		li.append(tul);
 
-		p = $(document.createElement('p'));
+		let p = $(document.createElement('p'));
 		p.text(pset.desc);
 		li.append(p);
 
