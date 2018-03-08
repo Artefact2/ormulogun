@@ -33,8 +33,8 @@ out/%.json: %.jpz
 out/%.js: out/%.json
 	cp $< $@
 
-retag-all: $(shell find . -name "*.jpz")
-	(for x in $^; do zstdcat $$x | xargs -P $(JOBS) -d '\n' retag-puzzles | tee >(zstd -4 - -o tmp.retag.$$x); done) | pv -ls `zstdcat $^ | wc -l` >/dev/null
+retag-all:
+	find . -maxdepth 1 -type f -name "*.jpz" -printf "%P\0" | xargs -0 -P $(JOBS) -n 1 -I '{}' bash -c "zstdcat {} | xargs -rd '\n' retag-puzzles | tee >(zstd -4 - -o tmp.retag.{})" | pv -ls `find . -maxdepth 1 -type f -name "*.jpz" -print0 | xargs -0 zstdcat | wc -l` >/dev/null
 	sync tmp.retag.*
 	rename tmp.retag. "" tmp.retag.*
 
