@@ -27,10 +27,18 @@ div#puzzlesets > ul {
 	}
 }
 
-.tag-prio-0 { background-color: hsl(0, 0%, 75%); }
-.tag-prio-1 { background-color: hsl(0, 0%, 85%); }
-.tag-prio-2 { background-color: hsl(0, 0%, 90%); }
-.tag-prio-3 { background-color: hsl(0, 0%, 95%); }
+$tp0: hsl(0, 0%, 75%);
+$tp1: hsl(0, 0%, 85%);
+$tp2: hsl(0, 0%, 90%);
+$tp3: hsl(0, 0%, 95%);
+.tag-prio-0 { background-color: $tp0; }
+.tag-prio-1 { background-color: $tp1; }
+.tag-prio-2 { background-color: $tp2; }
+.tag-prio-3 { background-color: $tp3; }
+button.tag-prio-0:hover { background-color: darken($tp0, 10%); }
+button.tag-prio-1:hover { background-color: darken($tp1, 10%); }
+button.tag-prio-2:hover { background-color: darken($tp2, 10%); }
+button.tag-prio-3:hover { background-color: darken($tp3, 10%); }
 
 div#promote-modal {
 	display: none;
