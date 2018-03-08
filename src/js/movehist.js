@@ -233,7 +233,23 @@ const orm_movehist_push = function(startfen, lan, san) {
 		li.append(sp);
 		sp.prop('title', 'Draw caused by 50-move rule.').text('½ – ½');
 	} else {
-		/* XXX: draw by 3-fold repetition. endfen? */
+		let endpos = gumble_save_fen().split(' ', 2)[0]; /* XXX: is this exactly correct? */
+		li.data('endpos', endpos);
+		li.data('smoves', gumble_smoves());
+
+		let l = li, pp = 1;
+		while((l = orm_movehist_prev(l)) && l.length > 0) {
+			if(l.data('endpos') === endpos) ++pp;
+			if(pp === 3 || l.data('smoves') === 0) break;
+		}
+
+		if(pp === 3) {
+			/* XXX: refactor this boilerplate */
+			li.addClass('game-over');
+			let sp = $(document.createElement('small')).addClass('eg ml-1');
+			li.append(sp);
+			sp.prop('title', 'Draw caused by threefold repetition.').text('½ – ½');
+		}
 	}
 
 	orm_movehist_make_active(li);
