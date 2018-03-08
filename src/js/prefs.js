@@ -140,7 +140,7 @@ const orm_prefs_css_update = function() {
 
 	if("custom_css" in orm_prefs) css += orm_prefs.custom_css;
 	if("highlight_moves" in orm_prefs && orm_prefs.highlight_moves === "0") {
-		css += "div.board > div.back.move-source:before, div.board > div.back.move-target:before { content: unset; }";
+		css += "div.board > div.back.move-target:before { content: unset; }";
 	}
 	if("highlight_check" in orm_prefs && orm_prefs.highlight_check === "0") {
 		css += "div.board > div.piece.king.in-check:after { content: unset; }";
