@@ -91,7 +91,8 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	}, 50);
 };
 
-const orm_do_puzzle_move = function(lan, animate, done, b) {
+const orm_do_user_move = function(lan, animate, done, b) {
+	if(lan.substring(0, 2) === lan.substring(2, 4)) return;
 	let piece = orm_piece_at(lan.substring(0, 2), null, b);
 	if(lan.length === 4 && piece.hasClass("pawn")
 	   && ((piece.hasClass("white") && orm_rank(lan.substring(2)) === 8)
@@ -157,19 +158,22 @@ orm_when_ready.push(function() {
 		p.data("origtop", p.position().top);
 		p.data("origleft", p.position().left);
 		p.addClass("dragging");
+		orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
 	}).on("mousemove", function(e) {
 		let b = $(this);
 		let p = b.children("div.piece.dragging");
 		if(p.length === 0) return;
 
-		if(!p.hasClass("dragged")) {
-			p.addClass("dragged");
-			orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
-		}
+		p.addClass("dragged");
 		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
 	}).on("mouseup", "> div.piece.dragging", function(e) {
 		let p = $(this);
+		if(!p.hasClass('dragged')) {
+			p.removeClass('dragging');
+			return;
+		}
+
 		let b = p.parent(), pos = p.position();
 		let file = 1 + Math.round(8 * pos.left / b.width());
 		let rank = 9 - Math.round(1 + 8 * pos.top / b.height());
@@ -182,8 +186,7 @@ orm_when_ready.push(function() {
 		p.removeAttr('style');
 		p.removeClass('dragging');
 		b.children("div.back").removeClass("move-source move-target");
-
-		orm_do_puzzle_move(orm_alg(p) + orm_alg(file, rank), false, null, b);
+		orm_do_user_move(orm_alg(p) + orm_alg(file, rank), false, null, b);
 	}).on("click", "> div", function() {
 		let p = $(this);
 		let b = p.parent();
@@ -202,7 +205,7 @@ orm_when_ready.push(function() {
 			b.children("div.back").removeClass("move-source move-target");
 			let tgt = orm_alg(p);
 			if(tgt !== b.data('candidate-move')) {
-				orm_do_puzzle_move(b.data('candidate-move') + tgt, true, null, b);
+				orm_do_user_move(b.data('candidate-move') + tgt, true, null, b);
 			}
 			b.data('candidate-move', null);
 		}
@@ -214,7 +217,7 @@ orm_when_ready.push(function() {
 		show: false,
 		focus: false,
 	}).on('hidden.bs.modal', function() {
-		orm_do_puzzle_move(orm_promote_context[0], orm_promote_context[1], function() {
+		orm_do_user_move(orm_promote_context[0], orm_promote_context[1], function() {
 			if(typeof(orm_promote_context[2]) === "function") {
 				orm_promote_context[2]();
 			}
@@ -253,6 +256,6 @@ orm_when_ready.push(function() {
 	}).on('click', '> li.pv', function() {
 		let li = $(this);
 		let b = orm_get_board();
-		orm_do_puzzle_move(li.data('pv').split(' ', 2)[0], true, null, b);
+		orm_do_user_move(li.data('pv').split(' ', 2)[0], true, null, b);
 	});
 });

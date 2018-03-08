@@ -83,7 +83,7 @@ const orm_restore_tab = function() {
 
 	case "#board":
 		/* XXX: refactor with orm_load_tab() */
-		orm_unload_puzzle();
+		orm_reset_main_board();
 		break;
 	}
 

@@ -53,13 +53,16 @@ const orm_load_puzzle = function(puz) {
 	orm_uci_stopall();
 };
 
-const orm_unload_puzzle = function() {
+const orm_reset_main_board = function() {
 	orm_puzzle = null;
 	orm_puzzle_next = null;
 	$("div#puzzle-stuff").hide();
 	$(".puzzle-cheat").show();
 	orm_movehist_reset();
-	orm_get_board().removeClass('game-over flipped').children("div.back").removeClass('move-prev pv-move-source pv-move-target move-source move-target');
+	orm_get_board()
+		.data('candidate-move', null)
+		.removeClass('game-over flipped')
+		.children("div.back").removeClass('move-prev pv-move-source pv-move-target move-source move-target');
 	Module._cch_init_board(gumble_board); /* XXX: refactor me */
 	orm_load_fen(gumble_save_fen(), orm_get_board());
 };

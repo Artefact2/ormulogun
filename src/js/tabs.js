@@ -22,7 +22,7 @@ const orm_load_tab = function(id, animate, between, after) {
 		orm_uci_stopall();
 
 		if(id === "board") {
-			orm_unload_puzzle();
+			orm_reset_main_board();
 		}
 		if(between) between();
 	};
