@@ -103,54 +103,77 @@
 		</div>
 		<div id="endgames" class="tab container mt-2">
 			<h1>Endgame training</h1>
-			<p class="alert alert-warning">This feature is still considered experimental.</p>
-			<h2>Fundamental checkmates</h2>
+			<h4>Fundamental checkmates</h4>
 			<p>
-				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}" title="King and queen versus king">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}" title="Queen versus lone king">
 					<span class="piece white queen"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="RK{07|*,*|07}k{34|34}" title="King and rook versus king">
+				<button class="btn btn-primary p-1 m-1" data-endgame="P{123456|1}K{FP-1FPFP+1|3}k{34|34}" title="Promoting a protected pawn">
+					<span class="piece white pawn"></span>
+				</button>
+				<button class="btn btn-primary p-1 m-1" data-endgame="RK{07|*,*|07}k{34|34}" title="Rook versus lone king">
 					<span class="piece white rook"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="B{*|@@+2@+4@+6@-2@-4@-6}B{*|@+1@+3@+5@+7@-1@-3@-5@-7}K{07|*,*|07}k{34|34}" title="King and two bishops versus king">
+				<button class="btn btn-primary p-1 m-1" data-endgame="B{*|@@+2@+4@+6@-2@-4@-6}B{*|@+1@+3@+5@+7@-1@-3@-5@-7}K{07|*,*|07}k{34|34}" title="Two bishops versus lone king">
 					<span class="piece white bishop"></span>
 					<span class="piece white bishop"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="BN{07|*,*|07}K{07|*,*|07}k{34|34}" title="King, bishop and knight versus king">
+				<button class="btn btn-primary p-1 m-1" data-endgame="BN{07|*,*|07}K{07|*,*|07}k{34|34}" title="Bishop and knight versus lone king">
 					<span class="piece white bishop"></span>
 					<span class="piece white knight"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="P{123456|1}K{FP-1FPFP+1|3}k{34|34}" title="King on key square and pawn versus king">
-					<span class="piece white pawn"></span>
-				</button>
-			</p>
-			<h4>Other piece endgames (forced mate not always possible)</h4>
-			<p>
-				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}b{34|34}" title="King and queen versus king and bishop">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}b{34|34}" title="Queen versus bishop">
 					<span class="piece white queen"></span>
 					<span class="piece black bishop"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}n{34|34}" title="King and queen versus king and knight">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}n{34|34}" title="Queen versus knight">
 					<span class="piece white queen"></span>
 					<span class="piece black knight"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}r{34|34}" title="King and queen versus king and rook">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}r{34|34}" title="Queen versus rook">
 					<span class="piece white queen"></span>
 					<span class="piece black rook"></span>
 				</button>
 			</p>
+			<h4>Pawnless endgames</h4>
+			<p class="alert alert-warning"><strong>This feature is still considered experimental.</strong> Generated positions might not always lead to forced checkmate on rare occasions.</p>
 			<p>
-				<button class="btn btn-primary p-1 m-1" data-endgame="RK{07|*,*|07}k{34|34}n{34|34}" title="King and rook versus king and knight">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QQK{07|*,*|07}k{34|34}q" title="Two queens versus queen">
+					<span class="piece white queen"></span>
+					<span class="piece white queen"></span>
+					<span class="piece black queen"></span>
+				</button>
+				<button class="btn btn-primary p-1 m-1" data-endgame="QRK{07|*,*|07}k{34|34}q" title="Queen and rook versus queen">
+					<span class="piece white queen"></span>
 					<span class="piece white rook"></span>
+					<span class="piece black queen"></span>
+				</button>
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}bn" title="Queen versus bishop and knight">
+					<span class="piece white queen"></span>
+					<span class="piece black bishop"></span>
 					<span class="piece black knight"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="RK{07|*,*|07}k{34|34}b{34|34}" title="King and rook versus king and bishop">
-					<span class="piece white rook"></span>
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}k{34|34}b{*|@@+2@+4@+6@-2@-4@-6}b{*|@+1@+3@+5@+7@-1@-3@-5@-7}" title="Queen versus two bishops">
+					<span class="piece white queen"></span>
+					<span class="piece black bishop"></span>
 					<span class="piece black bishop"></span>
 				</button>
-				<button class="btn btn-primary p-1 m-1" data-endgame="NNK{07|*,*|07}k{34|34}" title="King and two knights versus king">
+				<button class="btn btn-primary p-1 m-1" data-endgame="QK{07|*,*|07}nnk{34|34}" title="Queen versus two knights">
+					<span class="piece white queen"></span>
+					<span class="piece black knight"></span>
+					<span class="piece black knight"></span>
+				</button>
+				<button class="btn btn-primary p-1 m-1" data-endgame="B{*|@@+2@+4@+6@-2@-4@-6}B{*|@+1@+3@+5@+7@-1@-3@-5@-7}NK{07|*,*|07}k{34|34}n{34|34}" title="Two bishops and knight versus knight">
+					<span class="piece white bishop"></span>
+					<span class="piece white bishop"></span>
 					<span class="piece white knight"></span>
-					<span class="piece white knight"></span>
+					<span class="piece black knight"></span>
+				</button>
+				<button class="btn btn-primary p-1 m-1" data-endgame="RRRK{07|*,*|07}k{34|34}q" title="Three rooks versus queen">
+					<span class="piece white rook"></span>
+					<span class="piece white rook"></span>
+					<span class="piece white rook"></span>
+					<span class="piece black queen"></span>
 				</button>
 			</p>
 			<h4>Generate a custom endgame</h4>
