@@ -35,7 +35,8 @@ Examples
 --------
 
 * `Kk`: the minimum valid endgame, two kings randomly placed.
-* `K{34|34}k{07|07}`: own king in the center, opponent king on the edge of the board.
+* `K{34|34}k{07|07}`: own king in the center, opponent king on a corner of the board.
+* `{07|*,*|07}`: any square on the edge of the board
 * `Kk{FK-2|RK,FK+2|RK}`: one king randomly placed, then one king two squares left or right of it.
 * `K{07|07}k{FK+7|RK+7,FK-7|RK-7,FK+7|RK-7,FK-7|RK+7}`: randomly place kings in opposite corners of the board.
 * `B{*|@}`: place a dark square bishop on the big diagonal (a1-h8).
