@@ -46,6 +46,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
+	MAYBE_PRINT_TAG(p->tags.capturing_defender, "Capturing defender");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -273,6 +274,62 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	}
 }
 
+static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.capturing_defender) return;
+	if(st->nextlen == 0) return;
+
+	/* I take piece A, you take back, I take piece B that is no longer
+	 * defended by A and win material */
+
+	/* Not a capture */
+	if(!CCH_GET_SQUARE(b, st->move.end)) return;
+	/* No take back */
+	if(st->reply.end != st->move.end) return;
+
+	cch_undo_move_state_t um, ur;
+	cch_movelist_t ml;
+	unsigned char stop;
+	cch_piece_t q;
+	char ev;
+
+	eval_material(b, false, 0, &ev);
+	cch_play_legal_move(b, &(st->move), &um);
+	cch_play_legal_move(b, &(st->reply), &ur);
+
+	for(unsigned char i = 0; i < st->nextlen; ++i) {
+		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) continue;
+		if(st->next[i].move.end == st->move.end) continue;
+
+		/* See if the previously taken piece could defend the taken
+		 * piece */
+		cch_undo_move(b, &(st->reply), &ur);
+		cch_undo_move(b, &(st->move), &um);
+		q = CCH_GET_SQUARE(b, st->next[i].move.end);
+		b->side = !b->side;
+		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, 7)); /* XXX */
+		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
+		b->side = !b->side;
+		CCH_SET_SQUARE(b, st->next[i].move.end, q);
+		cch_play_legal_move(b, &(st->move), &um);
+		cch_play_legal_move(b, &(st->reply), &ur);
+
+		unsigned char j;
+		for(j = 0; j < stop; ++j) {
+			if(ml[j].end == st->next[i].move.end) break;
+		}
+		if(j < stop) {
+			if(eval_quiet_material(b, -127, 127) > ev) {
+				/* Previous piece was a defender, and now we gain material */
+				p->tags.capturing_defender = true;
+				break;
+			}
+		}
+	}
+
+	cch_undo_move(b, &(st->reply), &ur);
+	cch_undo_move(b, &(st->move), &um);
+}
+
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	if(p->tags.endgame) return;
 	unsigned char pieces[] = { 0, 0 };
@@ -298,6 +355,8 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	}
 
 	if(depth > 0) {
+		tags_capturing_defender(p, st, b);
+
 		cch_play_legal_move(b, &(st->move), &um);
 
 		if(CCH_IS_OWN_KING_CHECKED(b)) {
