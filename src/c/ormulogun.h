@@ -109,7 +109,7 @@ int puzzle_load(puzzle_t*, const char*);
 /* ----- tags.c ----- */
 
 void tags_print(const puzzle_t*);
-void tags_puzzle(puzzle_t*, cch_board_t*, const uci_engine_context_t*);
+void tags_puzzle(puzzle_t*, cch_board_t*);
 
 
 

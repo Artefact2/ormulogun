@@ -270,5 +270,5 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 		return;
 	}
 
-	tags_puzzle(p, b, ctx);
+	tags_puzzle(p, b);
 }

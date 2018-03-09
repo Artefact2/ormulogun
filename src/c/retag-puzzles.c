@@ -23,13 +23,6 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	uci_engine_context_t ctx;
-	if(uci_create(uci_engine, &ctx)) {
-		perror("could not spawn engine");
-		return 1;
-	}
-	uci_init(&ctx, uci_engine_opts);
-
 	cch_board_t b;
 	puzzle_t p;
 
@@ -42,7 +35,7 @@ int main(int argc, char** argv) {
 		cch_load_fen(&b, p.fen);
 		puzzle_init(&p, &b, &(p.root.reply));
 		cch_play_move(&b, &(p.root.reply), 0);
-		tags_puzzle(&p, &b, &ctx);
+		tags_puzzle(&p, &b);
 		puzzle_print(&p);
 		puzzle_free(&p);
 	}

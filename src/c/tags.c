@@ -70,15 +70,24 @@ void tags_print(const puzzle_t* p) {
 	putchar(']');
 }
 
-static void tags_mate_threat(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b) {
+static void tags_mate_threat(puzzle_t* p, cch_board_t* b) {
 	if(p->tags.mate_threat) return;
 
-	uci_eval_t ev[5];
-	unsigned char stop = uci_eval(ctx, "depth 1", b, ev, 5);
-	if(stop == 0) return;
+	cch_movelist_t ml, ml2, ml3;
+	cch_undo_move_state_t u, u2;
+	unsigned char stop, stop2;
+	unsigned char i, j;
 
-	if(ev[stop - 1].type == SCORE_MATE && ev[stop - 1].score == -1) {
-		p->tags.mate_threat = true;
+	stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64); /* Opponent turn */
+	for(i = 0; i < stop && !p->tags.mate_threat; ++i) {
+		cch_play_legal_move(b, &(ml[i]), &u);
+		stop2 = cch_generate_moves(b, ml2, CCH_LEGAL, 0, 64); /* Our turn */
+		for(j = 0; j < stop2 && !p->tags.mate_threat; ++j) {
+			cch_play_legal_move(b, &(ml2[j]), &u2);
+			p->tags.mate_threat = CCH_IS_OWN_KING_CHECKED(b) && cch_generate_moves(b, ml3, CCH_LEGAL, 0, 64) == 0;
+			cch_undo_move(b, &(ml2[j]), &u2);
+		}
+		cch_undo_move(b, &(ml[i]), &u);
 	}
 }
 
@@ -372,7 +381,7 @@ static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	p->tags.endgame = pieces <= 5;
 }
 
-static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {
+static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
 
@@ -397,7 +406,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 			tags_discovered_double_check(p, b, &(st->move));
 		}
 
-		tags_mate_threat(ctx, p, b);
+		tags_mate_threat(p, b);
 		tags_fork(p, st, b);
 		tags_skewer(p, st, b);
 		tags_pin(p, b, &(st->move));
@@ -408,7 +417,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	tags_promotion(p, st);
 
 	for(i = 0; i < st->nextlen; ++i) {
-		tags_step(p, &(st->next[i]), b, ctx, depth + 1);
+		tags_step(p, &(st->next[i]), b, depth + 1);
 	}
 
 	if(st->nextlen == 0) {
@@ -427,7 +436,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	}
 }
 
-void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
+void tags_puzzle(puzzle_t* p, cch_board_t* b) {
 	p->num_variations = 0;
 	p->max_depth = 0;
 	p->end_material_min = 255;
@@ -436,5 +445,5 @@ void tags_puzzle(puzzle_t* p, cch_board_t* b, const uci_engine_context_t* ctx) {
 	p->end_material_diff_max = -127;
 
 	tags_endgame(p, b);
-	tags_step(p, &(p->root), b, ctx, 0);
+	tags_step(p, &(p->root), b, 0);
 }
