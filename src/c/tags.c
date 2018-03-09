@@ -15,6 +15,13 @@
 
 #include "ormulogun.h"
 
+#define DEBUG_LAN(str, move) do {						\
+		char lan[SAFE_ALG_LENGTH];						\
+		cch_format_lan_move((move), lan, SAFE_ALG_LENGTH);	\
+		fprintf(stderr, "%s: %s\n", (str), lan);			\
+	} while(0)
+
+
 #define MAYBE_PRINT_TAG(f, n) do {				\
 		if(f) {									\
 			printf(",\"%s\"", (n));				\
@@ -41,8 +48,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
 	MAYBE_PRINT_TAG(p->tags.underpromotion, "Underpromotion");
-	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin");
-	MAYBE_PRINT_TAG(p->tags.pin_absolute, "Pin (Absolute)");
+	MAYBE_PRINT_TAG(p->tags.pin, "Pin");
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
@@ -112,21 +118,40 @@ static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_
 	else p->tags.discovered_check = true;
 }
 
-static void tags_pin_absolute(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
-	if(p->tags.pin_absolute) return;
+static void tags_pin(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
+	if(p->tags.pin) return;
 
-	cch_movelist_t ml;
-	unsigned char i, stop = cch_generate_moves(b, ml, CCH_PSEUDO_LEGAL, 0, 64);
+	/* If you take the piece I just moved (pseudo-legal move), I get
+	 * to capture your king or gain material by taking another piece
+	 * by moving through the square you just freed */
 
-	for(i = 0; i < stop; ++i) {
-		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
-		if(ml[i].start == CCH_OWN_KING(b)) continue;
-		/* XXX: not all pins involve being blocked from capturing the
-		 * piece that just moved */
-		if(ml[i].end != last->end) continue;
-		if(cch_is_pseudo_legal_move_legal(b, &(ml[i]))) continue;
-		p->tags.pin_absolute = true;
-		break;
+	char ev;
+	cch_movelist_t ml, ml2;
+	cch_undo_move_state_t u, u2;
+	unsigned char i, j, stop = cch_generate_moves(b, ml, CCH_PSEUDO_LEGAL, 0, 64), stop2;
+
+	eval_material(b, true, 0, &ev);
+
+	for(i = 0; i < stop && !p->tags.pin; ++i) {
+		if(ml[i].end != last->end) continue; /* Not a take back */
+		cch_play_legal_move(b, &(ml[i]), &u);
+		stop2 = cch_generate_moves(b, ml2, CCH_LEGAL, 0, 64);
+		for(j = 0; j < stop2 && !p->tags.pin; ++j) {
+			if(ml2[j].end == last->end) continue; /* Not taking another piece */
+			if(!CCH_GET_SQUARE(b, ml2[j].end)) continue; /* Not taking anything at all */
+			char x1 = CCH_FILE(ml2[j].end) - CCH_FILE(ml2[j].start);
+			char y1 = CCH_RANK(ml2[j].end) - CCH_RANK(ml2[j].start);
+			char x2 = CCH_FILE(ml[i].start) - CCH_FILE(ml2[j].start);
+			char y2 = CCH_RANK(ml[i].start) - CCH_RANK(ml2[j].start);
+			if(x1 * y2 != x2 * y1) continue; /* Not going through the newly freed square (wrong direction) */
+			if(x1 * x2 < 0 || y1 * y2 < 0) continue; /* Not going through the newly freed square (wrong orientation) */
+			if(x1 * x1 + y1 * y1 < x2 * x2 + y2 * y2) continue; /* Not going far enough */
+
+			cch_play_legal_move(b, &(ml2[j]), &u2);
+			p->tags.pin = -eval_quiet_material(b, -127, 127) > ev;
+			cch_undo_move(b, &(ml2[j]), &u2);
+		}
+		cch_undo_move(b, &(ml[i]), &u);
 	}
 }
 
@@ -355,23 +380,20 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, cons
 	}
 
 	if(depth > 0) {
+		if(st->reply.start == 255) return;
+
 		tags_capturing_defender(p, st, b);
 
 		cch_play_legal_move(b, &(st->move), &um);
 
 		if(CCH_IS_OWN_KING_CHECKED(b)) {
 			tags_discovered_double_check(p, b, &(st->move));
-		} else {
-			tags_pin_absolute(p, b, &(st->move));
 		}
+
 		tags_mate_threat(ctx, p, b);
 		tags_fork(p, st, b);
 		tags_skewer(p, st, b);
-
-		if(st->reply.start == 255) {
-			cch_undo_move(b, &(st->move), &um);
-			return;
-		}
+		tags_pin(p, b, &(st->move));
 
 		cch_play_legal_move(b, &(st->reply), &ur);
 	}

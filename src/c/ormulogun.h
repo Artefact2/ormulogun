@@ -82,7 +82,7 @@ typedef struct {
 		bool double_check:1;
 		bool promotion:1;
 		bool underpromotion:1;
-		bool pin_absolute:1;
+		bool pin:1;
 		bool fork:1;
 		bool skewer:1;
 		bool winning_position:1;

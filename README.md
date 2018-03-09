@@ -18,7 +18,7 @@ Dependencies
 To-Do
 =====
 
-* More automatic tagging (discovered attacks, pins, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
+* More automatic tagging (discovered attacks, overloaded pieces, sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
 * Filter-aware puzzle counts in list
 * Progress tracking, spaced repetition
 * Touch-friendly drag and drop
