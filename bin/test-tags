@@ -27,8 +27,8 @@ foreach($argv as $puzjson) {
 
 	sort($puz[2]);
 	sort($retagged[2]);
-	$epuz = json_encode($puz);
-	$eretagged = json_encode($retagged);
+	$epuz = json_encode($puz, JSON_UNESCAPED_SLASHES);
+	$eretagged = json_encode($retagged, JSON_UNESCAPED_SLASHES);
 
 	if($epuz !== $eretagged) {
 		fprintf(STDERR, "Test: %s\nRetagged: %s\n", $epuz, $eretagged);

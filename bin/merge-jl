@@ -45,5 +45,5 @@ while(($line = fgets(STDIN)) !== false) {
 }
 
 foreach($puzzles as $p) {
-	echo json_encode($p), "\n";
+	echo json_encode($p, JSON_UNESCAPED_SLASHES), "\n";
 }

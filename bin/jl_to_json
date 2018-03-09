@@ -39,7 +39,7 @@ while(($line = fgets(STDIN)) !== false) {
 
 	$puz = json_decode($line, true);
 	trim_puzzle($puz[1]);
-	echo json_encode($puz);
+	echo json_encode($puz, JSON_UNESCAPED_SLASHES);
 }
 
 echo "]\n";
