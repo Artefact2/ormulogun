@@ -89,6 +89,7 @@ typedef struct {
 		bool drawing_position:1;
 		bool endgame:1;
 		bool capturing_defender:1;
+		bool trapped_piece:1;
 	} tags;
 } puzzle_t;
 

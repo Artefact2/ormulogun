@@ -54,6 +54,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 	MAYBE_PRINT_TAG(p->tags.capturing_defender, "Capturing defender");
+	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -365,6 +366,63 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 	cch_undo_move(b, &(st->move), &um);
 }
 
+static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.trapped_piece) return;
+	if(st->nextlen == 0) return;
+
+	/* Did our last move threaten to capture a piece? If yes, does
+	 * every possible move for that piece result in a loss of material
+	 * ? */
+
+	cch_movelist_t ml, ml2, ml3;
+	unsigned char stop, stop2, stop3;
+	unsigned char i, j, k;
+	char ev;
+	cch_undo_move_state_t u;
+
+	b->side = !b->side;
+	eval_material(b, false, 0, &ev);
+	stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
+	b->side = !b->side;
+
+	for(i = 0; i < stop && !p->tags.trapped_piece; ++i) {
+		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
+		stop2 = cch_generate_moves(b, ml2, CCH_LEGAL, ml[i].end, ml[i].end + 1);
+
+		for(j = 0; j < stop2; ++j) {
+			cch_play_legal_move(b, &(ml2[j]), &u);
+			stop3 = cch_generate_moves(b, ml3, CCH_LEGAL, 0, 64);
+			for(k = 0; k < stop3; ++k) {
+				if(ml3[k].end != ml2[j].end) continue; /* Not a take back */
+				if(eval_quiet_material(b, -127, 127) > ev) {
+					/* We can take back the piece and gain material */
+					break;
+				}
+			}
+			if(k == stop3) {
+				/* We didn't break from the loop... That means the
+				 * piece has a safe flight square */
+				stop2 = 0;
+			}
+			cch_undo_move(b, &(ml2[j]), &u);
+		}
+
+		if(stop2 == 0 || j < stop2) continue;
+
+		/* Do we end up taking the piece? */
+
+		unsigned char fpos = st->reply.start == ml[i].end ? st->reply.end : ml[i].end;
+		for(j = 0; j < st->nextlen; ++j) {
+			if(st->next[j].move.end == fpos) {
+				DEBUG_LAN("move traps piece", &(st->move));
+				fprintf(stderr, "trapped piece at %d\n", ml[i].end);
+				p->tags.trapped_piece = true;
+				break;
+			}
+		}
+	}
+}
+
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	if(p->tags.endgame) return;
 	/* The definition of "endgame" is quite ambiguous and
@@ -410,6 +468,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 		tags_fork(p, st, b);
 		tags_skewer(p, st, b);
 		tags_pin(p, b, &(st->move));
+		tags_trapped_piece(p, st, b);
 
 		cch_play_legal_move(b, &(st->reply), &ur);
 	}
