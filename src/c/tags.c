@@ -40,6 +40,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
+	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
 	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
 	MAYBE_PRINT_TAG(p->tags.threefold, "Draw (Threefold repetition)");
@@ -357,12 +358,18 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	if(p->tags.endgame) return;
-	unsigned char pieces[] = { 0, 0 };
-	/* XXX: assumes a lot about gumble internals */
-	for(unsigned char i = CCH_BISHOP_W; i <= CCH_QUEEN_B; ++i) {
-		pieces[i & 1] += __builtin_popcountll(b->pieces[i]);
+	/* The definition of "endgame" is quite ambiguous and
+	 * controversial among some players. Here I consider an endgame
+	 * any position with 5 or less chessmen on the board, that is,
+	 * when reasonably-sized endgame tables can be used. */
+	unsigned char pieces = 0;
+	for(unsigned char i = 0; i < 64; ++i) {
+		if(CCH_GET_SQUARE(b, i)) {
+			++pieces;
+			if(pieces > 5) break;
+		}
 	}
-	p->tags.endgame = pieces[0] <= 1 || pieces[1] <= 1;
+	p->tags.endgame = pieces <= 5;
 }
 
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, const uci_engine_context_t* ctx, unsigned char depth) {

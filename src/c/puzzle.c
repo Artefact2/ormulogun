@@ -37,16 +37,22 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
+		unsigned char i;
+
 		if(evals[0].score > s.max_depth) {
-			/* XXX: Long checkmate */
+			/* Clearly win? */
 			if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
 			if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
+
+			/* Accept all forced mates, no matter the length (SF in
+			 * particular is unreliable for long checkmate sequences),
+			 * and completely winning cp evals (EGTB shenanigans) */
+			for(i = 1; i < nlines && ((evals[i].type == SCORE_MATE && evals[i].score > 0) || (evals[i].type == SCORE_CP && evals[i].score >= 100000)); ++i);
+		} else {
+			/* Short mate, depths are reliable, go for the shortest */
+			for(i = 1; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
 		}
 
-		unsigned char i = 1;
-		while(i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score) {
-			++i;
-		}
 		return i < nlines ? i : 0;
 	}
 
@@ -168,6 +174,11 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 		if(evals[0].type == SCORE_MATE && evals[0].score > 0) {
 			/* Puzzle leads to forced checkmate */
 			p->tags.winning_position = true;
+		} else if(evals[0].type == SCORE_CP && evals[0].score >= 10000) {
+			/* ≥100 cp advantage? Probably winning. */
+			p->tags.winning_position = true;
+		} else if(evals[0].type == SCORE_CP && evals[0].score == 0) {
+			p->tags.drawing_position = true;
 		}
 		return;
 	}

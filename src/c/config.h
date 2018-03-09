@@ -8,6 +8,7 @@ static const char* uci_engine_opts[] = {
 					 * own risk, the eval fluctuates wildly and the
 					 * output becomes highly nondeterministic */
 	"Hash", "512",
+	"SyzygyPath", "/opt/syzygy",
 	0
 };
 

@@ -178,6 +178,7 @@ static int json_partial_tags(puzzle_t* p, const char* json, const char** after) 
 		if(!strncmp("Draw (Threefold repetition)", tag, 64)) p->tags.threefold = true;
 		if(!strncmp("Draw (Stalemate)", tag, 64)) p->tags.stalemate = true;
 		if(!strncmp("Winning position", tag, 64)) p->tags.winning_position = true;
+		if(!strncmp("Drawing position", tag, 64)) p->tags.drawing_position = true;
 
 		json_whitespace(json, &json);
 		if(*json == ']') break;
