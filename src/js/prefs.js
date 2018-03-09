@@ -168,6 +168,7 @@ const orm_prefs_css_update = function() {
 const orm_prefs_apply = function() {
 	orm_prefs_css_update();
 
+	orm_temp_filter = false;
 	orm_tag_whitelist = [];
 	orm_tag_blacklist = [];
 	for(let k in orm_prefs) {
