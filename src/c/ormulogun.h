@@ -78,6 +78,7 @@ typedef struct {
 		bool threefold:1;
 		bool perpetual:1;
 		bool mate_threat:1;
+		bool discovered_attack:1;
 		bool discovered_check:1;
 		bool double_check:1;
 		bool promotion:1;

@@ -28,6 +28,21 @@
 		}										\
 	} while(0)
 
+/* XXX: hack hack hack hack */
+static void orm_cch_null_move(cch_board_t* b, cch_move_t* m, cch_undo_move_state_t* u) {
+	for(unsigned char i = 0; i < 64; ++i) {
+		if(CCH_GET_SQUARE(b, i)) continue;
+		m->start = i;
+		m->end = i;
+		m->promote = 0;
+		cch_play_legal_move(b, m, u);
+		return;
+	}
+
+	assert(0);
+	__builtin_unreachable();
+}
+
 void tags_print(const puzzle_t* p) {
 	putchar('[');
 
@@ -45,6 +60,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
 	MAYBE_PRINT_TAG(p->tags.threefold, "Draw (Threefold repetition)");
 	MAYBE_PRINT_TAG(p->tags.perpetual, "Draw (Perpetual check)");
+	MAYBE_PRINT_TAG(p->tags.discovered_attack, "Discovered attack");
 	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
@@ -90,43 +106,6 @@ static void tags_mate_threat(puzzle_t* p, cch_board_t* b) {
 		}
 		cch_undo_move(b, &(ml[i]), &u);
 	}
-}
-
-static void tags_discovered_double_check(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
-	if(p->tags.discovered_check && p->tags.double_check) return;
-
-	/* XXX: pure piece 7 is a dummy piece */
-	cch_piece_t prev = CCH_GET_SQUARE(b, last->end), dummy = CCH_MAKE_ENEMY_PIECE(b, 7);
-	CCH_SET_SQUARE(b, last->end, dummy);
-	bool check = CCH_IS_OWN_KING_CHECKED(b);
-	CCH_SET_SQUARE(b, last->end, prev);
-
-	if(!check) return;
-
-	cch_board_t copy = *b;
-	unsigned char checkers = 0;
-	unsigned char i;
-
-	/* XXX: this is sub-obtimal, have cch_is_square_checked() return the checking square? */
-
-	/* Replace all enemy pieces with dummies */
-	for(i = 0; i < 64; ++i) {
-		if(CCH_IS_ENEMY_PIECE(&copy, CCH_GET_SQUARE(&copy, i))) {
-			CCH_SET_SQUARE(&copy, i, dummy);
-		}
-	}
-
-	/* Check one by one which enemy piece causes check */
-	for(i = 0; i < 64 && checkers < 2; ++i) {
-		CCH_SET_SQUARE(&copy, i, CCH_GET_SQUARE(b, i));
-		if(CCH_IS_OWN_KING_CHECKED(&copy)) {
-			++checkers;
-		}
-		CCH_SET_SQUARE(&copy, i, dummy);
-	}
-
-	if(checkers > 1) p->tags.double_check = true;
-	else p->tags.discovered_check = true;
 }
 
 static void tags_pin(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
@@ -217,14 +196,16 @@ static void tags_fork(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	char ev;
 	unsigned char attacks;
 	cch_move_t moves[8]; /* XXX */
+	cch_move_t nullmove;
+	cch_undo_move_state_t um;
 
 	eval_material(b, true, 0, &ev);
 
 	/* If opponent does nothing, how many exchanges can we win with
 	 * the piece that we just moved? */
-	b->side = !b->side;
+	orm_cch_null_move(b, &nullmove, &um);
 	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
-	b->side = !b->side;
+	cch_undo_move(b, &nullmove, &um);
 
 	/* Can we win more than 2 exchanges? */
 	if(attacks < 2) return;
@@ -272,12 +253,14 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	char ev;
 	unsigned char attacks;
 	cch_move_t moves[8];
+	cch_move_t nullmove;
+	cch_undo_move_state_t unull;
 
 	eval_material(b, true, 0, &ev);
 
-	b->side = !b->side;
+	orm_cch_null_move(b, &nullmove, &unull);
 	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
-	b->side = !b->side;
+	cch_undo_move(b, &nullmove, &unull);
 
 	if(attacks == 0) return;
 
@@ -322,7 +305,8 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 	/* No take back */
 	if(st->reply.end != st->move.end) return;
 
-	cch_undo_move_state_t um, ur;
+	cch_move_t nullmove;
+	cch_undo_move_state_t um, ur, unull;
 	cch_movelist_t ml;
 	unsigned char stop;
 	cch_piece_t q;
@@ -341,10 +325,10 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 		cch_undo_move(b, &(st->reply), &ur);
 		cch_undo_move(b, &(st->move), &um);
 		q = CCH_GET_SQUARE(b, st->next[i].move.end);
-		b->side = !b->side;
+		orm_cch_null_move(b, &nullmove, &unull);
 		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, 7)); /* XXX */
 		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
-		b->side = !b->side;
+		cch_undo_move(b, &nullmove, &unull);
 		CCH_SET_SQUARE(b, st->next[i].move.end, q);
 		cch_play_legal_move(b, &(st->move), &um);
 		cch_play_legal_move(b, &(st->reply), &ur);
@@ -380,10 +364,10 @@ static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t
 	char ev;
 	cch_undo_move_state_t u;
 
-	b->side = !b->side;
+	orm_cch_null_move(b, ml2, &u);
 	eval_material(b, false, 0, &ev);
 	stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
-	b->side = !b->side;
+	cch_undo_move(b, ml2, &u);
 
 	for(i = 0; i < stop && !p->tags.trapped_piece; ++i) {
 		if(!CCH_GET_SQUARE(b, ml[i].end)) continue;
@@ -414,13 +398,71 @@ static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t
 		unsigned char fpos = st->reply.start == ml[i].end ? st->reply.end : ml[i].end;
 		for(j = 0; j < st->nextlen; ++j) {
 			if(st->next[j].move.end == fpos) {
-				DEBUG_LAN("move traps piece", &(st->move));
-				fprintf(stderr, "trapped piece at %d\n", ml[i].end);
 				p->tags.trapped_piece = true;
 				break;
 			}
 		}
 	}
+}
+
+static void tags_discovered_attack(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.discovered_attack && p->tags.discovered_check && p->tags.double_check) return;
+	if(st->nextlen == 0) return;
+
+	cch_movelist_t ml;
+	unsigned char stop;
+	cch_move_t nullmove;
+	cch_undo_move_state_t u, unull;
+	char ev;
+	bool disco_check = false;
+	unsigned char i;
+
+	orm_cch_null_move(b, &nullmove, &unull);
+	eval_material(b, false, 0, &ev);
+	stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
+
+	for(i = 0; i < stop; ++i) {
+		if(ml[i].start == st->move.end) continue; /* Can't do a discovered attack WITH the piece that just moved! */
+		if(!CCH_GET_SQUARE(b, ml[i].end)) continue; /* Not attacking anything */
+
+		/* Check that path from move goes through freed square from prev move */
+		/* XXX: refactor this? */
+		char x1 = CCH_FILE(ml[i].end) - CCH_FILE(ml[i].start);
+		char y1 = CCH_RANK(ml[i].end) - CCH_RANK(ml[i].start);
+		char x2 = CCH_FILE(st->move.start) - CCH_FILE(ml[i].start);
+		char y2 = CCH_RANK(st->move.start) - CCH_RANK(ml[i].start);
+		if(x1 * y2 != x2 * y1) continue;
+		if(x1 * x2 < 0 || y1 * y2 < 0) continue;
+		if(x1 * x1 + y1 * y1 <= x2 * x2 + y2 * y2) continue;
+
+		if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, ml[i].end)) == CCH_KING) {
+			disco_check = true; /* Discovered check! */
+			continue;
+		}
+
+		/* Is the attack actually meaningful? */
+		cch_play_legal_move(b, &(ml[i]), &u);
+		if(-eval_quiet_material(b, -127, 127) > ev) {
+			p->tags.discovered_attack = true;
+		}
+		cch_undo_move(b, &(ml[i]), &u);
+	}
+
+	if(disco_check) {
+		/* Check for double check */
+		for(i = 0; i < stop; ++i) {
+			if(ml[i].start != st->move.end) continue;
+			if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, ml[i].end)) == CCH_KING) {
+				p->tags.double_check = true;
+				break;
+			}
+		}
+		if(i == stop) {
+			p->tags.discovered_check = true;
+		}
+	}
+
+	cch_undo_move(b, &nullmove, &unull);
 }
 
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
@@ -460,15 +502,12 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 
 		cch_play_legal_move(b, &(st->move), &um);
 
-		if(CCH_IS_OWN_KING_CHECKED(b)) {
-			tags_discovered_double_check(p, b, &(st->move));
-		}
-
 		tags_mate_threat(p, b);
 		tags_fork(p, st, b);
 		tags_skewer(p, st, b);
 		tags_pin(p, b, &(st->move));
 		tags_trapped_piece(p, st, b);
+		tags_discovered_attack(p, st, b);
 
 		cch_play_legal_move(b, &(st->reply), &ur);
 	}

@@ -122,7 +122,7 @@ const orm_tag_priority = function(t) {
 	if(t.match(/^(Depth|Min depth|Max depth) /)) return 3;
 
 	/* Tactical motifs */
-	if(t.match(/^(Pin|Fork|Skewer|Discovered check|Double check|Capturing defender)$/)) return 0;
+	if(t.match(/^(Pin|Fork|Skewer|Discovered (attack|check)|Double check|Capturing defender|Trapped piece)$/)) return 0;
 
 	/* Fallback */
 	return 2;
