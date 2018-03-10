@@ -43,17 +43,20 @@ const orm_load_puzzle = function(puz) {
 		}, undefined, undefined, b);
 	}, orm_pref("board_move_delay"));
 
-	$("p#puzzle-prompt")
+	let prompt = $("p#puzzle-prompt")
 		.empty()
-		.removeClass("text-success text-danger")
-		.text("Find the best move for " + (puz.side ? 'White' : 'Black') + ".");
+		.removeClass("alert-success alert-danger")
+		.addClass('alert-secondary')
+		.text("Find the best move for " + (puz.side ? 'White' : 'Black') + ".")
+	;
+	if(orm_puzzle_idx !== null) {
+		prompt.toggleClass('practice-mode', orm_get_puzzle_cooldown(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx) > Date.now());
+	}
+
 	$("nav#mainnav").removeClass("bg-success bg-danger");
-	orm_puzzle_next = puz[1][1];
-
-	/* XXX: add indicator if cooldown, blah blah */
-
 	$("div#puzzle-stuff, .puzzle-during").show();
 	$(".puzzle-cheat, .puzzle-after").hide();
+	orm_puzzle_next = puz[1][1];
 	orm_uci_stopall();
 };
 
@@ -148,16 +151,15 @@ const orm_puzzle_over = function() {
 			orm_state_unset(npk);
 		}
 	}
+
+	orm_movehist_merge_from_puzzle(orm_puzzle);
 };
 
 const orm_puzzle_success = function() {
 	$("ul#movehist li.new").addClass("good-move");
-	orm_movehist_merge_from_puzzle(orm_puzzle);
-	orm_movehist_make_active(orm_movehist_current());
-	$("p#puzzle-prompt").addClass("text-success").text("Puzzle completed successfully!");
-	if(orm_puzzle_idx !== null && orm_commit_puzzle_win(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx)) {
-		$("nav#mainnav").addClass("bg-success"); /* XXX */
-	}
+	$("p#puzzle-prompt").toggleClass("alert-secondary alert-success").text("Puzzle completed successfully!");
+	$("nav#mainnav").addClass("bg-success");
+	if(orm_puzzle_idx !== null) orm_commit_puzzle_win(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx);
 	orm_puzzle_over();
 };
 
@@ -166,13 +168,9 @@ const orm_puzzle_fail = function() {
 	if(!cur.parent().hasClass('puzzle-reply')) {
 		cur.parent().addClass('bad-move');
 	}
-
-	orm_movehist_merge_from_puzzle(orm_puzzle);
-
-	$("p#puzzle-prompt").addClass("text-danger").text("Puzzle failed.");
-	if(orm_puzzle_idx !== null && orm_commit_puzzle_loss(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx)) {
-		$("nav#mainnav").addClass("bg-danger");
-	}
+	$("p#puzzle-prompt").toggleClass("alert-secondary alert-danger").text("Puzzle failed.");
+	$("nav#mainnav").addClass("bg-danger");
+	if(orm_puzzle_idx !== null) orm_commit_puzzle_loss(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx);
 	orm_puzzle_over();
 };
 
