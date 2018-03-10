@@ -28,6 +28,11 @@ const ORM_PREFS_DEFAULTS = {
 	"uci_multipv": "5",
 	"uci_hard_limiter": "depth 22",
 	"uci_practice_limiter": "movetime 1000",
+
+	"leitner_cooldown_initial": "43200000", /* 12 hours: 12*3600*1000 ms */
+	"leitner_cooldown_increase_arithmetic": "86400000", /* 24 hours */
+	"leitner_cooldown_increase_geometric": "1.5",
+	"leitner_first_win_initial": "5",
 };
 
 let orm_prefs = null;
