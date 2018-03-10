@@ -201,7 +201,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 				current.after(vli);
 			}
 
-			if(rootline && li.hasClass('black') && !(current.next().hasClass('dummy'))) {
+			if(rootline && li.hasClass('black') && current.length !== 0 && !(current.next().hasClass('dummy'))) {
 				let dummy = $(document.createElement('li'));
 				let btn = $(document.createElement('button'));
 				dummy.append(btn);
