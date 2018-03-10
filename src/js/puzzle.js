@@ -152,7 +152,10 @@ const orm_puzzle_over = function() {
 		}
 	}
 
-	orm_movehist_merge_from_puzzle(orm_puzzle);
+	/* This can be a long-ish operation, don't hang the main "thread" */
+	setTimeout(function() {
+		orm_movehist_merge_from_puzzle(orm_puzzle);
+	}, 1);
 };
 
 const orm_puzzle_success = function() {
