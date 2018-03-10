@@ -91,6 +91,7 @@ typedef struct {
 		bool endgame:1;
 		bool capturing_defender:1;
 		bool trapped_piece:1;
+		bool overloaded_piece:1;
 	} tags;
 } puzzle_t;
 

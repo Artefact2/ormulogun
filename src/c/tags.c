@@ -71,6 +71,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 	MAYBE_PRINT_TAG(p->tags.capturing_defender, "Capturing defender");
 	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
+	MAYBE_PRINT_TAG(p->tags.overloaded_piece, "Overloaded piece");
 
 	if(!p->tags.draw && !p->tags.checkmate) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -465,6 +466,59 @@ static void tags_discovered_attack(puzzle_t* p, const puzzle_step_t* st, cch_boa
 	cch_undo_move(b, &nullmove, &unull);
 }
 
+static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.overloaded_piece) return;
+	if(st->nextlen == 0) return;
+
+	/* I move to a square A, you took back with piece P. Sadly piece P
+	 * is now no longer defending piece Q which I can now take with
+	 * one of my pieces and gain material. */
+
+	if(st->reply.end != st->move.end) return;
+
+	cch_movelist_t ml;
+	unsigned char i, j, stop;
+	cch_piece_t q;
+	for(i = 0; i < st->nextlen; ++i) {
+		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) return;
+		if(st->next[i].move.end == st->reply.end) {
+			/* Move/take/take back, not really a case of overloading */
+			return;
+		}
+
+		q = CCH_GET_SQUARE(b, st->next[i].move.end);
+		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, 7)); /* XXX */
+		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->reply.start, st->reply.start + 1);
+		CCH_SET_SQUARE(b, st->next[i].move.end, q);
+
+		for(j = 0; j < stop; ++j) {
+			if(ml[j].end == st->next[i].move.end) break;
+		}
+		if(j == stop) {
+			/* Piece that took back wasn't a defender of Q */
+			return;
+		}
+	}
+
+	cch_undo_move_state_t ur, um;
+	cch_play_legal_move(b, &(st->reply), &ur);
+	for(i = 0; i < st->nextlen; ++i) {
+		cch_play_legal_move(b, &(st->next[i].move), &um);
+		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->reply.end, st->reply.end + 1);
+		cch_undo_move(b, &(st->next[i].move), &um);
+
+		for(j = 0; j < stop; ++j) {
+			if(ml[j].end == st->next[i].move.end) break;
+		}
+		if(j < stop) {
+			/* Piece that took back can still defend Q */
+			break;
+		}
+	}
+	cch_undo_move(b, &(st->reply), &ur);
+	p->tags.overloaded_piece = (i == st->nextlen);
+}
+
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	if(p->tags.endgame) return;
 	/* The definition of "endgame" is quite ambiguous and
@@ -508,6 +562,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 		tags_pin(p, b, &(st->move));
 		tags_trapped_piece(p, st, b);
 		tags_discovered_attack(p, st, b);
+		tags_overloaded_piece(p, st, b);
 
 		cch_play_legal_move(b, &(st->reply), &ur);
 	}
