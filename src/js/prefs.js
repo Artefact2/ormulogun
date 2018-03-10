@@ -34,6 +34,8 @@ const ORM_PREFS_DEFAULTS = {
 	"leitner_cooldown_increase_geometric": "1.5",
 	"leitner_first_win_initial": "5",
 	"leitner_mastery_threshold": "6",
+
+	"journal_max_length": "1000",
 };
 
 let orm_prefs = null;
@@ -221,7 +223,8 @@ orm_when_ready.push(function() {
 	);
 
 	$("section#prefs-leitner > form").append(
-		orm_prefs_number("leitner_cooldown_initial", "Initial puzzle cooldown (ms)"),
+		orm_prefs_combine2(orm_prefs_number("journal_max_length", "Maximum journal entries"),
+						   orm_prefs_number("leitner_cooldown_initial", "Initial puzzle cooldown (ms)")),
 		orm_prefs_combine2(orm_prefs_number("leitner_mastery_threshold", "Box threshold for mastery"),
 						   orm_prefs_number("leitner_first_win_initial", "Initial box for won puzzles")),
 		orm_prefs_combine2(orm_prefs_number("leitner_cooldown_increase_arithmetic", "Cooldown arithmetic increase (ms)"),

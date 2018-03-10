@@ -46,6 +46,7 @@ const orm_commit_puzzle_win = function(setid, puzid) {
 	++b[puzid][0];
 	b[puzid][1] = t + orm_compute_puzzle_cooldown(b[puzid][0]);
 	orm_put_leitner_boxes(setid, b);
+	orm_journal_push(setid, [ 1, puzid ]);
 	return true;
 };
 
@@ -57,6 +58,7 @@ const orm_commit_puzzle_loss = function(setid, puzid) {
 	/* Puzzle lost, goes back to the first box */
 	b[puzid] = [ 0, t + orm_compute_puzzle_cooldown(0) ];
 	orm_put_leitner_boxes(setid, b);
+	orm_journal_push(setid, [ 0, puzid ]);
 	return true;
 };
 
