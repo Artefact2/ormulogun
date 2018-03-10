@@ -212,7 +212,7 @@ const orm_puzzle_try = function(lan) {
 
 orm_when_ready.push(function() {
 	$("button#puzzle-retry").click(function() {
-		orm_load_puzzle(orm_puzzle);
+		orm_load_puzzle(orm_puzzle_idx === null ? orm_puzzle : orm_puzzle_idx);
 	});
 
 	$("button#puzzle-abandon").click(function() {
