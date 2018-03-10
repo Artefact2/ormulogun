@@ -90,11 +90,11 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 	/* Find a random puzzle that has never been attempted before. */
 	/* XXX: this is probably slow and inefficient */
 	let pl = puzlist.length, i = Math.floor(Math.random() * pl);
-	for(let j = i; i < pl; ++j) {
+	for(let j = i; j < pl; ++j) {
 		if(j in b || orm_puzzle_filtered(puzlist[j])) continue;
 		return j;
 	}
-	for(let j = i - 1; i >= 0; --j) {
+	for(let j = i - 1; j >= 0; --j) {
 		if(j in b || orm_puzzle_filtered(puzlist[j])) continue;
 		return j;
 	}
