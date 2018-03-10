@@ -24,7 +24,7 @@ const orm_movehist_in_rootline = function(e) {
 };
 
 const orm_movehist_current = function() {
-	return $("ul#movehist li > button.btn-primary, ul#movehist li > button.btn-success, ul#movehist li > button.btn-danger").parent();
+	return $("ul#movehist li.current");
 };
 
 const orm_movehist_next = function(e) {
@@ -59,7 +59,7 @@ const orm_movehist_last = function(e) {
 }
 
 const orm_movehist_make_active = function(e) {
-	const prev = orm_movehist_current();
+	const prev = orm_movehist_current().removeClass('current');
 	const prevbtn = prev.children('button');
 	prevbtn.removeClass('btn-primary btn-success btn-danger').addClass('btn-light');
 	if(prev.hasClass('good-move')) {
@@ -74,6 +74,8 @@ const orm_movehist_make_active = function(e) {
 		orm_get_board().removeClass('game-over'); /* XXX */
 		return;
 	}
+
+	e.addClass('current');
 
 	$("button#movehist-first, button#movehist-prev").prop('disabled', false).removeClass('disabled');
 	if(orm_movehist_next(e).length === 0) {
