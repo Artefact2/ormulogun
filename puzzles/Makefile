@@ -4,12 +4,12 @@ JOBS:=16
 PATH:=../bin:$(PATH)
 
 import-pgn:
-	pv -cN input $(INPUT) | chunk-pgn | xargs -d '\n' -P $(JOBS) filter-pgn | xargs -d '\n' -P $(JOBS) pgnml_to_json | pv -lcN games | zstd -4 - -o $(TMP)
+	pv -cN input $(INPUT) | chunk-pgn | xargs -rd '\n' -P $(JOBS) filter-pgn | xargs -rd '\n' -P $(JOBS) pgnml_to_json | pv -lcN games | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 
 master.jpz:
-	echo -n | zstd -4 - -o $@
+	echo -n | zstd -19 - -o $@
 
 puzzles-all:
 	make puzzles START=0 END=$$(zstdcat $(INPUT) | wc -l) OUTPUT=$(TMP).p
@@ -17,10 +17,10 @@ puzzles-all:
 	rm $(TMP).p*
 
 puzzles:
-	seq $(START) $(END) | xargs -n 1 -P $(JOBS) -I '{}' bash -c "zstdcat $(INPUT) | tail -n +{} | head -n 1 | xargs -d '\n' gen-puzzles --verbose $(PFLAGS) | tee >(zstd -4 -o $(TMP).{}); sync $(TMP).{}; mv $(TMP).{} $(OUTPUT)-{}.jpz" 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
+	seq $(START) $(END) | xargs -n 1 -P $(JOBS) -I '{}' bash -c "zstdcat $(INPUT) | tail -n +{} | head -n 1 | xargs -rd '\n' gen-puzzles --verbose $(PFLAGS) | tee >(zstd -19 -o $(TMP).{}); sync $(TMP).{}; mv $(TMP).{} $(OUTPUT)-{}.jpz" 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
 
 merge-all: master.jpz $(shell find . -name "*.jpz" -not -name "master.jpz")
-	zstdcat $^ | pv -lcN in | merge-jl | pv -lcN out | zstd -4 - -o $(TMP)
+	zstdcat $^ | pv -lcN in | merge-jl | pv -lcN out | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) master.jpz
 
@@ -34,7 +34,7 @@ out/%.js: out/%.json
 	cp $< $@
 
 retag-all:
-	find . -maxdepth 1 -type f -name "*.jpz" -printf "%P\0" | xargs -0 -P $(JOBS) -n 1 -I '{}' bash -c "zstdcat {} | xargs -rd '\n' retag-puzzles | tee >(zstd -4 - -o tmp.retag.{})" | pv -ls `find . -maxdepth 1 -type f -name "*.jpz" -print0 | xargs -0 zstdcat | wc -l` >/dev/null
+	find . -maxdepth 1 -type f -name "*.jpz" -printf "%P\0" | xargs -r0 -P $(JOBS) -n 1 -I '{}' bash -c "zstdcat {} | xargs -rd '\n' retag-puzzles | tee >(zstd -19 - -o tmp.retag.{})" | pv -ls `find . -maxdepth 1 -type f -name "*.jpz" -print0 | xargs -r0 zstdcat | wc -l` >/dev/null
 	sync tmp.retag.*
 	rename tmp.retag. "" tmp.retag.*
 

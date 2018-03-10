@@ -16,8 +16,17 @@
  */
 
 /* XXX: as args maybe? */
-const RATING_CUTOFF = 2000;
-const TIME_CUTOFF = 900;
+
+/* For ranges, the lower bound is always inclusive and the upper bound
+ * is always exclusive. */
+
+const LOWER_RATING_RANGE = [ 1800, PHP_INT_MAX ];
+const HIGHER_RATING_RANGE = [ 2000, PHP_INT_MAX ];
+const TIME_RANGE = [ 600, PHP_INT_MAX ];
+const INCREMENT_FACTOR = 40;
+const EVENT_FILTER = '%^Rated %';
+
+
 
 if($argc === 1) {
 	fprintf(STDERR, "Usage: %s <pgn1> <pgn2> <pgn3>...\n", $argv[0]);
@@ -35,10 +44,19 @@ foreach($argv as $pgn) {
 		$tags[$m['k']] = $m['v'];
 	}
 
-	if(!isset($tags['WhiteElo']) || (int)$tags['WhiteElo'] < RATING_CUTOFF) continue;
-	if(!isset($tags['BlackElo']) || (int)$tags['BlackElo'] < RATING_CUTOFF) continue;
-	if(!isset($tags['TimeControl']) || !preg_match('%^(?<base>[0-9]+)\+(?<inc>[0-9]+)$%', $tags['TimeControl'], $tc)) continue;
-	if((int)$tc['base'] + 40 * (int)$tc['inc'] < TIME_CUTOFF) continue;
+	if(!isset($tags['Event']) || !isset($tags['WhiteElo']) || !isset($tags['BlackElo']) || !isset($tags['TimeControl'])) continue;
+
+	$lower = min((int)$tags['WhiteElo'], (int)$tags['BlackElo']);
+	if($lower < LOWER_RATING_RANGE[0] || $lower >= LOWER_RATING_RANGE[1]) continue;
+
+	$upper = max((int)$tags['WhiteElo'], (int)$tags['BlackElo']);
+	if($upper < HIGHER_RATING_RANGE[0] || $upper >= HIGHER_RATING_RANGE[1]) continue;
+
+	if(!preg_match(EVENT_FILTER, $tags['Event'])) continue;
+
+	if(!preg_match('%^(?<base>[0-9]+)\+(?<inc>[0-9]+)$%', $tags['TimeControl'], $tc)) continue;
+	$time = (int)$tc['base'] + INCREMENT_FACTOR * (int)$tc['inc'];
+	if($time < TIME_RANGE[0] || $time >= TIME_RANGE[1]) continue;
 
 	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgn, $match)) continue;
 	echo $match[0], "\n";
