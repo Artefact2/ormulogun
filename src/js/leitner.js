@@ -65,6 +65,7 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 	let b = orm_get_leitner_boxes(setid);
 	let candidates = [];
 	let minbox = 10000000; /* XXX */
+	let mt = parseInt(orm_pref("leitner_mastery_threshold"), 10);
 
 	for(let puzid in b) {
 		if(t < b[puzid][1]) continue;
@@ -81,12 +82,12 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 		candidates.push(puzid);
 	}
 
-	if(candidates.length > 0) {
+	/* Do we have non-mastered puzzles to repeat? */
+	if(candidates.length > 0 && minbox < mt) {
 		return candidates[Math.floor(Math.random() * candidates.length)];
 	}
 
-	/* No candidates, find a puzzle that has never been attempted
-	 * before at random */
+	/* Find a random puzzle that has never been attempted before. */
 	/* XXX: this is probably slow and inefficient */
 	let indices = [], i, pl = puzlist.length;
 	for(i = 0; i < pl; ++i) indices.push(i);
@@ -95,6 +96,11 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 		if(indices[i] in b) continue; /* Already attempted before */
 		if(orm_puzzle_filtered(puzlist[indices[i]])) continue;
 		return indices[i];
+	}
+
+	/* No new puzzles? Settle on mastered puzzles, then. */
+	if(candidates.length > 0) {
+		return candidates[Math.floor(Math.random() * candidates.length)];
 	}
 
 	return false;
