@@ -163,6 +163,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 		let badge = $(document.createElement('span'));
 		h.addClass('d-flex justify-content-between border-bottom pb-1 border-dark');
 		span.text(pset.name);
+		btn.prop('type', 'button');
 		btn.text('Start training ');
 		btn.addClass('btn btn-primary');
 		btn.data('idx', i).data('tag', null);
@@ -185,8 +186,43 @@ orm_when_puzzle_manifest_ready.push(function() {
 				lastprio = prio;
 			}
 
+			let m = sortedtags[j].match(/^[^(]+\s\(([^)]+)\)$/);
+			let l = tli.children().last();
+			if(m && l.length > 0) {
+				/* Add sub tag as dropdown */
+				if(l.is("button")) {
+					let div = $(document.createElement('div'));
+					div.addClass('btn-group');
+					div.append(l);
+					l.removeClass('mr-1 mb-1');
+					div.addClass('mr-1 mb-1');
+					div.append($(document.createElement('button'))
+							   .addClass(l.attr('class') + ' dropdown-toggle dropdown-toggle-split')
+							   .prop('type', 'button')
+							   .attr('data-toggle', 'dropdown'));
+					div.append($(document.createElement('div'))
+							   .addClass('dropdown-menu'));
+					tli.append(div);
+					l = div;
+				}
+				l.children("div.dropdown-menu").append(
+					$(document.createElement('a'))
+						.addClass('dropdown-item')
+						.data('tag', sortedtags[j])
+						.data('idx', i)
+						.prop('href', '#')
+						.text(m[1] + ' ').append(
+							$(document.createElement('span'))
+								.addClass('badge badge-light')
+								.text(orm_format_integer(pset.tags[sortedtags[j]]))
+						)
+				);
+				continue;
+			}
+
 			let btn = $(document.createElement('button'));
 			let span = $(document.createElement('span'));
+			btn.prop('type', 'button');
 			btn.addClass('btn btn-sm mr-1 mb-1');
 			btn.addClass('tag-prio-' + lastprio);
 			btn.text(sortedtags[j] + ' ');
@@ -206,8 +242,11 @@ orm_when_puzzle_manifest_ready.push(function() {
 		ul.append(li);
 	}
 
-	ul.find("button").click(function() {
+	ul.on('click', 'button, a.dropdown-item', function(e) {
 		let t = $(this);
+		if(t.hasClass('dropdown-toggle')) return;
+		if(t.is('a')) e.preventDefault();
+
 		t.prop('disabled', 'disabled').addClass('disabled');
 		orm_load_puzzle_set(t.data('idx'), null, null, function() {
 			if(orm_temp_filter === true) {
