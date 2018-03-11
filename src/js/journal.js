@@ -30,7 +30,7 @@ const orm_journal_push = function(setid, payload) {
 	let d = $("div#journal > div").filter(function() { return $(this).data('setid') === setid; });
 	if(d.length > 0) {
 		orm_prepend_journal_entry(d.data('midx'), je, d.children('ul'));
-		d.prependTo(d.parent());
+		d.parent().children('h1').after(d);
 	} else {
 		/* XXX */
 		orm_generate_journal_page();
