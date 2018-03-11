@@ -24,6 +24,7 @@
 					<li class="nav-item"><a class="nav-link to-tab" href="#puzzlesets">Puzzle sets</a></li>
 					<li class="nav-item"><a class="nav-link to-tab" href="#endgames">Endgame training</a></li>
 					<li class="nav-item"><a class="nav-link to-tab" href="#board">Analysis board</a></li>
+					<li class="nav-item"><a class="nav-link to-tab" href="#journal">Activity journal</a></li>
 				</ul>
 				<ul class="navbar-nav ml-auto">
 					<li class="nav-item"><a class="nav-link to-tab" href="#preferences">Preferences</a></li>
@@ -59,7 +60,7 @@
 								</div>
 							</div>
 						</div>
-						<p id="puzzle-prompt"></p>
+						<p id="puzzle-prompt" class="alert mt-3"></p>
 					</div>
 					<div class="row ml-2 mr-2 mb-2">
 						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Start engine analysis</button>
@@ -183,6 +184,9 @@
 				<a target="_blank" href="https://gitlab.com/Artefact2/ormulogun/blob/master/docs/endgame.md" class="btn btn-outline-secondary btn-sm ml-2">Help &amp; Examples</a>
 			</form>
 		</div>
+		<div id="journal" class="tab container mt-2">
+			<h1>Activity journal</h1>
+		</div>
 		<div id="preferences" class="tab container mt-2">
 			<h1>Preferences</h1>
 			<section class="mt-4" id="prefs-lookandfeel">
@@ -195,6 +199,10 @@
 			</section>
 			<section class="mt-4" id="prefs-uci">
 				<h2>Engine settings</h2>
+				<form></form>
+			</section>
+			<section class="mt-4" id="prefs-leitner">
+				<h2>Spaced repetition</h2>
 				<form></form>
 			</section>
 		</div>

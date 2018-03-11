@@ -28,6 +28,14 @@ const ORM_PREFS_DEFAULTS = {
 	"uci_multipv": "5",
 	"uci_hard_limiter": "depth 22",
 	"uci_practice_limiter": "movetime 1000",
+
+	"leitner_cooldown_initial": "43200000", /* 12 hours: 12*3600*1000 ms */
+	"leitner_cooldown_increase_arithmetic": "86400000", /* 24 hours */
+	"leitner_cooldown_increase_geometric": "1.5",
+	"leitner_first_win_initial": "5",
+	"leitner_mastery_threshold": "6",
+
+	"journal_max_length": "1000",
 };
 
 let orm_prefs = null;
@@ -212,6 +220,15 @@ orm_when_ready.push(function() {
 		orm_prefs_number("uci_multipv", "Maximum number of lines"),
 		orm_prefs_combine2(orm_prefs_string("uci_hard_limiter", "Analysis limiter"),
 						   orm_prefs_string("uci_practice_limiter", "Practice limiter"))
+	);
+
+	$("section#prefs-leitner > form").append(
+		orm_prefs_combine2(orm_prefs_number("journal_max_length", "Maximum journal entries"),
+						   orm_prefs_number("leitner_cooldown_initial", "Initial puzzle cooldown (ms)")),
+		orm_prefs_combine2(orm_prefs_number("leitner_mastery_threshold", "Box threshold for mastery"),
+						   orm_prefs_number("leitner_first_win_initial", "Initial box for won puzzles")),
+		orm_prefs_combine2(orm_prefs_number("leitner_cooldown_increase_arithmetic", "Cooldown arithmetic increase (ms)"),
+						   orm_prefs_number("leitner_cooldown_increase_geometric", "Cooldown geometric increase"))
 	);
 
 	$("div#preferences > section > form").each(function() {

@@ -16,7 +16,6 @@
 let orm_manifest = null;
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
-let orm_puzzle_idx = null;
 let orm_temp_filter = false;
 
 const orm_load_puzzle_manifest = function(done) {
@@ -221,7 +220,6 @@ orm_when_puzzle_manifest_ready.push(function() {
 			}
 			orm_load_tab("board", true, function() {
 				t.prop('disabled', false).removeClass('disabled');
-				orm_puzzle_idx = null;
 				orm_load_next_puzzle();
 			});
 		});

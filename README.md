@@ -19,10 +19,14 @@ To-Do
 =====
 
 * More automatic tagging (sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
+* Better automatic tagging (not a trivial task)
 * Filter-aware puzzle counts in list
-* Progress tracking, spaced repetition
+* Progress tracking
+* Better activity log, activity streak
+* Progress saving, loading, merging
 * Touch-friendly drag and drop
 * Find some way of rating puzzles by difficulty without relying on a central server and user tracking (if at all possible)
+* localStorage space limit may become an issue with large puzzlesets, maybe use lz-string
 
 Credits
 =======
