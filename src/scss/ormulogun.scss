@@ -19,6 +19,10 @@ body {
 	}
 }
 
+div#intro > ul {
+	list-style-type: square;
+}
+
 div#puzzlesets > div.puzzle-set {
 	&> ul.puzzleset-tags {
 		padding: 0;
