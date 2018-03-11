@@ -20,7 +20,6 @@ To-Do
 
 * More automatic tagging (sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
 * Better automatic tagging (not a trivial task)
-* Filter-aware puzzle counts in list
 * Progress tracking
 * Better activity log, activity streak
 * Progress saving, loading, merging
