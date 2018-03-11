@@ -21,10 +21,13 @@
 		fprintf(stderr, "%s: %s\n", (str), lan);			\
 	} while(0)
 
+#define PRINT_TAG(n) do {						\
+		printf(",\"%s\"", (n));					\
+	} while(0)
 
 #define MAYBE_PRINT_TAG(f, n) do {				\
 		if(f) {									\
-			printf(",\"%s\"", (n));				\
+			PRINT_TAG(n);						\
 		}										\
 	} while(0)
 
@@ -78,16 +81,20 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
 	MAYBE_PRINT_TAG(p->tags.overloaded_piece, "Overloaded piece");
 
-	if(!p->tags.checkmate && !p->tags.threefold && !p->tags.stalemate && !p->tags.perpetual) {
+	if(!p->tags.checkmate && !p->tags.threefold && !p->tags.stalemate && !p->tags.perpetual && !p->tags.winning_position && !p->tags.drawing_position) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
-		MAYBE_PRINT_TAG(!p->tags.promotion && p->end_material_diff_min > p->start_material_diff, "Material gain");
-		MAYBE_PRINT_TAG(p->end_material_diff_max == p->start_material_diff
-						&& p->end_material_diff_min == p->start_material_diff
-						&& p->end_material_max < p->start_material, "Trade");
-		MAYBE_PRINT_TAG(p->end_material_diff_max == p->start_material_diff
-						&& p->end_material_diff_min == p->start_material_diff
-						&& p->end_material_max == p->start_material
-						&& p->end_material_min == p->start_material, "Quiet");
+
+		if(p->end_material_diff_min > p->start_material_diff) {
+			MAYBE_PRINT_TAG(!p->tags.promotion, "Material gain");
+		} else if(p->end_material_diff_max < p->start_material_diff) {
+			PRINT_TAG("Material loss");
+		} else {
+			if(p->end_material_min == p->start_material) {
+				PRINT_TAG("Quiet");
+			}  else {
+				PRINT_TAG("Trade");
+			}
+		}
 	}
 
 	putchar(']');

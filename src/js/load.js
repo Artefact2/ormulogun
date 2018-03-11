@@ -115,7 +115,7 @@ const orm_tag_priority = function(t) {
 	t = t.match(/^([^(]+)( \([^)]+\))?$/)[1];
 
 	/* General puzzle categories, usually mutually exclusive */
-	if(t.match(/^(Checkmate|Winning position|Drawing position|Draw|Material gain|Trade|Quiet)$/)) return 1;
+	if(t.match(/^(Checkmate|Draw|Winning position|Drawing position|Material (gain|loss)|Trade|Quiet)$/)) return 1;
 
 	/* Depth stuff, very spammy as there's lots of them */
 	if(t.match(/^(Depth|Min depth|Max depth) /)) return 3;
