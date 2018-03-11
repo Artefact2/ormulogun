@@ -90,6 +90,7 @@ const orm_prepend_journal_entry = function(midx, je, ul) {
 	btn.text('#' + je[1][1].toString());
 	btn.addClass(je[1][0] === 0 ? 'btn-danger' : 'btn-success');
 	btn.prop('title', (new Date(je[0])).toString());
+	btn.prop('type', 'button');
 	li.append(btn);
 
 	let pdate = ul.find('> li:first-child > button').data('date');

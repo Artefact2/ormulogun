@@ -27,6 +27,7 @@ const orm_error = function(str) {
 			.addClass('close')
 			.attr('data-dismiss', 'alert')
 			.prop('title', 'Close this alert')
+			.prop('type', 'button')
 			.append($(document.createElement('span')).text('×'))
 	);
 	$("nav#mainnav").after(err);

@@ -150,6 +150,7 @@ const orm_movehist_push = function(startfen, lan, san) {
 	li.addClass('new mb-1');
 	btn.addClass('btn btn-sm');
 	btn.text(san);
+	btn.prop('type', 'button');
 
 	if(startfen.split(' ', 3)[1] === 'w') {
 		li.addClass('white');
