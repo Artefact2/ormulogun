@@ -86,7 +86,7 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 
 	/* Do we have non-mastered puzzles to repeat? */
 	if(candidates.length > 0 && minbox < mt) {
-		return candidates[Math.floor(Math.random() * candidates.length)];
+		return parseInt(candidates[Math.floor(Math.random() * candidates.length)], 10);
 	}
 
 	/* Find a random puzzle that has never been attempted before. */
@@ -103,7 +103,7 @@ const orm_find_candidate_puzzle = function(setid, puzlist) {
 
 	/* No new puzzles? Settle on mastered puzzles, then. */
 	if(candidates.length > 0) {
-		return candidates[Math.floor(Math.random() * candidates.length)];
+		return parseInt(candidates[Math.floor(Math.random() * candidates.length)], 10);
 	}
 
 	return false;
