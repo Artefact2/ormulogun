@@ -250,7 +250,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 						)
 					),
 					$(document.createElement('ul')).addClass('puzzleset-tags'),
-					$(document.createElement('p')).addClass('puzzleset-desc').text(ps.desc)
+					$(document.createElement('div')).addClass('puzzleset-desc').html(ps.desc)
 				)
 		);
 	};
