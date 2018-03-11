@@ -19,14 +19,6 @@ body {
 	}
 }
 
-div#puzzlesets > ul {
-	list-style-type: none;
-
-	&> li > ul {
-		list-style-type: none;
-	}
-}
-
 $tp0: hsl(0, 0%, 75%);
 $tp1: hsl(0, 0%, 85%);
 $tp2: hsl(0, 0%, 90%);
