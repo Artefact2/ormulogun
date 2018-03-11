@@ -22,7 +22,7 @@ const orm_load_puzzle_set = function(div, always, fail, done) {
 	let alert = $(document.createElement('p'));
 	let m_idx = div.data('midx');
 	let btn = div.find('button');
-	div.children('h2').first().after(alert);
+	div.children('h4').first().after(alert);
 	alert.addClass("alert alert-primary").text("Loading puzzle set…");
 	btn.addClass('disabled').prop('disabled', true);
 
@@ -169,39 +169,45 @@ const orm_regen_puzzleset_counts = function(div) {
 		++btotal;
 	}
 	boxes.sort();
-	div.find('div.progress.puzzle-set-progress').empty().append(
+
+	div.find('div.puzzle-set-completion > span').text(
+		'Completion rate: ' + (100.0 * btotal / total).toFixed(3) + '% ('
+			+ orm_format_integer(btotal) + ' / ' + orm_format_integer(total) + ')'
+	);
+	div.find('div.puzzle-set-completion > div.progress').empty().append(
 		$(document.createElement('div')).addClass('progress-bar bg-primary')
 			.css('width', (100.0 * btotal / total).toString() + '%')
 	);
-	let pb = div.find('div.progress.puzzle-set-mastery').empty();
+
+	let pb = div.find('div.puzzle-set-mastery > div.progress').empty();
 	let mb = parseInt(orm_pref('leitner_mastery_threshold'));
-	let mtotal = 0;
+	let mtotal = 0.0;
 	for(let i in boxes) {
 		pb.prepend(
 			$(document.createElement('div')).addClass('progress-bar bg-success')
 				.css('width', (100.0 * bcounts[boxes[i]] / btotal).toString() + '%')
 				.css('opacity', Math.min(boxes[i], mb) / mb)
 		);
-		if(boxes[i] >= mb) mtotal += bcounts[boxes[i]];
+		if(boxes[i] >= mb) {
+			mtotal += bcounts[boxes[i]];
+		} else {
+			mtotal += bcounts[boxes[i]] * (1.0 - Math.pow(.5, boxes[i]));
+		}
 	}
-
-	let frate = 0.0;
-	div.children('div.puzzle-set-info').empty().append(
-		$(document.createElement('div')).addClass('col-auto')
-			.text('Completion rate: ' + (100.0 * btotal / total).toFixed(2) + '% ('
-				  + orm_format_integer(btotal) + ' / ' + orm_format_integer(total) + ')'),
-		$(document.createElement('div')).addClass('col-auto')
-			.text('Mastery rate: ' + (btotal > 0 ? 100.0 * mtotal / btotal : 0).toFixed(2) + '% ('
-				  + orm_format_integer(mtotal) + ' / ' + orm_format_integer(btotal) + ')'),
-		$(document.createElement('div')).addClass('col-auto')
-			.text('Filter rate: ' + (frate = 100.0 * (1.0 - total / orm_puzzle_set.length)).toFixed(2) + '% ('
-				  + orm_format_integer(orm_puzzle_set.length - total) + ' / ' + orm_format_integer(orm_puzzle_set.length) + ')')
+	div.find('div.puzzle-set-mastery > span').text(
+		'Mastery rate: ' + (btotal > 0 ? 100.0 * mtotal / btotal : 0).toFixed(4) + '%'
 	);
 
-	div.children('div.progress.puzzle-set-filtered').empty().append(
+	let frate = 0.0;
+	div.find('div.puzzle-set-filtered > span').text(
+		'Filter rate: ' + (frate = 100.0 * (1.0 - total / orm_puzzle_set.length)).toFixed(1) + '% ('
+			+ orm_format_integer(orm_puzzle_set.length - total) + ' / ' + orm_format_integer(orm_puzzle_set.length) + ')'
+	);
+	div.find('div.puzzle-set-filtered > div.progress').empty().append(
 		$(document.createElement('div')).addClass('progress-bar bg-secondary')
 			.css('width', (100.0 - frate).toString() + '%')
 	);
+
 	div.find('button.play-puzzleset').children('span.badge').text(orm_format_integer(total));
 };
 
@@ -214,17 +220,17 @@ orm_when_puzzle_manifest_ready.push(function() {
 				.addClass('puzzle-set mb-4')
 				.prop('id', 'puzzle-set-' + i)
 				.append(
-					$(document.createElement('h2'))
-						.addClass('d-flex justify-content-between')
+					$(document.createElement('h4'))
+						.addClass('d-flex justify-content-between align-items-end')
 						.append(
 							$(document.createElement('span')).text(ps.name),
 							$(document.createElement('span')).append(
 								$(document.createElement('button')).prop('type', 'button')
-									.addClass('mr-1 btn btn-outline-secondary reload-puzzleset')
-									.text('Reload')
+									.addClass('mr-1 btn btn-sm btn-outline-secondary reload-puzzleset')
+									.text('Refresh stats')
 									.hide(),
 								$(document.createElement('button')).prop('type', 'button')
-									.addClass('btn btn-primary load-puzzleset')
+									.addClass('btn btn-sm btn-primary load-puzzleset')
 									.append(
 										$(document.createElement('span')).text('Load puzzles'),
 										' ',
@@ -232,10 +238,17 @@ orm_when_puzzle_manifest_ready.push(function() {
 									)
 							)
 						),
-					$(document.createElement('div')).addClass('progress puzzle-set-progress'),
-					$(document.createElement('div')).addClass('progress puzzle-set-mastery'),
-					$(document.createElement('div')).addClass('progress puzzle-set-filtered'),
-					$(document.createElement('div')).addClass('row justify-content-around puzzle-set-info'),
+					$(document.createElement('div')).addClass('row ml-0 mr-0 mb-1 puzzle-set-info').append(
+						$(document.createElement('div')).addClass('col-lg-4 p-0 puzzle-set-completion').append(
+							$(document.createElement('div')).addClass('progress'), $(document.createElement('span'))
+						),
+						$(document.createElement('div')).addClass('col-lg-4 p-0 puzzle-set-mastery').append(
+							$(document.createElement('div')).addClass('progress'), $(document.createElement('span'))
+						),
+						$(document.createElement('div')).addClass('col-lg-4 p-0 puzzle-set-filtered').append(
+							$(document.createElement('div')).addClass('progress'), $(document.createElement('span'))
+						)
+					),
 					$(document.createElement('ul')).addClass('puzzleset-tags'),
 					$(document.createElement('p')).addClass('puzzleset-desc').text(ps.desc)
 				)
@@ -248,8 +261,10 @@ orm_when_puzzle_manifest_ready.push(function() {
 
 	md.on('click', 'button.load-puzzleset, button.reload-puzzleset', function() {
 		orm_load_puzzle_set($(this).closest('div.puzzle-set'));
+		$(this).blur();
 	}).on('click', 'button.play-puzzleset, .tag-filter', function() {
 		let t = $(this);
+		t.blur();
 		if(t.hasClass('dropdown-toggle')) return;
 		let d = t.closest('div.puzzle-set');
 		orm_puzzle_midx = d.data('midx');
