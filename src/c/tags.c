@@ -52,28 +52,33 @@ void tags_print(const puzzle_t* p) {
 		printf("\"Min depth %d\",\"Max depth %d\"", p->min_depth, p->max_depth);
 	}
 
+	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
+
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
-	MAYBE_PRINT_TAG(p->tags.draw, "Draw");
+
+	MAYBE_PRINT_TAG(p->tags.stalemate || p->tags.threefold || p->tags.perpetual, "Draw");
 	MAYBE_PRINT_TAG(p->tags.stalemate, "Draw (Stalemate)");
 	MAYBE_PRINT_TAG(p->tags.threefold, "Draw (Threefold repetition)");
 	MAYBE_PRINT_TAG(p->tags.perpetual, "Draw (Perpetual check)");
+
 	MAYBE_PRINT_TAG(p->tags.discovered_attack, "Discovered attack");
 	MAYBE_PRINT_TAG(p->tags.discovered_check, "Discovered check");
 	MAYBE_PRINT_TAG(p->tags.double_check, "Double check");
+
 	MAYBE_PRINT_TAG(p->tags.promotion, "Promotion");
 	MAYBE_PRINT_TAG(p->tags.underpromotion, "Underpromotion");
+
 	MAYBE_PRINT_TAG(p->tags.pin, "Pin");
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
-	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 	MAYBE_PRINT_TAG(p->tags.capturing_defender, "Capturing defender");
 	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
 	MAYBE_PRINT_TAG(p->tags.overloaded_piece, "Overloaded piece");
 
-	if(!p->tags.draw && !p->tags.checkmate) {
+	if(!p->tags.checkmate && !p->tags.threefold && !p->tags.stalemate && !p->tags.perpetual) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
 		MAYBE_PRINT_TAG(!p->tags.promotion && p->end_material_diff_min > p->start_material_diff, "Material gain");
 		MAYBE_PRINT_TAG(p->end_material_diff_max == p->start_material_diff

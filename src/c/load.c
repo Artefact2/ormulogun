@@ -173,7 +173,6 @@ static int json_partial_tags(puzzle_t* p, const char* json, const char** after) 
 
 		/* XXX: only the tags set in puzzle.c */
 		if(!strncmp("Checkmate", tag, 64)) p->tags.checkmate = true;
-		if(!strncmp("Draw", tag, 64)) p->tags.draw = true;
 		if(!strncmp("Draw (Perpetual check)", tag, 64)) p->tags.perpetual = true;
 		if(!strncmp("Draw (Threefold repetition)", tag, 64)) p->tags.threefold = true;
 		if(!strncmp("Draw (Stalemate)", tag, 64)) p->tags.stalemate = true;

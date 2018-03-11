@@ -139,7 +139,6 @@ static bool check_threefold(puzzle_t* p, cch_board_t* b, threefold_entry_t* tfta
 		}
 
 		if(repetitions >= 3) {
-			p->tags.draw = true;
 			if(tftable[tftlen - 1].check || tftable[tftlen - 2].check) p->tags.perpetual = true; /* XXX: more complicated than that */
 			else p->tags.threefold = true;
 			return true;
@@ -208,7 +207,6 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 				p->tags.checkmate = true;
 			} else {
 				p->tags.stalemate = true;
-				p->tags.draw = true;
 			}
 			cch_undo_move(b, &(st->next[i].move), &um);
 			continue;
