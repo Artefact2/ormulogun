@@ -39,7 +39,7 @@ const orm_commit_puzzle_win = function(setid, puzid) {
 	let b = orm_get_leitner_boxes(setid);
 
 	if(!(puzid in b)) {
-		b[puzid] = [ parseInt(orm_pref("leitner_first_win_initial"), 10), 0 ];
+		b[puzid] = [ parseInt(orm_pref("leitner_first_win_initial"), 10) - 1, 0 ];
 	}
 
 	/* Puzzle won, goes in the next box */
