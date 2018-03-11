@@ -281,5 +281,9 @@ orm_when_puzzle_manifest_ready.push(function() {
 			orm_load_next_puzzle();
 		});
 	});
-	/* XXX: auto-load last played set from history */
+
+	if(!location.hash.match(/^#puzzle-/)) {
+		/* XXX, for obvious reasons */
+		md.find("button.load-puzzleset").first().click();
+	}
 });
