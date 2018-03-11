@@ -24,6 +24,26 @@ div#puzzlesets > div.puzzle-set {
 		padding: 0;
 		list-style-type: none;
 	}
+
+	&> div.progress {
+		height: .5em;
+
+		&.puzzle-set-progress {
+			margin-top: .25em;
+			border-bottom-left-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+
+		&.puzzle-set-mastery {
+			border-radius: 0;
+		}
+
+		&.puzzle-set-filtered {
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+			margin-bottom: .25em;
+		}
+	}
 }
 
 $tp0: hsl(0, 0%, 75%);

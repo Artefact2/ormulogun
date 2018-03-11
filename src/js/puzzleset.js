@@ -123,7 +123,7 @@ const orm_regen_puzzleset_counts = function(div) {
 						   .attr('data-toggle', 'dropdown'));
 				div.append($(document.createElement('div'))
 						   .addClass('dropdown-menu'));
-				tli.append(div);
+				li.append(div);
 				l = div;
 			}
 			l.children("div.dropdown-menu").append(
@@ -154,8 +154,54 @@ const orm_regen_puzzleset_counts = function(div) {
 		li.append(btn);
 	}
 
-	/* XXX: fetch progress from state, progress bar, etc */
+	let b = orm_get_leitner_boxes(orm_manifest[orm_puzzle_midx].id);
+	let bcounts = {};
+	let boxes = [];
+	let btotal = 0;
+	for(let puzid in b) {
+		if(orm_puzzle_filtered(orm_puzzle_set[puzid])) continue;
+		let box = b[puzid][0];
+		if(!(box in bcounts)) {
+			bcounts[box] = 0;
+			boxes.push(box);
+		}
+		++bcounts[box];
+		++btotal;
+	}
+	boxes.sort();
+	div.find('div.progress.puzzle-set-progress').empty().append(
+		$(document.createElement('div')).addClass('progress-bar bg-primary')
+			.css('width', (100.0 * btotal / total).toString() + '%')
+	);
+	let pb = div.find('div.progress.puzzle-set-mastery').empty();
+	let mb = parseInt(orm_pref('leitner_mastery_threshold'));
+	let mtotal = 0;
+	for(let i in boxes) {
+		pb.prepend(
+			$(document.createElement('div')).addClass('progress-bar bg-success')
+				.css('width', (100.0 * bcounts[boxes[i]] / btotal).toString() + '%')
+				.css('opacity', Math.min(boxes[i], mb) / mb)
+		);
+		if(boxes[i] >= mb) mtotal += bcounts[boxes[i]];
+	}
 
+	let frate = 0.0;
+	div.children('div.puzzle-set-info').empty().append(
+		$(document.createElement('div')).addClass('col-auto')
+			.text('Completion rate: ' + (100.0 * btotal / total).toFixed(2) + '% ('
+				  + orm_format_integer(btotal) + ' / ' + orm_format_integer(total) + ')'),
+		$(document.createElement('div')).addClass('col-auto')
+			.text('Mastery rate: ' + (btotal > 0 ? 100.0 * mtotal / btotal : 0).toFixed(2) + '% ('
+				  + orm_format_integer(mtotal) + ' / ' + orm_format_integer(btotal) + ')'),
+		$(document.createElement('div')).addClass('col-auto')
+			.text('Filter rate: ' + (frate = 100.0 * (1.0 - total / orm_puzzle_set.length)).toFixed(2) + '% ('
+				  + orm_format_integer(orm_puzzle_set.length - total) + ' / ' + orm_format_integer(orm_puzzle_set.length) + ')')
+	);
+
+	div.children('div.progress.puzzle-set-filtered').empty().append(
+		$(document.createElement('div')).addClass('progress-bar bg-secondary')
+			.css('width', (100.0 - frate).toString() + '%')
+	);
 	div.find('button.play-puzzleset').children('span.badge').text(orm_format_integer(total));
 };
 
@@ -169,7 +215,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 				.prop('id', 'puzzle-set-' + i)
 				.append(
 					$(document.createElement('h2'))
-						.addClass('d-flex justify-content-between border-bottom pb-1 border-dark')
+						.addClass('d-flex justify-content-between')
 						.append(
 							$(document.createElement('span')).text(ps.name),
 							$(document.createElement('span')).append(
@@ -186,6 +232,10 @@ orm_when_puzzle_manifest_ready.push(function() {
 									)
 							)
 						),
+					$(document.createElement('div')).addClass('progress puzzle-set-progress'),
+					$(document.createElement('div')).addClass('progress puzzle-set-mastery'),
+					$(document.createElement('div')).addClass('progress puzzle-set-filtered'),
+					$(document.createElement('div')).addClass('row justify-content-around puzzle-set-info'),
 					$(document.createElement('ul')).addClass('puzzleset-tags'),
 					$(document.createElement('p')).addClass('puzzleset-desc').text(ps.desc)
 				)
@@ -200,6 +250,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 		orm_load_puzzle_set($(this).closest('div.puzzle-set'));
 	}).on('click', 'button.play-puzzleset, .tag-filter', function() {
 		let t = $(this);
+		if(t.hasClass('dropdown-toggle')) return;
 		let d = t.closest('div.puzzle-set');
 		orm_puzzle_midx = d.data('midx');
 		orm_puzzle_set = orm_puzzle_sets[orm_puzzle_midx];
