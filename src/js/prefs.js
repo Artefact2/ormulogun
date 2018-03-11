@@ -22,8 +22,8 @@ const ORM_PREFS_DEFAULTS = {
 	"board_move_delay": "500",
 	"custom_css": "",
 
-	"puzzle_depth_min": "1",
-	"puzzle_depth_max": "7",
+	"puzzle_depth_min": "2",
+	"puzzle_depth_max": "4",
 
 	"uci_multipv": "5",
 	"uci_hard_limiter": "depth 22",
@@ -142,6 +142,60 @@ const orm_prefs_textarea = function(k, lstr) {
 	ta.prop('id', 's_' + k);
 	return orm_prefs_generic(k, lstr, ta);
 }
+
+const orm_generate_tag_prefs = function() {
+	/* There's better ways, probably. */
+	let tmap = {};
+	let tags = [];
+
+	for(let k in orm_prefs) {
+		if(!k.match(/^puzzletag:/)) continue;
+		let t = k.split(':', 2)[1];
+		tmap[t] = true;
+		tags.push(t);
+	}
+
+	for(let i in orm_puzzle_sets) {
+		for(let j in orm_puzzle_sets[i]) {
+			for(let k in orm_puzzle_sets[i][j][2]) {
+				let t = orm_puzzle_sets[i][j][2][k];
+				if(t in tmap) continue;
+				tmap[t] = true;
+				tags.push(t);
+			}
+		}
+	}
+
+	$("section#prefs-puzzlefilters select.tag-filter").closest("div.form-row").remove();
+
+	tags.sort();
+	let d = $("section#prefs-puzzlefilters > form > div.form-row:last-child");
+	let d1 = null, d2 = null;
+
+	for(let i in tags) {
+		if(tags[i].match(/^(Depth|Min depth|Max depth) [1-9][0-9]*$/)) continue;
+
+		let select = $(document.createElement('select')).addClass('tag-filter');
+		let k = 'puzzletag:' + tags[i];
+		select.append(
+			$(document.createElement('option')).prop('value', '1').text('allowed'),
+			$(document.createElement('option')).prop('value', '2').text('mandatory'),
+			$(document.createElement('option')).prop('value', '0').text('forbidden')
+		);
+		ORM_PREFS_DEFAULTS[k] = '1';
+		d2 = orm_prefs_generic(k, tags[i] + " tag", select);
+
+		if(d1 === null) {
+			d1 = d2;
+		} else {
+			d.before(orm_prefs_combine2(d1, d2));
+			d1 = d2 = null;
+		}
+	}
+
+	if(d1 !== null) d.before(d1);
+};
+
 
 const orm_prefs_css_update = function() {
 	let css = '';
@@ -277,52 +331,4 @@ orm_when_ready.push(function() {
 	});
 
 	orm_prefs_apply();
-});
-
-orm_when_puzzle_manifest_ready.push(function() {
-	/* There's better ways, probably. */
-	let tmap = {};
-	let tags = [];
-
-	for(let k in orm_prefs) {
-		if(!k.match(/^puzzletag:/)) continue;
-		let t = k.split(':', 2)[1];
-		tmap[t] = true;
-		tags.push(t);
-	}
-
-	for(let i in orm_manifest) {
-		for(let t in orm_manifest[i].tags) {
-			if(t in tmap) continue;
-			tmap[t] = true;
-			tags.push(t);
-		}
-	}
-
-	tags.sort();
-	let d = $("section#prefs-puzzlefilters > form > div.form-row:last-child");
-	let d1 = null, d2 = null;
-
-	for(let i in tags) {
-		if(tags[i].match(/^(Depth|Min depth|Max depth) [1-9][0-9]*$/)) continue;
-
-		let select = $(document.createElement('select'));
-		let k = 'puzzletag:' + tags[i];
-		select.append(
-			$(document.createElement('option')).prop('value', '1').text('allowed'),
-			$(document.createElement('option')).prop('value', '2').text('mandatory'),
-			$(document.createElement('option')).prop('value', '0').text('forbidden')
-		);
-		ORM_PREFS_DEFAULTS[k] = '1';
-		d2 = orm_prefs_generic(k, tags[i] + " tag", select);
-
-		if(d1 === null) {
-			d1 = d2;
-		} else {
-			d.before(orm_prefs_combine2(d1, d2));
-			d1 = d2 = null;
-		}
-	}
-
-	if(d1 !== null) d.before(d1);
 });

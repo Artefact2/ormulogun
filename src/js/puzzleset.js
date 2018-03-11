@@ -44,6 +44,7 @@ const orm_load_puzzle_set = function(div, always, fail, done) {
 		div.find('button.reload-puzzleset').show();
 		setTimeout(function() {
 			orm_regen_puzzleset_counts(div);
+			orm_generate_tag_prefs();
 		}, 1);
 	});
 };
