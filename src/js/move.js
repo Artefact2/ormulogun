@@ -147,32 +147,48 @@ orm_when_ready.push(function() {
 	});
 
 	/* XXX not touch-friendly */
-	$("div.board").on("mousedown", "> div.piece", function(e) {
+	$("div.board").on("mousedown touchstart", "> div.piece", function(e) {
 		let p = $(this);
 		let b = p.parent();
 		if(!orm_can_move_piece(p, b)) return;
 
 		let bg = b.children("div.back.r" + p.data("orank") + ".f" + p.data("ofile"));
+		if(e.type === "touchstart") {
+			/* XXX */
+			e.pageX = e.originalEvent.targetTouches[0].pageX;
+			e.pageY = e.originalEvent.targetTouches[0].pageY;
+		}
 		p.data("origx", e.pageX);
 		p.data("origy", e.pageY);
 		p.data("origtop", p.position().top);
 		p.data("origleft", p.position().left);
 		p.addClass("dragging");
 		orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
-	}).on("mousemove", function(e) {
+	}).on("mousemove touchmove", function(e) {
 		let b = $(this);
 		let p = b.children("div.piece.dragging");
 		if(p.length === 0) return;
 
 		p.addClass("dragged");
+		if(e.type === "touchmove") {
+			/* XXX */
+			e.pageX = e.originalEvent.targetTouches[0].pageX;
+			e.pageY = e.originalEvent.targetTouches[0].pageY;
+			if(p.width() < 96) {
+				p.css('transform', 'scale(' + (96 / p.width()).toString() + ')');
+			}
+		}
 		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
 		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
-	}).on("mouseup", "> div.piece.dragging", function(e) {
+		e.preventDefault();
+	}).on("mouseup touchend", "> div.piece.dragging", function(e) {
 		let p = $(this);
 		if(!p.hasClass('dragged')) {
 			p.removeClass('dragging');
 			return;
 		}
+
+		p.css('transform', 'none');
 
 		let b = p.parent(), pos = p.position();
 		let file = 1 + Math.round(8 * pos.left / b.width());
@@ -182,9 +198,9 @@ orm_when_ready.push(function() {
 			file = 9 - file;
 			rank = 9 - rank;
 		}
-
 		p.removeAttr('style');
 		p.removeClass('dragging');
+
 		b.children("div.back").removeClass("move-source move-target");
 		orm_do_user_move(orm_alg(p) + orm_alg(file, rank), false, null, b);
 	}).on("click", "> div", function() {
