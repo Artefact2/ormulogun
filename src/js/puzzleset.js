@@ -260,8 +260,13 @@ orm_when_puzzle_manifest_ready.push(function() {
 		gen_set_div(i, orm_manifest[i]);
 	}
 
-	md.on('click', 'button.load-puzzleset, button.reload-puzzleset', function() {
+	md.on('click', 'button.load-puzzleset', function() {
 		orm_load_puzzle_set($(this).closest('div.puzzle-set'));
+		$(this).blur();
+	}).on('click', 'button.reload-puzzleset', function() {
+		setTimeout(function() {
+			orm_regen_puzzleset_counts($(this).closest('div.puzzle-set'));
+		}, 1);
 		$(this).blur();
 	}).on('click', 'button.play-puzzleset, .tag-filter', function() {
 		let t = $(this);
