@@ -19,7 +19,23 @@ const orm_get_leitner_boxes = function(setid) {
 
 const orm_put_leitner_boxes = function(setid, b) {
 	return orm_state_set("leitner_" + setid, b);
-}
+};
+
+const orm_merge_leitner_boxes = function(b1, b2) {
+	let t = Date.now();
+
+	for(let puzid in b2) {
+		if(!(puzid in b1)) {
+			b1[puzid] = b2[puzid];
+			continue;
+		}
+
+		if(b1[puzid][1] < t) {
+			b1[puzid] = b2[puzid];
+		}
+	}
+	return b1;
+};
 
 const orm_compute_puzzle_cooldown = function(box) {
 	if(box === 0) return parseInt(orm_pref("leitner_cooldown_initial"), 10);

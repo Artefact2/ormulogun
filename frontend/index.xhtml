@@ -27,6 +27,16 @@
 					<li class="nav-item"><a class="nav-link to-tab" href="#journal">Activity journal</a></li>
 				</ul>
 				<ul class="navbar-nav ml-auto">
+					<li id="progress" class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" data-toggle="dropdown">Progress</a>
+						<div class="dropdown-menu">
+							<a id="progress-save" class="dropdown-item" href="#">Export (backup)</a>
+							<a id="progress-merge" class="dropdown-item" href="#">Import (merge)</a>
+							<div class="dropdown-divider"></div>
+							<a id="progress-reset" class="dropdown-item" href="#">Reset</a>
+							<input type="file" id="progress-load-file" />
+						</div>
+					</li>
 					<li class="nav-item"><a class="nav-link to-tab" href="#preferences">Preferences</a></li>
 				</ul>
 			</div>
@@ -48,6 +58,7 @@
 				<li class="col-md-6">Endgame trainer for fundamental checkmates</li>
 				<li class="col-md-6">Analysis board with integrated engine</li>
 				<li class="col-md-6">Responsive layout (mobile-friendly)</li>
+				<li class="col-md-6">Progress is saved locally into the browser</li>
 			</ul>
 			<p class="alert alert-warning"><strong>Ormulogun is still under heavy developement. Some features are incomplete, or not implemented at all. Please <a href="https://gitlab.com/artefact2/ormulogun/issues/new">report issues or give feedback</a>.</strong></p>
 			<p><button type="button" class="btn btn-primary" data-orm-tab="puzzlesets">Start training</button> or

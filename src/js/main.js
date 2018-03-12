@@ -46,6 +46,51 @@ const orm_init = function() {
 	}).resize();
 
 	$("p#enable-js").remove();
+
+	$("a#progress-save").click(function(e) {
+		let t = $(this);
+		let b = new Blob([ JSON.stringify(localStorage) ], { type: 'application/json' });
+		let uri = URL.createObjectURL(b);
+		if(t.prop('href') !== '#') URL.revokeObjectURL(t.prop('href'));
+		t.prop('href', uri);
+		t.prop('download', 'ormulogun-' + Date.now().toString() + '.json');
+	});
+
+	$("a#progress-reset").click(function(e) {
+		e.preventDefault();
+		if(prompt("Do you really want to reset all your progress? Type uppercase 'reset' to confirm.") === "RESET") {
+			for(let k in localStorage) orm_state_unset(k);
+			orm_generate_journal_page();
+		}
+	});
+
+	$("a#progress-merge").click(function(e) {
+		e.preventDefault();
+		$("input#progress-load-file").click();
+	});
+
+	$("input#progress-load-file").change(function() {
+		let merge = function(rs) {
+			rs = JSON.parse(rs);
+			for(let k in rs) {
+				if(k.match(/^journal_/)) {
+					orm_state_set(k, orm_journal_merge(orm_state_get(k, []), JSON.parse(rs[k])));
+				} else if(k.match(/^leitner_/)) {
+					orm_state_set(k, orm_merge_leitner_boxes(orm_state_get(k, {}), JSON.parse(rs[k])));
+				} else if(typeof(orm_state_get(k, undefined)) === "undefined") {
+					orm_state_set(k, JSON.parse(rs[k]));
+				}
+				orm_generate_journal_page(); /* XXX: inefficient */
+			}
+		};
+		for(let i = 0; i < this.files.length; ++i) {
+			let r = new FileReader();
+			r.onload = function() {
+				merge(r.result);
+			};
+			r.readAsText(this.files[i]);
+		}
+	});
 };
 
 const orm_try_init = function() {

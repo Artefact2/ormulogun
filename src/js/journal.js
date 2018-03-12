@@ -37,6 +37,22 @@ const orm_journal_push = function(setid, payload) {
 	}
 };
 
+const orm_journal_merge = function(j1, j2) {
+	let j = [];
+	while(j1.length && j2.length) {
+		if(j1[0][0] === j2[0][0]) {
+			/* XXX: assume duplicate */
+			j1.shift();
+			j.push(j2.shift());
+			continue;
+		}
+		j.push(j1[0][0] < j2[0][0] ? j1.shift() : j2.shift());
+	}
+	while(j1.length) j.push(j1.shift());
+	while(j2.length) j.push(j2.shift());
+	return j;
+};
+
 const orm_generate_journal_page = function() {
 	let d = $("div#journal");
 	d.children("div").remove();
