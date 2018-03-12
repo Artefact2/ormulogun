@@ -170,6 +170,9 @@ const orm_puzzle_fail = function() {
 	let cur = $("ul#movehist li.new > button");
 	if(!cur.parent().hasClass('puzzle-reply')) {
 		cur.parent().addClass('bad-move');
+		if(orm_pref("uci_start_after_fail") === "1") {
+			$("button#engine-analyse").click();
+		}
 	}
 	$("p#puzzle-prompt").toggleClass("alert-secondary alert-danger").text("Puzzle failed.");
 	$("nav#mainnav").addClass("bg-danger");

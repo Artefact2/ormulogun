@@ -28,6 +28,7 @@ const ORM_PREFS_DEFAULTS = {
 	"uci_multipv": "5",
 	"uci_hard_limiter": "depth 22",
 	"uci_practice_limiter": "movetime 1000",
+	"uci_start_after_fail": "1",
 
 	"leitner_cooldown_initial": "43200000", /* 12 hours: 12*3600*1000 ms */
 	"leitner_cooldown_increase_arithmetic": "86400000", /* 24 hours */
@@ -271,7 +272,8 @@ orm_when_ready.push(function() {
 	);
 
 	$("section#prefs-uci > form").append(
-		orm_prefs_number("uci_multipv", "Maximum number of lines"),
+		orm_prefs_combine2(orm_prefs_boolean("uci_start_after_fail", "Start engine after puzzle fail"),
+						   orm_prefs_number("uci_multipv", "Maximum number of lines")),
 		orm_prefs_combine2(orm_prefs_string("uci_hard_limiter", "Analysis limiter"),
 						   orm_prefs_string("uci_practice_limiter", "Practice limiter"))
 	);
