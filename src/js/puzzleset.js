@@ -77,13 +77,15 @@ const orm_regen_puzzleset_counts = function(div) {
 	let total = 0;
 	let tags = {};
 	let tagnames = [];
+	let midx = div.data('midx');
+	let ps = orm_puzzle_sets[midx];
 
-	for(let i in orm_puzzle_set) {
-		if(orm_puzzle_filtered(orm_puzzle_set[i])) continue;
+	for(let i in ps) {
+		if(orm_puzzle_filtered(ps[i])) continue;
 		++total;
 
-		for(let j in orm_puzzle_set[i][2]) {
-			let tag = orm_puzzle_set[i][2][j];
+		for(let j in ps[i][2]) {
+			let tag = ps[i][2][j];
 			if(!(tag in tags)) {
 				tags[tag] = 0;
 				tagnames.push(tag);
@@ -155,12 +157,12 @@ const orm_regen_puzzleset_counts = function(div) {
 		li.append(btn);
 	}
 
-	let b = orm_get_leitner_boxes(orm_manifest[orm_puzzle_midx].id);
+	let b = orm_get_leitner_boxes(orm_manifest[midx].id);
 	let bcounts = {};
 	let boxes = [];
 	let btotal = 0;
 	for(let puzid in b) {
-		if(orm_puzzle_filtered(orm_puzzle_set[puzid])) continue;
+		if(orm_puzzle_filtered(ps[puzid])) continue;
 		let box = b[puzid][0];
 		if(!(box in bcounts)) {
 			bcounts[box] = 0;
@@ -201,8 +203,8 @@ const orm_regen_puzzleset_counts = function(div) {
 
 	let frate = 0.0;
 	div.find('div.puzzle-set-filtered > span').text(
-		'Filter rate: ' + (frate = 100.0 * (1.0 - total / orm_puzzle_set.length)).toFixed(1) + '% ('
-			+ orm_format_integer(orm_puzzle_set.length - total) + ' / ' + orm_format_integer(orm_puzzle_set.length) + ')'
+		'Filter rate: ' + (frate = 100.0 * (1.0 - total / ps.length)).toFixed(1) + '% ('
+			+ orm_format_integer(ps.length - total) + ' / ' + orm_format_integer(ps.length) + ')'
 	);
 	div.find('div.puzzle-set-filtered > div.progress').empty().append(
 		$(document.createElement('div')).addClass('progress-bar bg-secondary')
@@ -264,10 +266,11 @@ orm_when_puzzle_manifest_ready.push(function() {
 		orm_load_puzzle_set($(this).closest('div.puzzle-set'));
 		$(this).blur();
 	}).on('click', 'button.reload-puzzleset', function() {
+		let t = $(this);
 		setTimeout(function() {
-			orm_regen_puzzleset_counts($(this).closest('div.puzzle-set'));
+			orm_regen_puzzleset_counts(t.closest('div.puzzle-set'));
 		}, 1);
-		$(this).blur();
+		t.blur();
 	}).on('click', 'button.play-puzzleset, .tag-filter', function() {
 		let t = $(this);
 		t.blur();
