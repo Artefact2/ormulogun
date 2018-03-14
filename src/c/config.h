@@ -27,15 +27,14 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* Look for tactics after this many plies */
 	.min_ply = 8,
 
-	/* Don't look for puzzles in clearly lost or won positions */
-	.eval_cutoff = 500,
+	/* Only probe for puzzles when the eval is roughly equal or slightly in our favor */
+	.min_eval_cutoff = -100,
+	.max_eval_cutoff = 300,
 
 	/* No more than this many possible moves for the first puzzle move */
 	.max_variations = 3,
 
 	/* XXX */
 	.puzzle_threshold_absolute = 300,
-
-	/* XXX */
-	.variation_cutoff_relative = .1f,
+	.variation_cutoff_relative = .15f,
 };

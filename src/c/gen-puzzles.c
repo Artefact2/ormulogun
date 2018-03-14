@@ -27,7 +27,8 @@ static void usage(char* me) {
 	fprintf(stderr,
 			"Usage: %s [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
 			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
-			"          [--max-depth N] [--eval-cutoff N] [--max-variations N]\n"
+			"          [--max-depth N] [--max-variations N]\n"
+			"          [--min-eval-cutoff N] [--max-eval-cutoff N]\n"
 			"          [--puzzle-threshold-absolute N] [--variation-cutoff-relative D]\n"
 			"          <games...>\n"
 			"See config.h for an explanation of these options.\n"
@@ -100,12 +101,15 @@ int main(int argc, char** argv) {
 		} else if(!strcmp("--max-depth", *argv)) {
 			--argc; ++argv;
 			s.max_depth = expect_number(argc, argv);
-		} else if(!strcmp("--eval-cutoff", *argv)) {
-			--argc; ++argv;
-			s.eval_cutoff = expect_number(argc, argv);
 		} else if(!strcmp("--max-variations", *argv)) {
 			--argc; ++argv;
 			s.max_variations = expect_number(argc, argv);
+		} else if(!strcmp("--min-eval-cutoff", *argv)) {
+			--argc; ++argv;
+			s.min_eval_cutoff = expect_number(argc, argv);
+		} else if(!strcmp("--max-eval-cutoff", *argv)) {
+			--argc; ++argv;
+			s.max_eval_cutoff = expect_number(argc, argv);
 		} else if(!strcmp("--puzzle-threshold-absolute", *argv)) {
 			--argc; ++argv;
 			s.puzzle_threshold_absolute = expect_number(argc, argv);

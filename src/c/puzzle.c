@@ -29,20 +29,22 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 
 	/* Clearly lost position? */
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
-	   || (evals[0].type == SCORE_CP && evals[0].score < -s.eval_cutoff)) return 0;
+	   || (evals[0].type == SCORE_CP && evals[0].score < s.min_eval_cutoff)) return 0;
 
 	/* Clearly won position? */
-	if(depth == 0 && evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-	if((depth == 0 || evals[0].type == SCORE_CP) && evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
+	if(depth == 0) {
+		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
+		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 0;
+	}
 
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
 		unsigned char i;
 
 		if(evals[0].score > s.max_depth) {
-			/* Clearly win? */
+			/* Clear win? */
 			if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-			if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.eval_cutoff) return 0;
+			if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 0;
 
 			/* Accept all forced mates, no matter the length (SF in
 			 * particular is unreliable for long checkmate sequences),
