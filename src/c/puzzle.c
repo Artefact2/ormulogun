@@ -37,14 +37,13 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 0;
 	}
 
+	unsigned char i, j;
+
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
-		unsigned char i;
-
 		if(evals[0].score > s.max_depth) {
 			/* Clear win? */
 			if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-			if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 0;
 
 			/* Accept all forced mates, no matter the length (SF in
 			 * particular is unreliable for long checkmate sequences),
@@ -58,16 +57,23 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 		return i < nlines ? i : 0;
 	}
 
-	if(evals[nlines - 1].type == SCORE_CP && evals[0].score - evals[nlines - 1].score < s.puzzle_threshold_absolute) return 0;
+	for(i = 1; evals[i].type == SCORE_CP && i < nlines; ++i) {
+		if(evals[i-1].score - evals[i].score < s.puzzle_threshold_absolute) continue;
+		int cutoff = evals[0].score - (evals[i-1].score - evals[i].score) * s.variation_cutoff_relative;
+		for(j = 1; j < i; ++j) {
+			if(evals[j].score < cutoff) break;
+		}
+		if(i == j) return i;
+	}
 
-	int cutoff;
-	unsigned char i;
+	if(i == nlines) return 0;
 
-	if(evals[0].score > s.puzzle_threshold_absolute) cutoff = (1.f - s.variation_cutoff_relative) * evals[0].score;
-	else cutoff = evals[0].score - s.variation_cutoff_relative * s.puzzle_threshold_absolute;
-
-	for(i = 1; evals[i].type == SCORE_CP && evals[i].score >= cutoff; ++i);
-	return (i < nlines) ? i : 0;
+	/* Avoid forced mate iff mate-avoiding moves are within variation limits */
+	int cutoff = evals[0].score - s.puzzle_threshold_absolute * s.variation_cutoff_relative;
+	for(j = 1; j < i; ++j) {
+		if(evals[j].score < cutoff) return 0;
+	}
+	return i;
 }
 
 static void puzzle_free_steps(puzzle_step_t* st) {

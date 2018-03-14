@@ -35,6 +35,6 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	.max_variations = 3,
 
 	/* XXX */
-	.puzzle_threshold_absolute = 300,
-	.variation_cutoff_relative = .15f,
+	.puzzle_threshold_absolute = 200,
+	.variation_cutoff_relative = .1f,
 };
