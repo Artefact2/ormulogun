@@ -34,7 +34,9 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 	/* Clearly won position? */
 	if(depth == 0) {
 		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 0;
+		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff_start) return 0;
+	} else {
+		if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP && evals[nlines -1].score > s.max_eval_cutoff_end) return 0;
 	}
 
 	unsigned char i, j;
