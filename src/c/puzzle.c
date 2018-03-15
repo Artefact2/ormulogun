@@ -42,13 +42,9 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 	/* Forced mate? */
 	if(evals[0].type == SCORE_MATE) {
 		if(evals[0].score > s.max_depth) {
-			/* Clear win? */
-			if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-
 			/* Accept all forced mates, no matter the length (SF in
-			 * particular is unreliable for long checkmate sequences),
-			 * and completely winning cp evals (EGTB shenanigans) */
-			for(i = 1; i < nlines && ((evals[i].type == SCORE_MATE && evals[i].score > 0) || (evals[i].type == SCORE_CP && evals[i].score >= 100000)); ++i);
+			 * particular is unreliable for long checkmate sequences) */
+			for(i = 1; i < nlines && evals[i].type == SCORE_MATE && evals[i].score > 0; ++i);
 		} else {
 			/* Short mate, depths are reliable, go for the shortest */
 			for(i = 1; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
