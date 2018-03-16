@@ -8,7 +8,7 @@ all: all-frontend bin/gen-puzzles bin/retag-puzzles
 all-frontend: js-all frontend-ext frontend/deps $(FRONTEND)
 
 bin/%: src/c/%.c $(HEADERS) $(SOURCES) ext/gumble/build/src/libenginecore.a
-	gcc --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./ext/gumble/include $< $(SOURCES) ./ext/gumble/build/src/libenginecore.a
+	clang --std=c11 -g -Og -Wall -D_POSIX_C_SOURCE=200809L -o $@ -I./ext/gumble/include $< $(SOURCES) ./ext/gumble/build/src/libenginecore.a
 
 ext/gumble/build/src/libenginecore.a:
 	git submodule update --recursive --init
