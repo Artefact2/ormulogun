@@ -29,13 +29,12 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 
 	/* Only probe for puzzles when the eval is roughly equal or slightly in our favor */
 	.min_eval_cutoff = -100,
-	.max_eval_cutoff_start = 300,
-	.max_eval_cutoff_end = 500,
+	.max_eval_cutoff = 200,
 
 	/* No more than this many possible moves for the first puzzle move */
 	.max_variations = 3,
 
 	/* XXX */
-	.puzzle_threshold_absolute = 200,
-	.variation_cutoff_relative = .1f,
+	.puzzle_threshold_absolute = 300,
+	.variation_cutoff_relative = .15f,
 };

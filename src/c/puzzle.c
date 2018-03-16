@@ -23,20 +23,27 @@ typedef struct {
 	bool check;
 } threefold_entry_t;
 
+/* Returns 255 if current puzzle should be discarded, otherwise number
+ * of possible moves for next puzzle step. */
 unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puzzlegen_settings_t s, unsigned char depth) {
-	/* No moves or forced move? */
-	if(nlines < 2) return nlines == 1 && depth > 0;
+	if(nlines == 0) {
+		/* XXX */
+		return 255;
+	}
+
+	if(nlines == 1) {
+		/* Accept forced moves mid-puzzle */
+		return depth == 0 ? 255 : 1;
+	}
 
 	/* Clearly lost position? */
 	if((evals[0].type == SCORE_MATE && evals[0].score < 0)
-	   || (evals[0].type == SCORE_CP && evals[0].score < s.min_eval_cutoff)) return 0;
+	   || (evals[0].type == SCORE_CP && evals[0].score < s.min_eval_cutoff)) return 255;
 
 	/* Clearly won position? */
 	if(depth == 0) {
-		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 0;
-		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff_start) return 0;
-	} else {
-		if(evals[0].type == SCORE_CP && evals[nlines - 1].type == SCORE_CP && evals[nlines -1].score > s.max_eval_cutoff_end) return 0;
+		if(evals[nlines - 1].type == SCORE_MATE && evals[nlines - 1].score > 0) return 255;
+		if(evals[nlines - 1].type == SCORE_CP && evals[nlines - 1].score > s.max_eval_cutoff) return 255;
 	}
 
 	unsigned char i, j;
@@ -52,24 +59,34 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 			for(i = 1; i < nlines && evals[i].type == SCORE_MATE && evals[i].score == evals[0].score; ++i);
 		}
 
-		return i < nlines ? i : 0;
+		if(i == nlines) {
+			/* More moves may lead to forced or best checkmate, unclear, end puzzle here */
+			return 0;
+		}
+
+		return i;
 	}
 
 	for(i = 1; evals[i].type == SCORE_CP && i < nlines; ++i) {
-		if(evals[i-1].score - evals[i].score < s.puzzle_threshold_absolute) continue;
-		int cutoff = evals[0].score - (evals[i-1].score - evals[i].score) * s.variation_cutoff_relative;
+		/* Do we have a tactical opportunity? */
+		if(evals[0].score - evals[i].score < s.puzzle_threshold_absolute) continue;
+		int cutoff = evals[0].score - (evals[0].score - evals[i].score) * s.variation_cutoff_relative;
 		for(j = 1; j < i; ++j) {
-			if(evals[j].score < cutoff) break;
+			if(evals[j].score < cutoff) {
+				/* Tactical opportunity, but variations are too spread out, abort puzzle */
+				return 255;
+			}
 		}
-		if(i == j) return i;
+		return i;
 	}
 
+	/* Normal puzzle end; no tactical opportunities anymore */
 	if(i == nlines) return 0;
 
 	/* Avoid forced mate iff mate-avoiding moves are within variation limits */
 	int cutoff = evals[0].score - s.puzzle_threshold_absolute * s.variation_cutoff_relative;
 	for(j = 1; j < i; ++j) {
-		if(evals[j].score < cutoff) return 0;
+		if(evals[j].score < cutoff) return 255;
 	}
 	return i;
 }
@@ -166,7 +183,7 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	st->next = 0;
 
 	if(depth > s.max_depth || p->min_depth == 0) {
-		/* Puzzle is too long */
+		/* Puzzle is too long or was aborted earlier */
 		p->min_depth = 0;
 		return;
 	}
@@ -174,13 +191,16 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	if(check_threefold(p, b, tftable, tftlen)) return;
 
 	nlines = uci_eval(ctx, engine_limiter, b, evals, s.max_variations + 1);
-	if((i = puzzle_consider(evals, nlines, s, depth)) == 0) {
+	i = puzzle_consider(evals, nlines, s, depth);
+	if(i == 255) {
+		/* Abort puzzle */
+		p->min_depth = 0;
+		return;
+	}
+	if(i == 0) {
 		/* Puzzle over, after computer reply of last puzzle move */
 		if(evals[0].type == SCORE_MATE && evals[0].score > 0) {
 			/* Puzzle leads to forced checkmate */
-			p->tags.winning_position = true;
-		} else if(evals[0].type == SCORE_CP && evals[0].score >= 10000) {
-			/* ≥100 cp advantage? Probably winning. */
 			p->tags.winning_position = true;
 		} else if(evals[0].type == SCORE_CP && evals[0].score == 0) {
 			p->tags.drawing_position = true;

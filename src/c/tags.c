@@ -84,7 +84,7 @@ void tags_print(const puzzle_t* p) {
 	if(!p->tags.checkmate && !p->tags.threefold && !p->tags.stalemate && !p->tags.perpetual && !p->tags.winning_position && !p->tags.drawing_position) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
 
-		if(p->end_material_diff_min > p->start_material_diff) {
+		if(p->end_material_diff_max > p->start_material_diff) {
 			MAYBE_PRINT_TAG(!p->tags.promotion, "Material gain");
 		} else if(p->end_material_diff_max < p->start_material_diff) {
 			PRINT_TAG("Material loss");

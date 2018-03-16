@@ -45,8 +45,7 @@ unsigned char uci_eval(const uci_engine_context_t*, const char*, cch_board_t*, u
 
 typedef struct {
 	int min_eval_cutoff;
-	int max_eval_cutoff_start;
-	int max_eval_cutoff_end;
+	int max_eval_cutoff;
 	int puzzle_threshold_absolute;
 	int puzzle_threshold_absolute_diff;
 	float variation_cutoff_relative;

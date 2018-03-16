@@ -28,7 +28,7 @@ static void usage(char* me) {
 			"Usage: %s [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
 			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
 			"          [--max-depth N] [--max-variations N]\n"
-			"          [--min-eval-cutoff N] [--max-eval-cutoff-start N] [--max-eval-cutoff-end N]\n"
+			"          [--min-eval-cutoff N] [--max-eval-cutoff N]\n"
 			"          [--puzzle-threshold-absolute N] [--variation-cutoff-relative D]\n"
 			"          <games...>\n"
 			"See config.h for an explanation of these options.\n"
@@ -107,12 +107,9 @@ int main(int argc, char** argv) {
 		} else if(!strcmp("--min-eval-cutoff", *argv)) {
 			--argc; ++argv;
 			s.min_eval_cutoff = expect_number(argc, argv);
-		} else if(!strcmp("--max-eval-cutoff-start", *argv)) {
+		} else if(!strcmp("--max-eval-cutoff", *argv)) {
 			--argc; ++argv;
-			s.max_eval_cutoff_start = expect_number(argc, argv);
-		} else if(!strcmp("--max-eval-cutoff-end", *argv)) {
-			--argc; ++argv;
-			s.max_eval_cutoff_end = expect_number(argc, argv);
+			s.max_eval_cutoff = expect_number(argc, argv);
 		} else if(!strcmp("--puzzle-threshold-absolute", *argv)) {
 			--argc; ++argv;
 			s.puzzle_threshold_absolute = expect_number(argc, argv);
@@ -208,7 +205,8 @@ int main(int argc, char** argv) {
 			}
 
 			nlines = uci_eval(&ctx, limiterp, &b, evals, s.max_variations + 1);
-			if(!puzzle_consider(evals, nlines, s, 0)) continue;
+			nlines = puzzle_consider(evals, nlines, s, 0);
+			if(nlines == 0 || nlines == 255) continue;
 
 			if(p->root.next) puzzle_free(p);
 			puzzle_build(&ctx, p, &b, limiter, s);

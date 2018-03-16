@@ -174,8 +174,8 @@ unsigned char uci_eval(const uci_engine_context_t* ctx, const char* limiter,
 		}
 
 		if(has_mpv && has_pv && has_score) {
-			/* XXX: some engines will not report forced mates with EGTB, assume scores >=100 pawns advantage are forced mates */
-			if(ev.score >= 100000 || ev.score <= -100000) ev.type = SCORE_MATE;
+			/* XXX: assume scores >=50 pawns advantage are forced mates */
+			if(ev.score >= 5000 || ev.score <= -5000) ev.type = SCORE_MATE;
 
 			evals[pv] = ev;
 			if(pv >= nlines) nlines = pv + 1;
