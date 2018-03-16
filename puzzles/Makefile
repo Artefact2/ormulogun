@@ -12,12 +12,12 @@ master.jpz:
 	echo -n | zstd -19 - -o $@
 
 puzzles-all:
-	make puzzles START=0 END=$$(zstdcat $(INPUT) | wc -l) OUTPUT=$(TMP).p
-	make merge-all
-	rm $(TMP).p*
+	make puzzles START=0 END=$$(zstdcat $(INPUT) | wc -l) OUTPUT=all
 
 puzzles:
-	seq $(START) $(END) | xargs -n 1 -P $(JOBS) -I '{}' bash -c "zstdcat $(INPUT) | tail -n +{} | head -n 1 | xargs -rd '\n' gen-puzzles --verbose $(PFLAGS) | tee >(zstd -19 -o $(TMP).{}); sync $(TMP).{}; mv $(TMP).{} $(OUTPUT)-{}.jpz" 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles >/dev/null
+	zstdcat $(INPUT) | tail -n +$$(( $(START) + 1 )) | head -n $$(( $(END) - $(START) + 1 )) | xargs -rd '\n' -n 1 -P $(JOBS) gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles | zstd -19 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) $(OUTPUT)-$(START)-$(END).jpz
 
 merge-all: master.jpz $(shell find . -name "*.jpz" -not -name "master.jpz")
 	zstdcat $^ | pv -lcN in | merge-jl | pv -lcN out | zstd -19 - -o $(TMP)
