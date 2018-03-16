@@ -339,7 +339,7 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 		cch_undo_move(b, &(st->move), &um);
 		q = CCH_GET_SQUARE(b, st->next[i].move.end);
 		orm_cch_null_move(b, &nullmove, &unull);
-		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, 7)); /* XXX */
+		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN)); /* XXX */
 		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
 		cch_undo_move(b, &nullmove, &unull);
 		CCH_SET_SQUARE(b, st->next[i].move.end, q);
@@ -499,7 +499,7 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 		}
 
 		q = CCH_GET_SQUARE(b, st->next[i].move.end);
-		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, 7)); /* XXX */
+		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN)); /* XXX */
 		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->reply.start, st->reply.start + 1);
 		CCH_SET_SQUARE(b, st->next[i].move.end, q);
 
