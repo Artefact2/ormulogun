@@ -282,7 +282,7 @@ static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
 	memset(&(p->tags), 0, sizeof(p->tags));
 
-	threefold_entry_t tftable[s.max_depth << 1];
+	threefold_entry_t tftable[(s.max_depth + 1) << 1];
 	puzzle_build_step(ctx, 0, p, &(p->root), b, engine_limiter, s, tftable, 0);
 
 	if(p->min_depth == 0) {
