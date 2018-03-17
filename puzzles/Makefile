@@ -33,14 +33,17 @@ out/%.json: %.jpz
 out/%.js: out/%.json
 	cp $< $@
 
+retag:
+	zstdcat $(INPUT) | zstdcat | parallel -j100% -N100 --keep-order --pipe retag-puzzles | pv -ls $$(zstdcat $(INPUT) | wc -l) | zstd -19 - -o $(TMP)
+	sync $(TMP)
+	mv $(TMP) $(INPUT)
+
 retag-all:
-	find . -maxdepth 1 -type f -name "*.jpz" -printf "%P\0" | xargs -r0 -P $(JOBS) -n 1 -I '{}' bash -c "zstdcat {} | xargs -rd '\n' retag-puzzles | tee >(zstd -19 - -o tmp.retag.{})" | pv -ls `find . -maxdepth 1 -type f -name "*.jpz" -print0 | xargs -r0 zstdcat | wc -l` >/dev/null
-	sync tmp.retag.*
-	rename tmp.retag. "" tmp.retag.*
+	find . -maxdepth 1 -type f -name "*.jpz" -print0 | parallel -0 -N1 -j2 make -j1 -s retag INPUT={}
 
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
 	make out/manifest.json
 
 js-all: $(patsubst %.json, %.js, $(shell find out/ -name "*.json"))
 
-.PHONY: clean import-pgn puzzles-all puzzles-partial merge-all json-all js-all
+.PHONY: clean import-pgn puzzles puzzles-all retag retag-all json-all js-all

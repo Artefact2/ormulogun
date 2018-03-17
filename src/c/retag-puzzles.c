@@ -16,18 +16,16 @@
 #include "ormulogun.h"
 #include <stdio.h>
 
-int main(int argc, char** argv) {
-	if(argc == 1) {
-		fprintf(stderr, "Usage: %s <puzzles...>\n", argv[0]);
-		return 1;
-	}
-
+int main(void) {
 	cch_board_t b;
 	puzzle_t p;
 
-	for(size_t i = 1; i < argc; ++i) {
-		if(puzzle_load(&p, argv[i])) {
-			fprintf(stderr, "Parse error loading puzzle: %s\n", argv[i]);
+	char* line = 0;
+	size_t linelen;
+
+	while(getline(&line, &linelen, stdin) != -1) {
+		if(puzzle_load(&p, line)) {
+			fprintf(stderr, "Parse error loading puzzle: %s", line);
 			return 2;
 		}
 
