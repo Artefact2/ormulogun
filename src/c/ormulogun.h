@@ -90,6 +90,14 @@ typedef struct {
 		bool winning_position:1;
 		bool drawing_position:1;
 		bool endgame:1;
+		bool endgame_q:1;
+		bool endgame_r:1;
+		bool endgame_b:1;
+		bool endgame_n:1;
+		bool endgame_p:1;
+		bool endgame_m:1;
+		bool endgame_M:1;
+		bool endgame_Mm:1;
 		bool capturing_defender:1;
 		bool trapped_piece:1;
 		bool overloaded_piece:1;

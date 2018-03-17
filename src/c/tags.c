@@ -54,9 +54,17 @@ void tags_print(const puzzle_t* p) {
 	} else {
 		printf("\"Min depth %d\",\"Max depth %d\"", p->min_depth, p->max_depth);
 	}
+	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
 
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
-	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
+	MAYBE_PRINT_TAG(p->tags.endgame_q, "Endgame (Queen ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_r, "Endgame (Rook ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_b, "Endgame (Bishop ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_n, "Endgame (Knight ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_p, "Endgame (Pawn ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_m, "Endgame (Minor piece ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_M, "Endgame (Major piece ending)");
+	MAYBE_PRINT_TAG(p->tags.endgame_Mm, "Endgame (Mixed piece ending)");
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
@@ -532,19 +540,44 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 }
 
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
-	if(p->tags.endgame) return;
-	/* The definition of "endgame" is quite ambiguous and
-	 * controversial among some players. Here I consider an endgame
-	 * any position with 5 or less chessmen on the board, that is,
-	 * when reasonably-sized endgame tables can be used. */
-	unsigned char pieces = 0;
+	/* Are there 5 or less chessmen on the board ? */
+	unsigned char pieces, wpieces = 0, bpieces = 0, pawns = 0, rooks = 0, queens = 0, bishops = 0, knights = 0;
+	cch_piece_t piece;
 	for(unsigned char i = 0; i < 64; ++i) {
-		if(CCH_GET_SQUARE(b, i)) {
-			++pieces;
-			if(pieces > 5) break;
+		piece = CCH_GET_SQUARE(b, i);
+		if(!piece) continue;
+
+		if(CCH_PURE_PIECE(piece) == CCH_KING) continue;
+		if(CCH_PURE_PIECE(piece) == CCH_PAWN) {
+			++pawns;
+			continue;
 		}
+
+		switch(CCH_PURE_PIECE(piece)) {
+		case CCH_QUEEN: ++queens; break;
+		case CCH_ROOK: ++rooks; break;
+		case CCH_BISHOP: ++bishops; break;
+		case CCH_KNIGHT: ++knights; break;
+		}
+
+		if(CCH_IS_OWN_PIECE(b, piece)) ++wpieces;
+		else ++bpieces;
 	}
-	p->tags.endgame = pieces <= 5;
+
+	pieces = wpieces + bpieces;
+	if(wpieces > 1 || bpieces > 1) return;
+
+	p->tags.endgame_q = queens  > 0 && pieces == queens;
+	p->tags.endgame_r = rooks   > 0 && pieces == rooks;
+	p->tags.endgame_b = bishops > 0 && pieces == bishops;
+	p->tags.endgame_n = knights > 0 && pieces == knights;
+	p->tags.endgame_p = pawns   > 0 && pieces == 0;
+
+	p->tags.endgame_m = knights == 1 && bishops == 1;
+	p->tags.endgame_M = queens == 1 && rooks == 1;
+	p->tags.endgame_Mm = (knights + bishops == 1) && (rooks + queens == 1);
+
+	p->tags.endgame = true;
 }
 
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
