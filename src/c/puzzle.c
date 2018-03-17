@@ -80,6 +80,11 @@ unsigned char puzzle_consider(const uci_eval_t* evals, unsigned char nlines, puz
 		return i;
 	}
 
+	if(nlines < s.max_variations) {
+		/* XXX */
+		return 255;
+	}
+
 	/* Normal puzzle end; no tactical opportunities anymore */
 	if(i == nlines) return 0;
 

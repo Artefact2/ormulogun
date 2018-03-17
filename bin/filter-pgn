@@ -28,14 +28,12 @@ const EVENT_FILTER = '%^Rated %';
 
 
 
-if($argc === 1) {
-	fprintf(STDERR, "Usage: %s <pgn1> <pgn2> <pgn3>...\n", $argv[0]);
+if($argc !== 1) {
+	fprintf(STDERR, "Usage: %s < chunked-pgn...", $argv[0]);
 	die(1);
 }
 
-array_shift($argv);
-
-foreach($argv as $pgn) {
+while($pgn = fgets(STDIN)) {
 	$pgn = json_decode($pgn);
 	$tags = [];
 

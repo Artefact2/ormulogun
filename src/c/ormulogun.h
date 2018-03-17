@@ -17,9 +17,9 @@
 #ifndef ORMULOGUN_H
 #define ORMULOGUN_H
 
-#include <engine.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <gumble.h>
 
 /* ----- uci.c ----- */
 

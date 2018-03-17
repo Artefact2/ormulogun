@@ -15,7 +15,6 @@
 
 #include "ormulogun.h"
 #include "config.h"
-#include <engine.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,18 +22,18 @@
 
 #define MOVES_EQUAL(m1, m2) ((m1).start == (m2).start && (m1).end == (m2).end && (m1).promote == (m2).promote)
 
-static void usage(char* me) {
+static void usage(void) {
 	fprintf(stderr,
-			"Usage: %s [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
-			"          [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
-			"          [--max-depth N] [--max-variations N]\n"
-			"          [--min-eval-cutoff N] [--max-eval-cutoff N]\n"
-			"          [--puzzle-threshold-absolute N] [--variation-cutoff-relative D]\n"
-			"          <games...>\n"
+			"Usage: gen-puzzles [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
+			"                   [--uci-engine-limiter-probe foo] [--uci-engine-limiter foo]\n"
+			"                   [--max-depth N] [--max-variations N]\n"
+			"                   [--min-eval-cutoff N] [--max-eval-cutoff N]\n"
+			"                   [--puzzle-threshold-absolute N] [--variation-cutoff-relative D]\n"
+			"                   < json-movelists...\n"
 			"See config.h for an explanation of these options.\n"
 			"Where each game is a JSON array of SAN moves from starting position.\n"
 			"Environment toggles: ORM_VERBOSE_EVAL\n"
-			"Example: %s '[\"e4\",\"Nc6\"]'\n", me, me);
+			"Example: echo '[\"e4\",\"Nc6\"]' | gen-puzzles\n");
 	exit(1);
 }
 
@@ -77,14 +76,12 @@ int main(int argc, char** argv) {
 	unsigned int max_puzzles = 0;
 	bool verbose = false;
 
-	if(argc == 1) {
-		usage(*argv);
-	}
-
 	--argc;
 	++argv;
 	while(argc > 0) {
-		if(!strcmp("--verbose", *argv)) {
+		if(!strcmp("--help", *argv) || !strcmp("-h", *argv)) {
+			usage();
+		} else if(!strcmp("--verbose", *argv)) {
 			verbose = true;
 		} else if(!strcmp("--start-ply", *argv)) {
 			--argc; ++argv;
@@ -119,12 +116,10 @@ int main(int argc, char** argv) {
 		} else if(!strcmp("--start-fen", *argv)) {
 			--argc; ++argv;
 			startfen = expect_string(argc, argv);
-		}
-
-		else if(!strncmp("--", *argv, 2)) {
+		} else {
 			fprintf(stderr, "Unknown argument %s\n", *argv);
 			exit(1);
-		} else break;
+		}
 
 		--argc; ++argv;
 	}
@@ -158,7 +153,10 @@ int main(int argc, char** argv) {
 
 	memset(puzzles, 0, sizeof(puzzles));
 
-	for(int i = 0; i < argc; ++i) {
+	char* line = 0;
+	size_t linelen;
+
+	while(getline(&line, &linelen, stdin) != -1) {
 		if(startfen) {
 			ret = cch_load_fen(&b, startfen);
 			assert(ret == CCH_OK);
@@ -167,7 +165,7 @@ int main(int argc, char** argv) {
 		}
 		fputs("ucinewgame\n", ctx.w);
 
-		for(movestr = strtok_r(argv[i], "[]\",", &saveptr), ply = 1; movestr; movestr = strtok_r(0, "[]\",", &saveptr), ++ply) {
+		for(movestr = strtok_r(line, "[]\",\n", &saveptr), ply = 1; movestr; movestr = strtok_r(0, "[]\",\n", &saveptr), ++ply) {
 			if(verbose) fprintf(stderr, "move %s\n", movestr);
 
 			p = &(puzzles[!b.side].p);
@@ -219,7 +217,6 @@ int main(int argc, char** argv) {
 			}
 
 			if(npuzzles > 0 && npuzzles == max_puzzles) {
-				i = argc;
 				break;
 			}
 		}
@@ -227,6 +224,7 @@ int main(int argc, char** argv) {
 		if(verbose) fputs("game\n", stderr);
 	}
 
+	free(line);
 	uci_quit(&ctx);
 	return 0;
 }

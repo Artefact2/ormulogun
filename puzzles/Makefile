@@ -1,10 +1,10 @@
-SHELL=/bin/bash
+SHELL:=/bin/bash
 TMP:=$(shell mktemp -u -p .)
 JOBS:=16
 PATH:=../bin:$(PATH)
 
 import-pgn:
-	pv -cN input $(INPUT) | chunk-pgn | xargs -rd '\n' -P $(JOBS) filter-pgn | xargs -rd '\n' -P $(JOBS) pgnml_to_json | pv -lcN games | zstd -19 - -o $(TMP)
+	pv -cN input $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | parallel -j100% --lb --pipe --round-robin pgnml_to_json | pv -lcN games | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 

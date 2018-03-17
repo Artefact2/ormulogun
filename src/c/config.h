@@ -18,7 +18,7 @@ static const char* uci_engine_opts[] = {
 static const char* uci_limiter_probe = "nodes 1000000";
 
 /* When building puzzles */
-static const char* uci_limiter = "depth 22";
+static const char* uci_limiter = "nodes 5000000";
 
 static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	/* Abort if puzzle is longer than this number of turns */
@@ -35,6 +35,6 @@ static const puzzlegen_settings_t settings = (puzzlegen_settings_t){
 	.max_variations = 3,
 
 	/* XXX */
-	.puzzle_threshold_absolute = 300,
-	.variation_cutoff_relative = .15f,
+	.puzzle_threshold_absolute = 200,
+	.variation_cutoff_relative = .25f,
 };

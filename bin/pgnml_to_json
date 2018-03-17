@@ -15,14 +15,12 @@
  * limitations under the License.
  */
 
-if($argc === 1) {
-	fprintf(STDERR, "Usage: %s <pgn-movelist1> <pgn-movelist2> <pgn-movelist3>...\n", $argv[0]);
+if($argc !== 1) {
+	fprintf(STDERR, "Usage: %s < pgn-movelists...\n", $argv[0]);
 	die(1);
 }
 
-array_shift($argv);
-
-foreach($argv as $pgnml) {
+while($pgnml = fgets(STDIN)) {
 	if($pgnml === '') continue; /* XXX? */
 	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgnml)) {
 		fprintf(STDERR, "Unexpected pgnml: %s\n", var_export($pgnml, true));
