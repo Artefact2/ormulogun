@@ -134,7 +134,7 @@ const orm_regen_puzzleset_counts = function(div) {
 					.addClass('tag-filter dropdown-item')
 					.data('tag', tn)
 					.prop('href', '#')
-					.text(tn + ' ').append(
+					.text(m[1] + ' ').append(
 						$(document.createElement('span'))
 							.addClass('badge badge-light')
 							.text(orm_format_integer(tc))
