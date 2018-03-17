@@ -147,13 +147,13 @@ div#journal > div > ul {
 	margin: 0 0 1em 0;
 
 	&> li {
-		display: inline;
-		margin: .25em .125em;
+		display: inline-block;
+		margin: .1em;
 		padding: 0;
 
 		&.spacer {
 			display: block;
-			height: .125em;
+			height: .2em;
 		}
 	}
 }
