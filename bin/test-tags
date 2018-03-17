@@ -17,13 +17,18 @@
 
 $failures = 0;
 
-array_shift($argv);
+while($puzjson = fgets(STDIN)) {
+	$puzjson = substr($puzjson, 0, -1);
 
-foreach($argv as $puzjson) {
-	$retagged = json_decode(shell_exec(escapeshellcmd(__DIR__.'/retag-puzzles').' '.escapeshellarg($puzjson)));
+	/* XXX: use proc_open() */
+	$retagged = json_decode(shell_exec('echo '.escapeshellarg($puzjson).' | '.escapeshellcmd(__DIR__.'/retag-puzzles')));
 	$puz = json_decode($puzjson);
 
-	if(!is_array($retagged)) goto fail;
+	if(!is_array($retagged)) {
+		printf("Test failed: %s --> could not retag\n", $puzjson);
+		++$failures;
+		continue;
+	}
 
 	sort($puz[2]);
 	sort($retagged[2]);
@@ -31,16 +36,12 @@ foreach($argv as $puzjson) {
 	$eretagged = json_encode($retagged, JSON_UNESCAPED_SLASHES);
 
 	if($epuz !== $eretagged) {
-		fprintf(STDERR, "Test: %s\nRetagged: %s\n", $epuz, $eretagged);
-		goto fail;
+		printf("Test failed: %s --> %s\n", $puzjson, $eretagged);
+		++$failures;
+		continue;
 	}
 
 	printf("Test OK: %s\n", $puzjson);
-	continue;
-
-	fail:
-	++$failures;
-	printf("Test failed: %s\n", $puzjson);
 }
 
 die($failures);

@@ -1,7 +1,6 @@
-JOBS:=16
 PATH:=../bin:$(PATH)
 
 tags:
-	cat tags/*.jpl | xargs -n 1 -d '\n' -P $(JOBS) test-tags | pv -ls `cat tags/*.jpl | wc -l` >/dev/null
+	cat tags/*.jpl | parallel -j100% -N10 --lb --pipe --round-robin test-tags | pv -ls $$(cat tags/*.jpl | wc -l) | grep '^Test failed:'
 
 .PHONY: tags

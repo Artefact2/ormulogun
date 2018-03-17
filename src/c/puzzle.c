@@ -141,7 +141,6 @@ void puzzle_print(const puzzle_t* p) {
 	putchar(',');
 	tags_print(p);
 	puts("]");
-	fflush(stdout); /* XXX: play nice with xargs? */
 }
 
 void puzzle_init(puzzle_t* p, const cch_board_t* b, const cch_move_t* m) {
