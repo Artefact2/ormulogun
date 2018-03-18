@@ -3,12 +3,12 @@ TMP:=$(shell mktemp -u -p .)
 PATH:=../tools:../build/src:$(PATH)
 
 import-pgn:
-	pv -cN input $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | parallel -j100% --lb --pipe --round-robin pgnml_to_json | pv -lcN games | zstd -19 - -o $(TMP)
+	pv $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | parallel -j100% --lb --pipe --round-robin pgnml_to_json | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 
 puzzles:
-	zstdcat $(INPUT) | tail -n +$$(( $(START) + 1 )) | head -n $$(( $(END) - $(START) + 1 )) | parallel -q -j100% -N1 --lb --pipe --round-robin gen-puzzles --verbose $(PFLAGS) 2> >(tee >(grep --line-buffered move | pv -lcN moves >/dev/null) | grep --line-buffered game | pv -s $$(( $(END) - $(START) + 1 )) -lcN games >/dev/null) | pv -lcN puzzles | zstd -19 - -o $(TMP)
+	zstdcat $(INPUT) | tail -n +$$(( $(START) + 1 )) | head -n $$(( $(END) - $(START) + 1 )) | parallel -q -j100% -N1 --lb --pipe --round-robin gen-puzzles --verbose $(PFLAGS) 2> >(grep --line-buffered '^move' | pv -ls $$(zstdcat $(INPUT) | tail -n +$$(( $(START) + 1)) | head -n $$(( $(END) - $(START) + 1 )) | tr '\n' ',' | tr -dc ',' | wc -c) >/dev/null) | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)-$(START)-$(END).jpz
 
@@ -20,9 +20,6 @@ out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
 
 out/%.json: %.jpz
 	zstdcat $< | jl_to_json > $@
-
-out/%.js: out/%.json
-	cp $< $@
 
 retag:
 	zstdcat $(INPUT) | zstdcat | parallel -j100% -N100 --keep-order --pipe retag-puzzles | pv -ls $$(zstdcat $(INPUT) | wc -l) | zstd -19 - -o $(TMP)
