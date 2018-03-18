@@ -36,7 +36,21 @@ while($puzjson = fgets(STDIN)) {
 	$eretagged = json_encode($retagged, JSON_UNESCAPED_SLASHES);
 
 	if($epuz !== $eretagged) {
-		printf("Test failed: %s --> %s\n", $puzjson, $eretagged);
+		$diff = '';
+		$ptags = array_flip($puz[2]);
+		$prtags = array_flip($retagged[2]);
+		foreach($ptags as $k => $v) {
+			if(!isset($prtags[$k])) {
+				$diff .= sprintf(' %c[31m-%s%c[0m', 27, $k, 27);
+			}
+		}
+		foreach($prtags as $k => $v) {
+			if(!isset($ptags[$k])) {
+				$diff .= sprintf(' %c[32m+%s%c[0m', 27, $k, 27);
+			}
+		}
+
+		printf("%c[1mTest failed:%c[0m %s -->%s\n", 27, 27, $puzjson, $diff);
 		++$failures;
 		continue;
 	}

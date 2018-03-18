@@ -1,3 +1,0 @@
-["5r1k/6b1/p1R1N1p1/4p2p/4P1N1/3n2P1/P2B1PBK/1r6 b - - 3 31",["d3f2",{"g4e5":["g7e5",{"e6f8":"e5f6"}]}],["Depth 2","Linear","Overloaded piece","Material gain"]]
-["8/8/R4P2/4k1n1/2B2P2/1p4P1/pr6/4K3 b - - 0 53",["e5d4",{"f4g5":["b2b1",{"e1f2":["a2a1q",{"a6a1":["b1a1",{"c4b3":"d4e5"}]}],"e1e2":["a2a1r",{"a6a1":["b1a1",{"c4b3":["d4e5",{"g3g4":"a1a8","f6f7":["a1a8",{"g3g4":"a8b8"}]}]}]}]}]}],["Min depth 4","Max depth 6","Overloaded piece","Trade"]]
-["r2q1rk1/2b2ppp/bp2p1n1/p2pP1NQ/5P2/2PB2B1/PP4PP/R3K2R b KQ - 3 15",["h7h6",{"g5e6":["f7e6",{"h5g6":["a6d3",{"g6d3":"d8d7"}],"d3g6":"d8d7"}],"d3a6":"a8a6"}],["Min depth 1","Max depth 3","Overloaded piece","Checkmate threat"]]

@@ -1,0 +1,11 @@
+# A nice example of deflection: sacrifice a rook to deflect the king and win a queen
+["3R4/pp2r1pk/4q2p/8/8/6P1/P1Q2P2/6K1 b - - 5 34",["e6g6",{"d8h8": ["h7h8",{"c2g6": ""}]}],["Material gain","Linear","Depth 2","Deflection"]]
+
+# Qd5+ forks the king and the rook, but it's not tagged as such
+["r2qr1k1/pR2ppbp/5np1/3bn3/3P4/B4NP1/P3PPBP/3Q1RK1 w - - 0 15",["f3e5",{"d5g2":["g1g2",{"d8d5":["f2f3",{"d5b7":"d1b1"}]}]}],["Depth 3","Linear","Material gain","Fork"]]
+
+# Nc5+ is also a fork, and this should be a trade
+["1rb5/3k1p2/p3p1p1/P2pP3/P2P2P1/1R1NBP2/6K1/8 b - - 0 38",["b8b3",{"d3c5": ["d7d8",{"e3g5": ["d8e8",{"c5b3": ""}],"c5b3": ""}]}],["Trade","Min depth 2","Max depth 3","Fork"]]
+
+# Qc2+ is a fork, and also material gain (wins a piece)
+["8/5pp1/4p1bk/7n/6r1/7R/3Q1P1K/8 b - - 11 41",["h6h7",{"f2f3": ["g4a4",{"h3h5": ["g6h5",{"d2c2": ["h5g6",{"c2a4": ""}]}]}]}],["Material gain","Linear","Checkmate threat","Depth 4","Fork"]]
