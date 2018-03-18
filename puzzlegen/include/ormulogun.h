@@ -130,4 +130,10 @@ void tags_puzzle(puzzle_t*, cch_board_t*);
 void eval_material(const cch_board_t*, bool, unsigned char*, char*);
 char eval_quiet_material(cch_board_t*, char, char);
 
+
+
+/* ----- gumbleextras.c ----- */
+
+bool cche_moves_through_square(const cch_move_t*, cch_square_t);
+
 #endif

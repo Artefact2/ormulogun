@@ -150,13 +150,7 @@ static void tags_pin(puzzle_t* p, cch_board_t* b, const cch_move_t* last) {
 		for(j = 0; j < stop2 && !p->tags.pin; ++j) {
 			if(ml2[j].end == last->end) continue; /* Not taking another piece */
 			if(!CCH_GET_SQUARE(b, ml2[j].end)) continue; /* Not taking anything at all */
-			char x1 = CCH_FILE(ml2[j].end) - CCH_FILE(ml2[j].start);
-			char y1 = CCH_RANK(ml2[j].end) - CCH_RANK(ml2[j].start);
-			char x2 = CCH_FILE(ml[i].start) - CCH_FILE(ml2[j].start);
-			char y2 = CCH_RANK(ml[i].start) - CCH_RANK(ml2[j].start);
-			if(x1 * y2 != x2 * y1) continue; /* Not going through the newly freed square (wrong direction) */
-			if(x1 * x2 < 0 || y1 * y2 < 0) continue; /* Not going through the newly freed square (wrong orientation) */
-			if(x1 * x1 + y1 * y1 < x2 * x2 + y2 * y2) continue; /* Not going far enough */
+			if(!cche_moves_through_square(&(ml2[j]), ml[i].start)) continue; /* Not going through the newly freed square */
 
 			cch_play_legal_move(b, &(ml2[j]), &u2);
 			p->tags.pin = -eval_quiet_material(b, -127, 127) > ev;
@@ -294,20 +288,11 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	}
 	if(i == attacks) return;
 
-	char x1 = CCH_FILE(moves[i].end) - CCH_FILE(moves[i].start);
-	char y1 = CCH_RANK(moves[i].end) - CCH_RANK(moves[i].start);
 	for(unsigned char j = 0; j < st->nextlen; ++j) {
 		/* Is the follow up taking the piece behind the piece that just moved ? */
 		if(st->next[j].move.start != st->move.end) continue;
 		if(!CCH_GET_SQUARE(b, st->next[j].move.end)) continue;
-		char x2 = CCH_FILE(st->next[j].move.end) - CCH_FILE(st->next[j].move.start);
-		char y2 = CCH_RANK(st->next[j].move.end) - CCH_RANK(st->next[j].move.start);
-
-		/* Check direction */
-		if(x1 * y2 != y1 * x2) continue;
-
-		/* Check orientation */
-		if(x1 * x2 < 0 || y1 * y2 < 0) continue;
+		if(!cche_moves_through_square(&(st->next[j].move), st->reply.start)) continue;
 
 		p->tags.skewer = true;
 		return;
@@ -446,15 +431,8 @@ static void tags_discovered_attack(puzzle_t* p, const puzzle_step_t* st, cch_boa
 		if(ml[i].start == st->move.end) continue; /* Can't do a discovered attack WITH the piece that just moved! */
 		if(!CCH_GET_SQUARE(b, ml[i].end)) continue; /* Not attacking anything */
 
-		/* Check that path from move goes through freed square from prev move */
-		/* XXX: refactor this? */
-		char x1 = CCH_FILE(ml[i].end) - CCH_FILE(ml[i].start);
-		char y1 = CCH_RANK(ml[i].end) - CCH_RANK(ml[i].start);
-		char x2 = CCH_FILE(st->move.start) - CCH_FILE(ml[i].start);
-		char y2 = CCH_RANK(st->move.start) - CCH_RANK(ml[i].start);
-		if(x1 * y2 != x2 * y1) continue;
-		if(x1 * x2 < 0 || y1 * y2 < 0) continue;
-		if(x1 * x1 + y1 * y1 <= x2 * x2 + y2 * y2) continue;
+		/* Are we going through the newly freed square? */
+		if(ml[i].end == st->move.start || !cche_moves_through_square(&(ml[i]), st->move.start)) continue;
 
 		if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, ml[i].end)) == CCH_KING) {
 			disco_check = true; /* Discovered check! */
