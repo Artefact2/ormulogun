@@ -73,6 +73,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.undermining, "Undermining");
 	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
 	MAYBE_PRINT_TAG(p->tags.overloaded_piece, "Overloaded piece");
+	MAYBE_PRINT_TAG(p->tags.deflection, "Deflection");
 
 	if(!p->tags.checkmate && !p->tags.threefold && !p->tags.stalemate && !p->tags.perpetual && !p->tags.winning_position && !p->tags.drawing_position) {
 		MAYBE_PRINT_TAG(p->tags.mate_threat, "Checkmate threat");
@@ -318,6 +319,45 @@ static void tags_undermining(puzzle_t* p, const puzzle_step_t* st, cch_board_t* 
 	}
 }
 
+static void tags_deflection(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.deflection) return;
+	if(st->nextlen == 0) return;
+
+	/* I move piece A, attacking piece B. You move piece B to a square
+	 * where it can no longer defend piece C. I capture piece C and
+	 * gain material. */
+
+	if(!cche_could_take(b, st->move.end, st->reply.start)) return;
+
+	char ev, qev;
+	eval_material(b, false, 0, &ev);
+
+	for(unsigned char i = 0; i < st->nextlen; ++i) {
+		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) continue;
+		if(st->next[i].move.end == st->reply.start || st->next[i].move.end == st->reply.end) continue;
+
+		cch_undo_move_state_t u;
+		bool can_defend;
+
+		cch_play_legal_move(b, &st->next[i].move, &u);
+		can_defend = cche_could_take(b, st->reply.start, st->next[i].move.end);
+		cch_undo_move(b, &st->next[i].move, &u);
+
+		if(!can_defend) continue;
+
+		cch_play_legal_move(b, &st->reply, &u);
+		can_defend = cche_could_take(b, st->reply.end, st->next[i].move.end);
+		qev = eval_quiet_material(b, -127, 127);
+		cch_undo_move(b, &st->reply, &u);
+
+		if(can_defend) continue;
+		if(qev <= ev) continue;
+
+		p->tags.deflection = true;
+		return;
+	}
+}
+
 static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	if(p->tags.trapped_piece) return;
 	if(st->nextlen == 0) return;
@@ -534,6 +574,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 		tags_trapped_piece(p, st, b);
 		tags_discovered_attack(p, st, b);
 		tags_overloaded_piece(p, st, b);
+		tags_deflection(p, st, b);
 
 		cch_play_legal_move(b, &(st->reply), &ur);
 	}

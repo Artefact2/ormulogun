@@ -99,6 +99,7 @@ typedef struct {
 		bool endgame_M:1;
 		bool endgame_Mm:1;
 		bool undermining:1;
+		bool deflection:1;
 		bool trapped_piece:1;
 		bool overloaded_piece:1;
 	} tags;

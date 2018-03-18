@@ -1,6 +1,3 @@
-# A nice example of deflection: sacrifice a rook to deflect the king and win a queen
-["3R4/pp2r1pk/4q2p/8/8/6P1/P1Q2P2/6K1 b - - 5 34",["e6g6",{"d8h8": ["h7h8",{"c2g6": ""}]}],["Material gain","Linear","Depth 2","Deflection"]]
-
 # Qd5+ forks the king and the rook, but it's not tagged as such
 ["r2qr1k1/pR2ppbp/5np1/3bn3/3P4/B4NP1/P3PPBP/3Q1RK1 w - - 0 15",["f3e5",{"d5g2":["g1g2",{"d8d5":["f2f3",{"d5b7":"d1b1"}]}]}],["Depth 3","Linear","Material gain","Fork"]]
 

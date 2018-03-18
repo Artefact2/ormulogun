@@ -39,7 +39,7 @@ See [README.md](./puzzlegen/puzzles/README.md).
 To-Do
 =====
 
-* More automatic tagging (sacrifices, deflection, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
+* More automatic tagging (sacrifices, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
 * Better automatic tagging (not a trivial task)
 * Local puzzle blacklist (ignore list)
 * Better activity log, activity streak
