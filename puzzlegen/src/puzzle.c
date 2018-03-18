@@ -259,8 +259,53 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	}
 }
 
-bool puzzle_is_trivial(const puzzle_t* p, const cch_board_t* b) {
+static bool puzzle_is_trivial(const puzzle_t* p, const cch_board_t* b) {
 	return p->min_depth < 2 && !p->tags.checkmate;
+}
+
+static bool puzzle_prune(puzzle_step_t* st, cch_board_t* b) {
+	/* Prune children first */
+	for(unsigned char i = 0; i < st->nextlen && st->next[i].nextlen; ++i) {
+		cch_undo_move_state_t um, ur;
+		bool should_prune;
+
+		cch_play_move(b, &st->next[i].move, &um);
+		cch_play_move(b, &st->next[i].reply, &ur);
+		should_prune = puzzle_prune(&st->next[i], b);
+		cch_undo_move(b, &st->next[i].reply, &ur);
+		cch_undo_move(b, &st->next[i].move, &um);
+
+		if(should_prune) {
+			puzzle_free_steps(&st->next[i]);
+			st->next[i] = st->next[st->nextlen - 1];
+			--st->nextlen;
+			--i;
+		}
+	}
+
+	/* Are we in a node with only leaf children? */
+	for(unsigned char i = 0; i < st->nextlen; ++i) {
+		if(st->next[i].nextlen > 0) return false;
+	}
+
+	/* Are these moves forced? */
+	static cch_movelist_t ml;
+	unsigned char stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
+	assert(stop >= st->nextlen);
+	return stop == st->nextlen;
+}
+
+void puzzle_finalize(puzzle_t* p, cch_board_t* b) {
+	if(p->min_depth == 0) {
+		return;
+	}
+
+	puzzle_prune(&p->root, b);
+	tags_puzzle(p, b);
+
+	if(puzzle_is_trivial(p, b)) {
+		p->min_depth = 0;
+	}
 }
 
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
@@ -269,13 +314,5 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 	threefold_entry_t tftable[(s.max_depth + 1) << 1];
 	puzzle_build_step(ctx, 0, p, &(p->root), b, engine_limiter, s, tftable, 0);
 
-	if(p->min_depth == 0) {
-		return;
-	}
-
-	tags_puzzle(p, b);
-
-	if(puzzle_is_trivial(p, b)) {
-		p->min_depth = 0;
-	}
+	puzzle_finalize(p, b);
 }

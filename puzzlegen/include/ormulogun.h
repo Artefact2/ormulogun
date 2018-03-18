@@ -21,6 +21,8 @@
 #include <stdbool.h>
 #include <gumble.h>
 
+#define ORM_MOVES_EQUAL(m1, m2) ((m1).start == (m2).start && (m1).end == (m2).end && (m1).promote == (m2).promote)
+
 /* ----- uci.c ----- */
 
 typedef struct {
@@ -110,7 +112,7 @@ void puzzle_free(puzzle_t*);
 void puzzle_init(puzzle_t*, const cch_board_t*, const cch_move_t*);
 void puzzle_print(const puzzle_t*);
 void puzzle_build(const uci_engine_context_t*, puzzle_t*, cch_board_t*, const char*, puzzlegen_settings_t);
-bool puzzle_is_trivial(const puzzle_t*, const cch_board_t*);
+void puzzle_finalize(puzzle_t*, cch_board_t*);
 
 
 

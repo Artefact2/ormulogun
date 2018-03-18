@@ -20,8 +20,6 @@
 #include <string.h>
 #include <assert.h>
 
-#define MOVES_EQUAL(m1, m2) ((m1).start == (m2).start && (m1).end == (m2).end && (m1).promote == (m2).promote)
-
 static void usage(void) {
 	fprintf(stderr,
 			"Usage: gen-puzzles [--verbose] [--start-fen fen] [--start-ply N] [--max-puzzles N]\n"
@@ -184,7 +182,7 @@ int main(int argc, char** argv) {
 			if(puzzles[!b.side].st) {
 				bool found = false;
 				for(unsigned char j = 0; j < puzzles[!b.side].st->nextlen; ++j) {
-					if(MOVES_EQUAL(m, puzzles[!b.side].st->next[j].move)) {
+					if(ORM_MOVES_EQUAL(m, puzzles[!b.side].st->next[j].move)) {
 						found = true;
 						puzzles[!b.side].st = &(puzzles[!b.side].st->next[j]);
 						break;
@@ -195,7 +193,7 @@ int main(int argc, char** argv) {
 				}
 			}
 			if(puzzles[b.side].st) {
-				if(!MOVES_EQUAL(m, puzzles[b.side].st->reply)) {
+				if(!ORM_MOVES_EQUAL(m, puzzles[b.side].st->reply)) {
 					puzzles[b.side].st = 0;
 				} else {
 					continue;

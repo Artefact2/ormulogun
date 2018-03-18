@@ -21,15 +21,27 @@ out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
 out/%.json: %.jpz
 	zstdcat $< | jl_to_json > $@
 
-retag:
-	zstdcat $(INPUT) | zstdcat | parallel -j100% -N100 --keep-order --pipe retag-puzzles | pv -ls $$(zstdcat $(INPUT) | wc -l) | zstd -19 - -o $(TMP)
+inplace-op:
+	zstdcat $(INPUT) | parallel -j100% -N100 --keep-order --pipe $(COMMAND) | pv -ls $$(zstdcat $(INPUT) | wc -l) | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(INPUT)
 
+inplace-op-all:
+	find . -maxdepth 1 -type f -name "*.jpz" -print0 | parallel -0 -N1 -j2 make -j1 -s inplace-op INPUT={}
+
+retag:
+	+make inplace-op COMMAND=retag-puzzles
+
 retag-all:
-	find . -maxdepth 1 -type f -name "*.jpz" -print0 | parallel -0 -N1 -j2 make -j1 -s retag INPUT={}
+	+make inplace-op-all COMMAND=retag-puzzles
+
+regen:
+	+make inplace-op COMMAND=regen-puzzles
+
+regen-all:
+	+make inplace-op-all COMMAND=regen-puzzles
 
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
 	make out/manifest.json
 
-.PHONY: clean import-pgn puzzles puzzles-all retag retag-all json-all
+.PHONY: clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all

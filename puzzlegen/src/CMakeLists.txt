@@ -9,3 +9,6 @@ target_link_libraries(gen-puzzles ormuloguncore)
 
 add_executable(retag-puzzles retag-puzzles.c)
 target_link_libraries(retag-puzzles ormuloguncore)
+
+add_executable(regen-puzzles regen-puzzles.c)
+target_link_libraries(regen-puzzles ormuloguncore)
