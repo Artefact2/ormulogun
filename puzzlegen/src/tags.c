@@ -309,9 +309,9 @@ static void tags_undermining(puzzle_t* p, const puzzle_step_t* st, cch_board_t* 
 
 	for(unsigned char i = 0; i < st->nextlen; ++i) {
 		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) continue;
-		if(st->next[i].move.end == st->move.end || st->next[i].move.end == st->reply.start) continue;
+		if(st->next[i].move.end == st->move.start || st->next[i].move.end == st->move.end || st->next[i].move.end == st->reply.start) continue;
 
-		if(cche_is_defender(b, st->move.end, st->next[i].move.end)) {
+		if(cche_could_take(b, st->move.end, st->next[i].move.end)) {
 			p->tags.undermining = true;
 			return;
 		}
@@ -445,7 +445,7 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 			/* Move/take/take back, not really a case of overloading */
 			return;
 		}
-		if(!cche_is_defender(b, st->reply.start, st->next[i].move.end)) {
+		if(!cche_could_take(b, st->reply.start, st->next[i].move.end)) {
 			/* Piece that took back wasn't a defender of Q */
 			return;
 		}
@@ -453,7 +453,7 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 		cch_undo_move_state_t u;
 		bool can_still_defend;
 		cch_play_legal_move(b, &st->reply, &u);
-		can_still_defend = cche_is_defender(b, st->reply.end, st->next[i].move.end);
+		can_still_defend = cche_could_take(b, st->reply.end, st->next[i].move.end);
 		cch_undo_move(b, &st->reply, &u);
 
 		if(can_still_defend) {

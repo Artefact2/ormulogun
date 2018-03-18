@@ -80,19 +80,19 @@ unsigned char cche_defenders_of_square(cch_board_t* b, cch_square_t sq, cch_move
 	return 0;
 }
 
-bool cche_is_defender(cch_board_t* b, cch_square_t src, cch_square_t dest) {
-	cch_piece_t p = CCH_GET_SQUARE(b, dest);
-	if(CCH_IS_ENEMY_PIECE(b, p)) {
+bool cche_could_take(cch_board_t* b, cch_square_t src, cch_square_t dest) {
+	if(CCH_IS_ENEMY_PIECE(b, CCH_GET_SQUARE(b, src))) {
 		cch_move_t m;
 		cch_undo_move_state_t u;
 		bool r;
 
 		cche_play_null_move(b, &m, &u);
-		r = cche_is_defender(b, src, dest);
+		r = cche_could_take(b, src, dest);
 		cch_undo_move(b, &m, &u);
 		return r;
 	}
 
+	cch_piece_t p = CCH_GET_SQUARE(b, dest);
 	cch_movelist_t ml;
 	unsigned char stop, i;
 
