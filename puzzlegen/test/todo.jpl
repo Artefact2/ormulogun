@@ -9,3 +9,6 @@
 
 # Qc2+ is a fork, and also material gain (wins a piece)
 ["8/5pp1/4p1bk/7n/6r1/7R/3Q1P1K/8 b - - 11 41",["h6h7",{"f2f3": ["g4a4",{"h3h5": ["g6h5",{"d2c2": ["h5g6",{"c2a4": ""}]}]}]}],["Material gain","Linear","Checkmate threat","Depth 4","Fork"]]
+
+# Nb4 is a fork, also in-between move to save the knight
+["2r3k1/2q2ppp/Ppb5/2nQ4/1B2p3/4P3/5PPP/2R2NK1 w - - 1 34",["d5d4",{"c5b3": ["c1c6",{"b3d4": ["c6c7",{"d4e2": ["g1h1",{"c8c7": ""}]}],"c7c6": ""}]}],["Material gain","Min depth 2","Max depth 4","Fork"]]

@@ -85,7 +85,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.pin, "Pin");
 	MAYBE_PRINT_TAG(p->tags.fork, "Fork");
 	MAYBE_PRINT_TAG(p->tags.skewer, "Skewer");
-	MAYBE_PRINT_TAG(p->tags.capturing_defender, "Capturing defender");
+	MAYBE_PRINT_TAG(p->tags.undermining, "Undermining");
 	MAYBE_PRINT_TAG(p->tags.trapped_piece, "Trapped piece");
 	MAYBE_PRINT_TAG(p->tags.overloaded_piece, "Overloaded piece");
 
@@ -299,8 +299,8 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 	}
 }
 
-static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
-	if(p->tags.capturing_defender) return;
+static void tags_undermining(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
+	if(p->tags.undermining) return;
 	if(st->nextlen == 0) return;
 
 	/* I take piece A, you take back, I take piece B that is no longer
@@ -346,7 +346,7 @@ static void tags_capturing_defender(puzzle_t* p, const puzzle_step_t* st, cch_bo
 		if(j < stop) {
 			if(eval_quiet_material(b, -127, 127) > ev) {
 				/* Previous piece was a defender, and now we gain material */
-				p->tags.capturing_defender = true;
+				p->tags.undermining = true;
 				break;
 			}
 		}
@@ -575,7 +575,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 	if(depth > 0) {
 		if(st->reply.start == 255) return;
 
-		tags_capturing_defender(p, st, b);
+		tags_undermining(p, st, b);
 
 		cch_play_legal_move(b, &(st->move), &um);
 

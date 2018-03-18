@@ -98,7 +98,7 @@ typedef struct {
 		bool endgame_m:1;
 		bool endgame_M:1;
 		bool endgame_Mm:1;
-		bool capturing_defender:1;
+		bool undermining:1;
 		bool trapped_piece:1;
 		bool overloaded_piece:1;
 	} tags;
