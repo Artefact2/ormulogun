@@ -21,7 +21,7 @@ while($puzjson = fgets(STDIN)) {
 	$puzjson = substr($puzjson, 0, -1);
 
 	/* XXX: use proc_open() */
-	$retagged = json_decode(shell_exec('echo '.escapeshellarg($puzjson).' | '.escapeshellcmd(__DIR__.'/retag-puzzles')));
+	$retagged = json_decode(shell_exec('echo '.escapeshellarg($puzjson).' | retag-puzzles'));
 	$puz = json_decode($puzjson);
 
 	if(!is_array($retagged)) {

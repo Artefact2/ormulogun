@@ -1,4 +1,4 @@
-PATH:=../bin:$(PATH)
+PATH:=../tools:../build/src:$(PATH)
 
 tags:
 	cat tags.jpl | parallel -j100% -N10 --lb --pipe --round-robin test-tags | pv -ls $$(cat tags.jpl | wc -l) | (grep 'Test failed'; exit 0)

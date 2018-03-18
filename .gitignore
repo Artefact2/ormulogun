@@ -7,8 +7,7 @@ frontend/index.html
 frontend/ormulogun.css
 frontend/ormulogun.js
 frontend/puzzles/*.js
-puzzles/*.j[lz]
-puzzles/*.jpz
-puzzles/tmp.*
-bin/gen-puzzles
-bin/retag-puzzles
+puzzlegen/build
+puzzlegen/puzzles/*.j[lz]
+puzzlegen/puzzles/*.jpz
+puzzlegen/puzzles/tmp.*

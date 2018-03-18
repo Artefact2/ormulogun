@@ -8,10 +8,9 @@ before_script:
 pages:
     stage: deploy
     script:
-    - make all-frontend
+    - make -C frontend
     - cp -R frontend public
-    - find public/puzzles -name "*.json" -delete
-    - rm -R public/index.xhtml
+    - rm -R public/index.xhtml public/src public/Makefile public/tools public/puzzles/*.json
     - mv public/stockfish.wasm public/stockfish.wasm2.js
     - sed -i -e s/SF_VERSION/$(b2sum public/stockfish.wasm2.js | cut -d' ' -f1)/ -e s/\"stockfish.wasm\"/\"stockfish.wasm2.js\"/ public/stockfish.wasm.js
     - find public -type f -exec gzip --best --keep '{}' ';'

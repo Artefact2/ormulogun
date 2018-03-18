@@ -16,14 +16,38 @@ Dependencies
 * LLVM, clang
 * sassc
 
+Getting started
+===============
+
+~~~
+git submodule update --recursive --init
+~~~
+
+Frontend
+--------
+
+~~~
+make -C frontend
+make -C frontend host
+~~~
+
+Puzzle generation
+-----------------
+
+See [README.md](./puzzlegen/puzzles/README.md).
+
 To-Do
 =====
 
-* More automatic tagging (sacrifices, coercion, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
+* More automatic tagging (sacrifices, deflection, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
 * Better automatic tagging (not a trivial task)
+* Local puzzle blacklist (ignore list)
 * Better activity log, activity streak
 * Find some way of rating puzzles by difficulty without relying on a central server and user tracking (if at all possible)
 * localStorage space limit may become an issue with large puzzlesets, maybe use lz-string
+* Refactor attackers/defenders/etc. in gumbleextras.c
+* Opening trainer
+* Guess the move
 
 Credits
 =======
