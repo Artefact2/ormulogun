@@ -134,6 +134,9 @@ char eval_quiet_material(cch_board_t*, char, char);
 
 /* ----- gumbleextras.c ----- */
 
+void cche_play_null_move(cch_board_t*, cch_move_t*, cch_undo_move_state_t*);
 bool cche_moves_through_square(const cch_move_t*, cch_square_t);
+unsigned char cche_defenders_of_square(cch_board_t*, cch_square_t, cch_movelist_t);
+bool cche_is_defender(cch_board_t*, cch_square_t, cch_square_t);
 
 #endif

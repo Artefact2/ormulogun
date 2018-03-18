@@ -31,21 +31,6 @@
 		}										\
 	} while(0)
 
-/* XXX: hack hack hack hack */
-static void orm_cch_null_move(cch_board_t* b, cch_move_t* m, cch_undo_move_state_t* u) {
-	for(unsigned char i = 0; i < 64; ++i) {
-		if(CCH_GET_SQUARE(b, i)) continue;
-		m->start = i;
-		m->end = i;
-		m->promote = 0;
-		cch_play_legal_move(b, m, u);
-		return;
-	}
-
-	assert(0);
-	__builtin_unreachable();
-}
-
 void tags_print(const puzzle_t* p) {
 	putchar('[');
 
@@ -218,7 +203,7 @@ static void tags_fork(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 
 	/* If opponent does nothing, how many exchanges can we win with
 	 * the piece that we just moved? */
-	orm_cch_null_move(b, &nullmove, &um);
+	cche_play_null_move(b, &nullmove, &um);
 	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
 	cch_undo_move(b, &nullmove, &um);
 
@@ -273,7 +258,7 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 
 	eval_material(b, true, 0, &ev);
 
-	orm_cch_null_move(b, &nullmove, &unull);
+	cche_play_null_move(b, &nullmove, &unull);
 	attacks = count_winning_exchanges(b, ev, st->move.end, st->move.end + 1, moves);
 	cch_undo_move(b, &nullmove, &unull);
 
@@ -311,49 +296,26 @@ static void tags_undermining(puzzle_t* p, const puzzle_step_t* st, cch_board_t* 
 	/* No take back */
 	if(st->reply.end != st->move.end) return;
 
-	cch_move_t nullmove;
-	cch_undo_move_state_t um, ur, unull;
-	cch_movelist_t ml;
-	unsigned char stop;
-	cch_piece_t q;
-	char ev;
+	cch_undo_move_state_t um, ur;
+	char ev, qev;
 
 	eval_material(b, false, 0, &ev);
 	cch_play_legal_move(b, &(st->move), &um);
 	cch_play_legal_move(b, &(st->reply), &ur);
+	qev = eval_quiet_material(b, -127, 127);
+	cch_undo_move(b, &(st->reply), &ur);
+	cch_undo_move(b, &(st->move), &um);
+	if(qev <= ev) return; /* Not gaining material */
 
 	for(unsigned char i = 0; i < st->nextlen; ++i) {
 		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) continue;
-		if(st->next[i].move.end == st->move.end) continue;
+		if(st->next[i].move.end == st->move.end || st->next[i].move.end == st->reply.start) continue;
 
-		/* See if the previously taken piece could defend the taken
-		 * piece */
-		cch_undo_move(b, &(st->reply), &ur);
-		cch_undo_move(b, &(st->move), &um);
-		q = CCH_GET_SQUARE(b, st->next[i].move.end);
-		orm_cch_null_move(b, &nullmove, &unull);
-		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN)); /* XXX */
-		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
-		cch_undo_move(b, &nullmove, &unull);
-		CCH_SET_SQUARE(b, st->next[i].move.end, q);
-		cch_play_legal_move(b, &(st->move), &um);
-		cch_play_legal_move(b, &(st->reply), &ur);
-
-		unsigned char j;
-		for(j = 0; j < stop; ++j) {
-			if(ml[j].end == st->next[i].move.end) break;
-		}
-		if(j < stop) {
-			if(eval_quiet_material(b, -127, 127) > ev) {
-				/* Previous piece was a defender, and now we gain material */
-				p->tags.undermining = true;
-				break;
-			}
+		if(cche_is_defender(b, st->move.end, st->next[i].move.end)) {
+			p->tags.undermining = true;
+			return;
 		}
 	}
-
-	cch_undo_move(b, &(st->reply), &ur);
-	cch_undo_move(b, &(st->move), &um);
 }
 
 static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
@@ -370,7 +332,7 @@ static void tags_trapped_piece(puzzle_t* p, const puzzle_step_t* st, cch_board_t
 	char ev;
 	cch_undo_move_state_t u;
 
-	orm_cch_null_move(b, ml2, &u);
+	cche_play_null_move(b, ml2, &u);
 	eval_material(b, false, 0, &ev);
 	stop = cch_generate_moves(b, ml, CCH_LEGAL, st->move.end, st->move.end + 1);
 	cch_undo_move(b, ml2, &u);
@@ -423,7 +385,7 @@ static void tags_discovered_attack(puzzle_t* p, const puzzle_step_t* st, cch_boa
 	bool disco_check = false;
 	unsigned char i;
 
-	orm_cch_null_move(b, &nullmove, &unull);
+	cche_play_null_move(b, &nullmove, &unull);
 	eval_material(b, false, 0, &ev);
 	stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
 
@@ -483,38 +445,24 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 			/* Move/take/take back, not really a case of overloading */
 			return;
 		}
-
-		q = CCH_GET_SQUARE(b, st->next[i].move.end);
-		CCH_SET_SQUARE(b, st->next[i].move.end, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN)); /* XXX */
-		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->reply.start, st->reply.start + 1);
-		CCH_SET_SQUARE(b, st->next[i].move.end, q);
-
-		for(j = 0; j < stop; ++j) {
-			if(ml[j].end == st->next[i].move.end) break;
-		}
-		if(j == stop) {
+		if(!cche_is_defender(b, st->reply.start, st->next[i].move.end)) {
 			/* Piece that took back wasn't a defender of Q */
+			return;
+		}
+
+		cch_undo_move_state_t u;
+		bool can_still_defend;
+		cch_play_legal_move(b, &st->reply, &u);
+		can_still_defend = cche_is_defender(b, st->reply.end, st->next[i].move.end);
+		cch_undo_move(b, &st->reply, &u);
+
+		if(can_still_defend) {
+			/* Piece that took back can still defend Q */
 			return;
 		}
 	}
 
-	cch_undo_move_state_t ur, um;
-	cch_play_legal_move(b, &(st->reply), &ur);
-	for(i = 0; i < st->nextlen; ++i) {
-		cch_play_legal_move(b, &(st->next[i].move), &um);
-		stop = cch_generate_moves(b, ml, CCH_LEGAL, st->reply.end, st->reply.end + 1);
-		cch_undo_move(b, &(st->next[i].move), &um);
-
-		for(j = 0; j < stop; ++j) {
-			if(ml[j].end == st->next[i].move.end) break;
-		}
-		if(j < stop) {
-			/* Piece that took back can still defend Q */
-			break;
-		}
-	}
-	cch_undo_move(b, &(st->reply), &ur);
-	p->tags.overloaded_piece = (i == st->nextlen);
+	p->tags.overloaded_piece = true;
 }
 
 static void tags_endgame(puzzle_t* p, const cch_board_t* b) {

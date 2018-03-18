@@ -45,7 +45,6 @@ To-Do
 * Better activity log, activity streak
 * Find some way of rating puzzles by difficulty without relying on a central server and user tracking (if at all possible)
 * localStorage space limit may become an issue with large puzzlesets, maybe use lz-string
-* Refactor attackers/defenders/etc. in gumbleextras.c
 * Opening trainer
 * Guess the move
 
