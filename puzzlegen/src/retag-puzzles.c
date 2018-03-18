@@ -33,7 +33,9 @@ int main(void) {
 		puzzle_init(&p, &b, &(p.root.reply));
 		cch_play_legal_move(&b, &(p.root.reply), 0);
 		tags_puzzle(&p, &b);
-		puzzle_print(&p);
+		if(!puzzle_is_trivial(&p, &b)) {
+			puzzle_print(&p);
+		}
 		puzzle_free(&p);
 	}
 

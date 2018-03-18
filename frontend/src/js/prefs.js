@@ -22,7 +22,7 @@ const ORM_PREFS_DEFAULTS = {
 	"board_move_delay": "500",
 	"custom_css": "",
 
-	"puzzle_depth_min": "2",
+	"puzzle_depth_min": "1",
 	"puzzle_depth_max": "4",
 
 	"uci_multipv": "5",

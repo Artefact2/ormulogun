@@ -259,28 +259,8 @@ static void puzzle_build_step(const uci_engine_context_t* ctx, unsigned char dep
 	}
 }
 
-/* Filter simple 2-ply trades with no choices involved */
-static bool puzzle_is_trivial(puzzle_t* p, cch_board_t* b) {
-	/* Last move was not a capture */
-	if(!CCH_GET_SQUARE(b, p->root.reply.end)) return false;
-
-	for(unsigned char i = 0; i < p->root.nextlen; ++i) {
-		if(p->root.next[i].nextlen > 0) {
-			/* Too deep */
-			return false;
-		}
-		if(p->root.next[i].move.end != p->root.reply.end) {
-			/* Puzzle move is not a takeback */
-			return false;
-		}
-	}
-
-	cch_movelist_t ml;
-	unsigned char takebacks = 0, stop = cch_generate_moves(b, ml, CCH_LEGAL, 0, 64);
-	for(unsigned char i = 0; i < stop; ++i) {
-		if(ml[i].end == p->root.reply.end) ++takebacks;
-	}
-	return p->root.nextlen == takebacks;
+bool puzzle_is_trivial(const puzzle_t* p, const cch_board_t* b) {
+	return p->min_depth < 2 && !p->tags.checkmate;
 }
 
 void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, const char* engine_limiter, puzzlegen_settings_t s) {
@@ -293,10 +273,9 @@ void puzzle_build(const uci_engine_context_t* ctx, puzzle_t* p, cch_board_t* b, 
 		return;
 	}
 
+	tags_puzzle(p, b);
+
 	if(puzzle_is_trivial(p, b)) {
 		p->min_depth = 0;
-		return;
 	}
-
-	tags_puzzle(p, b);
 }
