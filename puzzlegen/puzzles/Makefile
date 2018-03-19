@@ -1,9 +1,9 @@
 SHELL:=/bin/bash
 TMP:=$(shell mktemp -u -p .)
-PATH:=../tools:../build/src:$(PATH)
+PATH:=../../tools:../tools:../build/src:$(PATH)
 
 import-pgn:
-	pv $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | parallel -j100% --lb --pipe --round-robin pgnml_to_json | zstd -19 - -o $(TMP)
+	pv $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | zstd -19 - -o $(TMP)
 	sync $(TMP)
 	mv $(TMP) $(OUTPUT)
 

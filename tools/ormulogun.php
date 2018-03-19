@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 /* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
  *
@@ -15,18 +14,18 @@
  * limitations under the License.
  */
 
-if($argc !== 1) {
-	fprintf(STDERR, "Usage: %s < pgn-movelists...\n", $argv[0]);
-	die(1);
-}
+function orm_parse_pgn(string $pgn): array {
+	list($header, $body) = explode("\n\n", $pgn, 2);
 
-while($pgnml = fgets(STDIN)) {
-	if($pgnml === '') continue; /* XXX? */
-	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgnml)) {
-		fprintf(STDERR, "Unexpected pgnml: %s\n", var_export($pgnml, true));
-		die(1);
+	preg_match_all('%^\[(?<k>[A-Z][A-Za-z]*) "(?<v>[^"]*)"\]$%m', $header, $match, PREG_SET_ORDER);
+	$tags = [];
+	foreach($match as $m) {
+		$tags[$m['k']] = $m['v'];
 	}
-	$moves = preg_replace('% \{[^}]*\} %', ' ', $pgnml);
+
+	$moves = preg_replace('% \{[^}]*\} %', ' ', $body);
 	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
-	echo json_encode($matches['san']), "\n";
+	$tags['Moves'] = $matches['san'];
+
+	return $tags;
 }

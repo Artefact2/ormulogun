@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+require __DIR__.'/../../tools/ormulogun.php';
+
 /* XXX: as args maybe? */
 
 /* For ranges, the lower bound is always inclusive and the upper bound
@@ -34,14 +36,9 @@ if($argc !== 1) {
 }
 
 while($pgn = fgets(STDIN)) {
-	$pgn = json_decode($pgn);
-	$tags = [];
+	$tags = orm_parse_pgn(json_decode($pgn));
 
-	preg_match_all('%^\[(?<k>[A-Z][A-Za-z]*) "(?<v>[^"]*)"\]$%m', $pgn, $match, PREG_SET_ORDER);
-	foreach($match as $m) {
-		$tags[$m['k']] = $m['v'];
-	}
-
+	if(!isset($tags['Moves']) || $tags['Moves'] === []) continue;
 	if(!isset($tags['Event']) || !isset($tags['WhiteElo']) || !isset($tags['BlackElo']) || !isset($tags['TimeControl'])) continue;
 
 	$lower = min((int)$tags['WhiteElo'], (int)$tags['BlackElo']);
@@ -56,6 +53,5 @@ while($pgn = fgets(STDIN)) {
 	$time = (int)$tc['base'] + INCREMENT_FACTOR * (int)$tc['inc'];
 	if($time < TIME_RANGE[0] || $time >= TIME_RANGE[1]) continue;
 
-	if(!preg_match('%^1\. (?<moves>.+)$%m', $pgn, $match)) continue;
-	echo $match[0], "\n";
+	echo json_encode($tags['Moves']), "\n";
 }
