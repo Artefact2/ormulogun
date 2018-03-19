@@ -11,9 +11,11 @@ Dependencies
 
 * PHP (CLI)
 * Any UCI engine (eg stockfish)
-* GNU parallel, pv
+* GNU parallel
+* pv
+* zstd
 * CMake
-* LLVM, clang
+* clang/llvm
 * sassc
 
 Getting started

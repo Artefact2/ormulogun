@@ -1,0 +1,59 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ini_set('memory_limit', -1);
+
+require __DIR__.'/../../tools/ormulogun.php';
+
+$book = [ 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -' => [ 0, 0, 0 ] ];
+
+while($pgn = fgets(STDIN)) {
+	$pgns = json_decode($pgn);
+	if(!is_string($pgns)) {
+		fprintf(STDERR, "Unparseable pgn? %s\n", $pgn);
+		continue;
+	}
+	$pgn = orm_parse_pgn($pgns);
+
+	if(!isset($pgn['Result']) || !in_array($pgn['Result'], [ '1-0', '0-1', '1/2-1/2' ], true)) continue;
+
+	if($pgn['Result'] === '1-0') $i = 0;
+	else if($pgn['Result'] === '0-1') $i = 2;
+	else $i = 1;
+
+	$fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+	$sfen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -';
+	++$book[$sfen][$i];
+
+	foreach($pgn['Moves'] as $san) {
+		$fen = orm_do_san_move($fen, $san);
+		if($fen === null) break;
+
+		$sfen = explode(' ', $fen, 5);
+		array_pop($sfen);
+		$sfen = implode(' ', $sfen);
+
+		if(!isset($book[$sfen])) $book[$sfen] = [ 0, 0, 0 ];
+		++$book[$sfen][$i];
+	}
+}
+
+/* Sort the book now, this will make it much easier to merge later */
+ksort($book);
+foreach($book as $k => $v) {
+	printf("%d\t%d\t%d\t%s\n", $v[0], $v[1], $v[2], $k);
+}

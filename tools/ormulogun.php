@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
+assert_options(ASSERT_BAIL, 1);
+
 function orm_parse_pgn(string $pgn): array {
-	list($header, $body) = explode("\n\n", $pgn, 2);
+	list($header, $body) = explode("\n\n", $pgn."\n\n", 2);
 
 	preg_match_all('%^\[(?<k>[A-Z][A-Za-z]*) "(?<v>[^"]*)"\]$%m', $header, $match, PREG_SET_ORDER);
 	$tags = [];
@@ -28,4 +30,39 @@ function orm_parse_pgn(string $pgn): array {
 	$tags['Moves'] = $matches['san'];
 
 	return $tags;
+}
+
+function orm_do_san_move(?string $startfen, ?string $san): ?string {
+	static $proc = null;
+	static $pipes = null;
+
+	if($proc === null) {
+		$proc = proc_open(__DIR__.'/../puzzlegen/build/gumble/src/gumble', [
+			0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ],
+		], $pipes);
+	}
+
+	$pos = ($startfen === null) ? 'startpos' : 'fen '.$startfen;
+
+	if($san !== null) {
+		fprintf($pipes[0], "position %s\nlan %s\n", $pos, $san);
+		fflush($pipes[0]);
+		$lan = explode(' ', fgets($pipes[1]));
+		if($lan[0] !== 'info' || $lan[1] !== 'lan') {
+			/* Illegal move, most likely... */
+			@fclose($pipes[0]);
+			@fclose($pipes[1]);
+			@proc_close($proc);
+			$proc = null;
+			$pipes = null;
+			return null;
+		}
+		$pos .= ' moves '.trim($lan[2]);
+	}
+
+	fprintf($pipes[0], "position %s\nfen\n", $pos);
+	fflush($pipes[0]);
+	$fen = explode(' ', fgets($pipes[1]), 3);
+	assert($fen[0] === 'info' && $fen[1] === 'fen');
+	return trim($fen[2]);
 }

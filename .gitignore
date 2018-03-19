@@ -1,3 +1,7 @@
+book/build
+book/tmp.*
+book/*.tsv
+book/*.zst
 frontend/deps
 frontend/gumble.js
 frontend/stockfish.js
