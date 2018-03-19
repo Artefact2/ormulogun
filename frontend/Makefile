@@ -1,7 +1,6 @@
 FRONTEND:=index.html ormulogun.css ormulogun.js
 
 all: ext-all deps $(FRONTEND)
-	+make -C puzzles js-all
 
 index.html: index.xhtml
 	echo '<!DOCTYPE html>' > $@
@@ -22,6 +21,8 @@ deps:
 
 ext-all:
 	cp -a ../ext/frontend/* .
+	cp -a ../ext/puzzles .
+	make -C puzzles js-all
 
 host:
 	@echo "Browse to http://[::1]:8080/index.xhtml in your browser..."
