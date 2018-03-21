@@ -1,0 +1,80 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ini_set('memory_limit', -1);
+
+const CUTOFF = .9;
+
+$eco = [];
+
+while($f = fgets(STDIN)) {
+	$f = substr($f, 0, -1);
+	assert(preg_match('%^\{.+\}%', pathinfo($f, PATHINFO_FILENAME), $match));
+	$k = $match[0];
+
+	$f = popen('zstdcat '.escapeshellarg($f), 'rb');
+	assert($f !== false);
+	$max = 2;
+	while($l = fgets($f)) {
+		list($n, , , $fen) = explode("\t", substr($l, 0, -1));
+		if($n < .9 * $max) continue;
+		if($n > $max) $max = $n;
+		$eco[$k][$fen] = $n;
+	}
+	pclose($f);
+
+	if($max === 2) continue;
+
+	foreach($eco[$k] as $fen => $n) {
+		if($n < .9 * $max) {
+			unset($eco[$k][$fen]);
+		}
+	}
+	arsort($eco[$k]);
+}
+
+while($eco !== []) {
+	$maxe = null;
+	$maxk = null;
+	$maxv = 0;
+
+	foreach($eco as $e => &$a) {
+		$v = reset($a);
+		if($v <= $maxv) continue;
+
+		$el = strlen($e);
+		for($i = 5; $i < $el - 2; ++$i) {
+			/* XXX: flawed */
+			/* Show "X" before "X: variation Y", no matter what numbers say */
+			if(isset($eco[substr($e, 0, $i).'"}'])) continue 2;
+		}
+
+		$maxv = $v;
+		$maxk = key($a);
+		$maxe = $e;
+	}
+
+	assert($maxe !== null);
+	printf("%s\t%s\n", $maxe, $maxk);
+
+	foreach($eco as $k => $v) {
+		unset($eco[$k][$maxk]);
+		if($eco[$k] === []) {
+			unset($eco[$k]);
+		}
+	}
+}

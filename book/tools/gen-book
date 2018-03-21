@@ -43,9 +43,7 @@ while($pgn = fgets(STDIN)) {
 		$fen = orm_do_san_move($fen, $san);
 		if($fen === null) break;
 
-		$sfen = explode(' ', $fen, 5);
-		array_pop($sfen);
-		$sfen = implode(' ', $sfen);
+		$sfen = orm_bookfen($fen);
 
 		if(!isset($book[$sfen])) $book[$sfen] = [ 0, 0, 0 ];
 		++$book[$sfen][$i];

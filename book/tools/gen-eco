@@ -1,0 +1,90 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+if($argc === 1) {
+	fprintf(STDERR, "Usage: chunk-pgn < input.pgn | %s <out-dir>\n");
+	die(1);
+}
+
+ini_set('memory_limit', -1);
+
+require __DIR__.'/../../tools/ormulogun.php';
+
+$eco = [];
+
+function shortfens(array $a): array {
+	$ret = [];
+	$lanl = '';
+	orm_gumble('position startpos', false);
+	foreach($a as $san) {
+		$lanl .= ' '.orm_gumble('lan '.$san);
+		orm_gumble('position startpos moves'.$lanl, false);
+		$ret[] = orm_ecobookfen(orm_gumble('fen'));
+	}
+	return $ret;
+}
+
+while($pgn = fgets(STDIN, 32768)) {
+	$pgns = json_decode($pgn);
+	if(!is_string($pgns)) {
+		fprintf(STDERR, "Unparseable pgn? %s\n", $pgn);
+		continue;
+	}
+	$pgn = orm_parse_pgn($pgns);
+
+	$k = [];
+	foreach([ 'ECO', 'Opening', 'Variation' ] as $t) {
+		if(!isset($pgn[$t]) || $pgn[$t] === '?') continue;
+		$k[strtolower($t)] = $pgn[$t];
+	}
+	if($k === []) continue;
+
+	$k = json_encode($k, JSON_UNESCAPED_SLASHES);
+	$k = str_replace('/', '\u002f', $k); /* Escape slashes with their unicode CP to make a legal directory name */
+	$sf = shortfens($pgn['Moves']);
+
+	if(!isset($eco[$k])) $eco[$k] = [];
+	foreach($sf as $t) {
+		if(isset($eco[$k][$t])) ++$eco[$k][$t];
+		else $eco[$k][$t] = 1;
+	}
+}
+
+$file = sprintf("%05d.%.04f.tsv.zst", getmypid(), microtime(true)); /* Should be "unique enough" */
+$dir = $argv[1];
+foreach($eco as $k => &$v) {
+	/* Create the output directory without getting into race
+	 * conditions */
+	if(!file_exists($odir = $dir.'/'.$k)) {
+		touch($lockf = $dir.'/lock');
+		$lockf = fopen($lockf, 'rb');
+		assert($lockf !== false);
+		assert(flock($lockf, LOCK_EX));
+		if(!file_exists($odir)) {
+			assert(mkdir($odir, 0777, true) !== false);
+		}
+		flock($lockf, LOCK_UN);
+	}
+
+	ksort($v);
+	$fp = popen('zstd - -qo '.escapeshellarg($odir.'/'.$file), 'wb');
+	foreach($v as $fen => $c) {
+		/* merge-books expects 3 fields */
+		fprintf($fp, "%d\t0\t0\t%s\n", $c, $fen);
+	}
+	pclose($fp);
+}

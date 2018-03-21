@@ -2,6 +2,9 @@ SHELL:=/bin/bash
 TMP:=$(shell mktemp -u -p .)
 PATH:=../../tools:../tools:../build/src:$(PATH)
 
+default:
+	@echo "See README.md for usage."
+
 import-pgn:
 	pv $(INPUT) | chunk-pgn | parallel -j100% --lb --pipe --round-robin filter-pgn | zstd -19 - -o $(TMP)
 	sync $(TMP)
@@ -44,4 +47,4 @@ regen-all:
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
 	make out/manifest.json
 
-.PHONY: clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all
+.PHONY: default clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all

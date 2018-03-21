@@ -16,10 +16,11 @@
  */
 
 ini_set('memory_limit', -1);
-assert_options(ASSERT_BAIL, 1);
 
-if($argc !== 2) {
-	fprintf(STDERR, "Usage: %s book.tsv\n", $argv[0]);
+require __DIR__.'/../../tools/ormulogun.php';
+
+if($argc !== 2 && $argc !== 3) {
+	fprintf(STDERR, "Usage: %s book.tsv [eco.tsv]\n", $argv[0]);
 	die(1);
 }
 
@@ -29,55 +30,42 @@ $book = [];
 $bf = fopen($argv[1], 'rb');
 assert($bf !== false);
 while($l = fgets($bf)) {
-	list($w, $d, $l, $pgn) = explode("\t", substr($l, 0, -1));
-	$book[$pgn] = [ (int)$w, (int)$d, (int)$l ];
+	list($w, $d, $l, $fen) = explode("\t", substr($l, 0, -1));
+	$book[$fen] = [ (int)$w, (int)$d, (int)$l ];
 }
 fclose($bf);
 printf("Loaded %d positions from book.\n", count($book));
 
-
-function gumble(string $cmd, bool $expectresult = true): ?string {
-	static $proc = null;
-	static $pipes = null;
-
-	if($proc === null) {
-		$proc = proc_open(__DIR__.'/../../puzzlegen/build/gumble/src/gumble', [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $pipes);
-		assert($proc !== false);
+$eco = [];
+if($argc === 3) {
+	$bf = fopen($argv[2], 'rb');
+	assert($bf !== false);
+	while($l = fgets($bf)) {
+		list($json, $fen) = explode("\t", substr($l, 0, -1));
+		$eco[$fen] = json_decode($json, true);
 	}
-
-	fwrite($pipes[0], $cmd."\n");
-	if($expectresult === false) return null;
-
-	$line = fgets($pipes[1]);
-	assert($line !== false);
-	$line = explode(' ', substr($line, 0, -1), 3);
-	assert($line[0] === 'info' && $line[1] === explode(' ', $cmd, 2)[0]);
-	return $line[2];
+	fclose($bf);
+	fprintf("Loaded %d positions from ECO code book.\n", count($eco));
 }
 
-function shortfen(string $fen): string {
-	$fen = explode(' ', $fen, 5);
-	array_pop($fen);
-	return implode(' ', $fen);
-}
 
 echo "Enter moves in short or long algebraic notation. Use '..' to undo the previous move. Use ^C or q to exit.\n";
 $lanmoves = '';
 while(true) {
-	gumble('position startpos moves '.$lanmoves, false);
+	orm_gumble('position startpos moves '.$lanmoves, false);
 
-	$fen = shortfen(gumble('fen'));
-	$lans = explode(' ', gumble('moves'));
+	$bfen = orm_bookfen($fen = orm_gumble('fen'));
+	$lans = explode(' ', orm_gumble('moves'));
 
 	$sans = [];
 	foreach($lans as $l) {
-		$sans[$l] = gumble('san '.$l);
+		$sans[$l] = orm_gumble('san '.$l);
 	}
 
 	$positions = [];
 	foreach($lans as $l) {
-		gumble('position startpos moves '.$lanmoves.' '.$l, false);
-		$nf = shortfen(gumble('fen'));
+		orm_gumble('position startpos moves '.$lanmoves.' '.$l, false);
+		$nf = orm_bookfen(orm_gumble('fen'));
 		if(!isset($book[$nf])) continue;
 		$positions[$l] = $book[$nf];
 	}
@@ -86,13 +74,22 @@ while(true) {
 			return $b[0] + $b[1] + $b[2] - $a[0] - $a[1] - $a[2];
 		});
 
-	echo $fen, "\n";
+	echo $bfen, "\n";
+
+	if(isset($eco[$efen = orm_ecobookfen($fen)])) {
+		printf("%3s %s %s\n",
+			   $eco[$efen]['eco'] ?? '???',
+			   $eco[$efen]['opening'] ?? '',
+			   isset($eco[$efen]['variation']) ? '('.$eco[$efen]['variation'].')' : ''
+		);
+	}
+
 	foreach($positions as $l => $wdl) {
 		printf(
 			"%10s %9d %6.2f %6.2f/%6.2f/%6.2f\n",
 			$sans[$l],
 			$wdl[0] + $wdl[1] + $wdl[2],
-			100. * ($wdl[0] + $wdl[1] + $wdl[2]) / ($book[$fen][0] + $book[$fen][1] + $book[$fen][2]),
+			100. * ($wdl[0] + $wdl[1] + $wdl[2]) / ($book[$bfen][0] + $book[$bfen][1] + $book[$bfen][2]),
 			100. * $wdl[0] / ($wdl[0] + $wdl[1] + $wdl[2]),
 			100. * $wdl[1] / ($wdl[0] + $wdl[1] + $wdl[2]),
 			100. * $wdl[2] / ($wdl[0] + $wdl[1] + $wdl[2])

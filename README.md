@@ -38,6 +38,11 @@ Puzzle generation
 
 See [README.md](./puzzlegen/puzzles/README.md).
 
+Opening book generation
+-----------------------
+
+See [README.md](./book/README.md).
+
 To-Do
 =====
 

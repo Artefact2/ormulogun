@@ -26,7 +26,7 @@ function orm_parse_pgn(string $pgn): array {
 	}
 
 	$moves = preg_replace('% \{[^}]*\} %', ' ', $body);
-	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
+	preg_match_all('%(?<san>(O-O-O|O-O|((([KQRBN][a-h]?[1-8]?)|[a-h])x?)?[a-h][1-8](=[QRBN])?))(\+|#|\?!|\?|\?\?)?%', $moves, $matches);
 	$tags['Moves'] = $matches['san'];
 
 	return $tags;
@@ -65,4 +65,31 @@ function orm_do_san_move(?string $startfen, ?string $san): ?string {
 	$fen = explode(' ', fgets($pipes[1]), 3);
 	assert($fen[0] === 'info' && $fen[1] === 'fen');
 	return trim($fen[2]);
+}
+
+function orm_gumble(string $cmd, bool $expectresult = true): ?string {
+	static $proc = null;
+	static $pipes = null;
+
+	if($proc === null) {
+		$proc = proc_open(__DIR__.'/../puzzlegen/build/gumble/src/gumble', [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $pipes);
+		assert($proc !== false);
+	}
+
+	fwrite($pipes[0], $cmd."\n");
+	if($expectresult === false) return null;
+
+	$line = fgets($pipes[1]);
+	assert($line !== false);
+	$line = explode(' ', substr($line, 0, -1), 3);
+	assert($line[0] === 'info' && $line[1] === explode(' ', $cmd, 2)[0]);
+	return $line[2];
+}
+
+function orm_bookfen(string $fen): string {
+	return implode(' ', array_slice(explode(' ', $fen, 5), 0, 4));
+}
+
+function orm_ecobookfen(string $fen): string {
+	return implode(' ', array_slice(explode(' ', $fen, 6), 0, 5));
 }
