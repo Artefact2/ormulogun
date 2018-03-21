@@ -1,3 +1,4 @@
+PATH:=../tools:$(PATH)
 FRONTEND:=index.html ormulogun.css ormulogun.js
 
 all: ext-all deps $(FRONTEND)
@@ -6,11 +7,11 @@ index.html: index.xhtml
 	echo '<!DOCTYPE html>' > $@
 	tail -n +2 $< >> $@
 
-ormulogun.js: src/js/main.js $(shell find src/js -name "*.js" -not -name "main.js")
+ormulogun.js: ../src/frontend/js/main.js $(shell find ../src/frontend/js -name "*.js" -not -name "main.js")
 	cat $^ > $@
 
-ormulogun.css: $(shell find src/scss -name "*.scss")
-	sassc -t compressed src/scss/ormulogun.scss $@
+ormulogun.css: $(shell find ../src/frontend/scss -name "*.scss" -not -name "ormulogun.scss")
+	sassc -t compressed ../src/frontend/scss/ormulogun.scss $@
 
 deps:
 	mkdir $@ || exit 1

@@ -10,13 +10,13 @@ Generating an opening book
 2. Prune positions from the book that were reached, for example, less than 100 times:
 
    ~~~
-   ./build/src/merge-books 100 <(zstdcat book.tsv.zst) | pv > book100.tsv
+   ../build/src/bookgen/merge-books 100 <(zstdcat book.tsv.zst) | pv > book100.tsv
    ~~~
 
 3. Test the generated book.
 
    ~~~
-   ./tools/test-book book100.tsv
+   ../tools/bookgen/test-book book100.tsv
    ~~~
 
 Generating an ECO code book
@@ -29,4 +29,4 @@ Requires a PGN list of games, annonated with the appropriate tags
 make eco.tsv INPUT=foo.pgn
 ~~~
 
-Test with `./tools/test-book book.tsv eco.tsv`.
+Test with `../tools/bookgen/test-book book.tsv eco.tsv`.

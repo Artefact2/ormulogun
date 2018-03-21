@@ -37,7 +37,7 @@ make -C frontend host
 Puzzle generation
 -----------------
 
-See [README.md](./puzzlegen/puzzles/README.md).
+See [README.md](./puzzles/README.md).
 
 Opening book generation
 -----------------------

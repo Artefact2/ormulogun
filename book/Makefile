@@ -1,12 +1,8 @@
 TMP:=$(shell mktemp -u -p .)
-PATH:=../tools:./tools:./build/src:$(PATH)
+PATH:=../tools:../tools/bookgen:../build/src:../build/src/bookgen:$(PATH)
 
-default: build
-	+cd build && make
-
-build:
-	mkdir -p $@
-	cd $@ && CFLAGS="-g -Og -Wall" cmake .. || (rm -R ../$@; exit 1)
+default:
+	@echo "See README.md for usage."
 
 book.tsv.zst:
 	mkdir $(TMP)
