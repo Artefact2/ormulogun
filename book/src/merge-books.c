@@ -17,12 +17,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <gumble.h>
+
+#define S(a) S_(a)
+#define S_(a) #a
 
 typedef struct {
 	unsigned int w;
 	unsigned int d;
 	unsigned int l;
-	char fen[128];
+	char fen[SAFE_FEN_LENGTH+1];
 } book_entry_t;
 
 int main(int argc, char** argv) {
@@ -32,7 +36,7 @@ int main(int argc, char** argv) {
 	}
 
 	unsigned int pthresh = strtoul(argv[1], 0, 10);
-	char min[128];
+	char min[SAFE_FEN_LENGTH+1];
 	int i;
 
 	argc -= 2;
@@ -55,7 +59,7 @@ int main(int argc, char** argv) {
 		for(i = 0; i < argc; ++i) {
 			if(lines[i].fen[0] == 0) {
 				/* XXX: this is extremely fragile */
-				if(fscanf(in[i], "%u\t%u\t%u\t%127[KQRBNPkqrbnp12345678/abcdefghwb- ]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].fen) == EOF) {
+				if(fscanf(in[i], "%u\t%u\t%u\t%" S(SAFE_FEN_LENGTH) "[KQRBNPkqrbnp12345678/abcdefghwb- ]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].fen) == EOF) {
 					fclose(in[i]);
 					in[i] = in[argc - 1];
 					lines[i] = lines[argc - 1];

@@ -1,14 +1,14 @@
 TMP:=$(shell mktemp -u -p .)
-PATH:=../tools:./tools:./build:$(PATH)
+PATH:=../tools:./tools:./build/src:$(PATH)
 
-default:
-	@echo "See README.md for usage."
+default: build
+	+cd build && make
 
-build/%: src/%.c
-	mkdir -p build
-	clang -g -Og -Wall -o $@ $<
+build:
+	mkdir -p $@
+	cd $@ && CFLAGS="-g -Og -Wall" cmake .. || (rm -R ../$@; exit 1)
 
-book.tsv.zst: build/merge-books
+book.tsv.zst:
 	mkdir $(TMP)
 	pv $(INPUT) | chunk-pgn | parallel --block-size 20M --pipe --files --compress --compress-program zstd --tmpdir $(TMP) gen-book >/dev/null
 	batch-merge 100 2 $@ $(TMP)/par*.par

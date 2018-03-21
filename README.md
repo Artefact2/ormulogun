@@ -10,13 +10,14 @@ Dependencies
 ============
 
 * PHP (CLI)
-* Any UCI engine (eg stockfish)
+* Any UCI engine (eg stockfish; puzzle generation only)
 * GNU parallel
 * pv
 * zstd
 * CMake
 * clang/llvm
-* sassc
+* sassc (frontend only)
+* Judy (book generation only)
 
 Getting started
 ===============

@@ -10,7 +10,7 @@ Generating an opening book
 2. Prune positions from the book that were reached, for example, less than 100 times:
 
    ~~~
-   ./build/merge-books 100 <(zstdcat book.tsv.zst) | pv > book100.tsv
+   ./build/src/merge-books 100 <(zstdcat book.tsv.zst) | pv > book100.tsv
    ~~~
 
 3. Test the generated book.
