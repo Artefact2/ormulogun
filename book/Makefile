@@ -6,8 +6,8 @@ default:
 
 book.tsv.zst:
 	mkdir $(TMP)
-	pv $(INPUT) | chunk-pgn | parallel --block-size 100M --pipe --files --compress --compress-program zstd --tmpdir $(TMP) gen-book >/dev/null
-	batch-merge 100 2 $@ $(TMP)/par*.par
+	pv $(INPUT) | chunk-pgn | parallel --block-size 100M --pipe --files --compress --compress-program pzstd --tmpdir $(TMP) gen-book >/dev/null
+	zstdize merge-books-mt 2 $(TMP)/par*.par | pv -ls $$(pv $(TMP)/par*.par | zstdcat | wc -l) | pzstd - -fqo $@
 	sync $@
 
 eco.tsv:
