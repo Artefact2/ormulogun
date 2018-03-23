@@ -18,13 +18,11 @@
 #include <string.h>
 #include <assert.h>
 
-#define PAYLOAD_SIZE 1024
-
 typedef struct {
 	unsigned int w;
 	unsigned int d;
 	unsigned int l;
-	char payload[PAYLOAD_SIZE];
+	char payload[1024];
 } book_entry_t;
 
 int main(int argc, char** argv) {
@@ -34,7 +32,7 @@ int main(int argc, char** argv) {
 	}
 
 	unsigned int pthresh = strtoul(argv[1], 0, 10);
-	char min[PAYLOAD_SIZE];
+	char min[1024];
 	int i;
 
 	argc -= 2;
@@ -57,7 +55,7 @@ int main(int argc, char** argv) {
 		for(i = 0; i < argc; ++i) {
 			if(lines[i].payload[0] == 0) {
 				/* XXX: this is extremely fragile */
-				if(fscanf(in[i], "%u\t%u\t%u\t%[^\n]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].payload) == EOF) {
+				if(fscanf(in[i], "%u\t%u\t%u\t%1023[^\n]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].payload) == EOF) {
 					fclose(in[i]);
 					in[i] = in[argc - 1];
 					lines[i] = lines[argc - 1];
