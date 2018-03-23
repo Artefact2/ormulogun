@@ -15,43 +15,53 @@
  * limitations under the License.
  */
 
-ini_set('memory_limit', -1);
-assert_options(ASSERT_BAIL, 1);
+$bestcount = 0;
+$bestage = 0;
+$bestposition = null;
 
-$rows = [];
+$curopening = null;
+$curposition = null;
+$curcount = 0;
+$curage = PHP_INT_MAX;
 
-while($f = fgets(STDIN)) {
-	list($code, $opening, $variation, $position, $age, $count) = explode("\t", substr($f, 0, -1));
-	$k = sprintf("%s\t%s\t%s", $code, $opening, $variation);
-	$rows[$k][$position] = [ $age, $count ];
-}
+while(true) {
+	$line = fgets(STDIN);
 
-while($rows !== []) {
-	$minage = PHP_INT_MAX;
-	$maxcount = 0;
-	$ck = null;
-	$cp = null;
-
-	foreach($rows as $k => &$a) {
-		list($age, $count) = reset($a);
-		$position = key($a);
-
-		if($age > $minage) continue;
-		if($age === $minage && $count < $maxcount) continue;
-
-		$minage = $age;
-		$maxcount = $count;
-		$ck = $k;
-		$cp = $position;
+	if($line !== false) {
+		list($count, , , $code, $opening, $variation, $fen) = explode("\t", substr($line, 0, -1));
+		$opening = sprintf("%s\t%s\t%s", $code, $opening, $variation);
+		$position = implode(' ', array_slice($fen = explode(' ', $fen), 0, 2));
 	}
 
-	printf("%s\t%s\n", $ck, $cp);
-
-	unset($rows[$ck]);
-	foreach($rows as $k => &$a) {
-		unset($rows[$k][$cp]);
-		if($rows[$k] === []) {
-			unset($rows[$k]);
+	/* EOF, or moving to another opening */
+	if($line === false || $curopening !== $opening) {
+		if($bestposition !== null) {
+			printf("%s\t%s\t%d\t%d\n", $curopening, $bestposition, $bestage, $bestcount);
 		}
+
+		if($line === false) break;
+
+		$curopening = $opening;
+		$bestposition = null;
+		$bestcount = 0;
+		$bestage = 0;
+	}
+
+	/* Same opening, moving to another position */
+	if($curposition !== $position) {
+		if($curcount > $bestcount || ($curcount === $bestcount && $curage > $bestage)) {
+			/* New best */
+			$bestcount = $curcount;
+			$bestage = $curage;
+			$bestposition = $curposition;
+		}
+
+		$curposition = $position;
+		$curcount = (int)$count;
+		$curage = 2 * (int)$fen[5] + (int)($fen[1] === 'b') - 2;
+	} else {
+		/* Same opening, same position */
+		$curcount += $count;
+		$curage = min($curage, 2 * (int)$fen[5] + (int)($fen[1] === 'b') - 2);
 	}
 }

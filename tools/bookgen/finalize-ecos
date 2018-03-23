@@ -15,28 +15,29 @@
  * limitations under the License.
  */
 
-if($argc < 3) {
-	fprintf(STDERR, "Usage: %s <prune-threshold> in1.tsd in2.tsd...\n", $argv[0]);
-	die(1);
-}
+$rows = [];
 
-const CHUNK_SIZE = 4;
+while($line = fgets(STDIN)) {
+	list($eco, $opening, $variation, $pos, $age, $count) = explode("\t", substr($line, 0, - 1));
 
-array_shift($argv);
-$prune = (int)array_shift($argv);
+	$a = [ $eco, $opening, $variation, (int)$age, (int)$count ];
 
-$tomerge = array_map('escapeshellarg', $argv);
-
-while(count($tomerge) > CHUNK_SIZE) {
-	$merged = [];
-
-	foreach(array_chunk($tomerge, CHUNK_SIZE) as $chunk) {
-		$merged[] = '<(merge-books 0 '.implode(' ', $chunk).')';
+	if(!isset($rows[$pos])) {
+		$rows[$pos] = $a;
+		continue;
 	}
 
-	$tomerge = $merged;
+	fprintf(STDERR, "Conflict for position %s\n%s\n%s\n", $pos, json_encode($rows[$pos]), json_encode($a));
+
+	if($rows[$pos][4] < $a[4]) {
+		$rows[$pos] = $a;
+	}
 }
 
-$cmd = 'merge-books '.$prune.' '.implode(' ', $tomerge);
-passthru('bash -c '.escapeshellarg($cmd), $ret);
-die($ret);
+uasort($rows, function(array $a, array $b) {
+	return strcmp($a[0], $b[0]) ?: (strcmp($a[1], $b[1]) ?: strcmp($a[2], $b[2]));
+});
+
+foreach($rows as $pos => list($eco, $op, $var)) {
+	printf("%s\t%s\t%s\t%s\n", $eco, $op, $var, $pos);
+}

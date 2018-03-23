@@ -16,54 +16,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
-#include <errno.h>
-#include <time.h>
 #include <gumble.h>
 #include <Judy.h>
 #include "common.h"
 
-static FILE* zstdpipe(const char* out) {
-	int fd[2]; /* read, write */
-	int r;
-
-	r = pipe(fd);
-	assert(!r);
-
-	switch(fork()) {
-	case -1:
-		assert(0);
-		__builtin_unreachable();
-
-	case 0: /* Child */
-		close(fd[1]);
-		r = dup2(fd[0], 0); /* set new stdin */
-		assert(!r);
-		execlp("zstd", "zstd", "-", "-qo", out, 0);
-		assert(0);
-		__builtin_unreachable();
-
-	default: /* Parent */
-		close(fd[0]);
-		return fdopen(fd[1], "wb");
-	}
-
-	assert(0);
-	__builtin_unreachable();
-}
-
-int main(int argc, char** argv) {
-	if(argc != 2) {
-		fprintf(stderr, "Usage: chunk-pgn < input.pgn | %s <out-dir>\n", argv[0]);
-		return 1;
-	}
-	if(chdir(argv[1])) {
-		fprintf(stderr, "%s: could not chdir into %s\n", argv[0], argv[1]);
-		return 1;
-	}
-
+int main(void) {
 	char* line = 0;
 	char* pgn = 0;
 	size_t linelen, pgnlen;
@@ -123,35 +80,17 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	FILE* out;
-	char outfn[20];
-	struct timespec t;
-	r = clock_gettime(CLOCK_REALTIME, &t);
-	assert(!r);
-	snprintf(outfn, 40, "%05d.%ld.%09ld.tsv.zst", getpid(), t.tv_sec, t.tv_nsec);
 	key[0] = '\0';
 	JSLF(sub_array, main_array, key);
 	while(sub_array) {
-		r = mkdir(key, 0777);
-		assert(!r || errno == EEXIST);
-		r = chdir(key);
-		assert(!r);
-		out = zstdpipe(outfn);
-		assert(out);
-
 		fen[0] = '\0';
 		JSLF(sub_array_value, *sub_array, fen);
 		while(sub_array_value) {
-			fprintf(out, "%u\t0\t0\t%s\n", *sub_array_value, fen);
+			printf("%u\t0\t0\t%s\t%s\n", *sub_array_value, key, fen);
 			JSLN(sub_array_value, *sub_array, fen);
 		}
 		//JLFA(linelen, *sub_array); XXX: fails with free(): invalid pointer
 		JSLN(sub_array, main_array, key);
-
-		fclose(out);
-		wait(0); /* for zstd to terminate */
-		r = chdir("..");
-		assert(!r);
 	}
 
 	if(line) free(line);

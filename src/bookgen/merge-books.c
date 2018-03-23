@@ -17,16 +17,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <gumble.h>
 
-#define S(a) S_(a)
-#define S_(a) #a
+#define PAYLOAD_SIZE 1024
 
 typedef struct {
 	unsigned int w;
 	unsigned int d;
 	unsigned int l;
-	char fen[SAFE_FEN_LENGTH+1];
+	char payload[PAYLOAD_SIZE];
 } book_entry_t;
 
 int main(int argc, char** argv) {
@@ -36,7 +34,7 @@ int main(int argc, char** argv) {
 	}
 
 	unsigned int pthresh = strtoul(argv[1], 0, 10);
-	char min[SAFE_FEN_LENGTH+1];
+	char min[PAYLOAD_SIZE];
 	int i;
 
 	argc -= 2;
@@ -57,22 +55,23 @@ int main(int argc, char** argv) {
 
 		/* Read new lines and find the minimum */
 		for(i = 0; i < argc; ++i) {
-			if(lines[i].fen[0] == 0) {
+			if(lines[i].payload[0] == 0) {
 				/* XXX: this is extremely fragile */
-				if(fscanf(in[i], "%u\t%u\t%u\t%" S(SAFE_FEN_LENGTH) "[KQRBNPkqrbnp12345678/abcdefghwb09- ]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].fen) == EOF) {
+				if(fscanf(in[i], "%u\t%u\t%u\t%[^\n]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].payload) == EOF) {
 					fclose(in[i]);
 					in[i] = in[argc - 1];
 					lines[i] = lines[argc - 1];
+					argv[i] = argv[argc - 1];
 					--i;
 					--argc;
 					continue;
 				}
 			}
 
-			assert(lines[i].fen[0]);
+			assert(lines[i].payload[0]);
 
-			if(min[0] == 0 || strcmp(lines[i].fen, min) < 0) {
-				strcpy(min, lines[i].fen);
+			if(min[0] == 0 || strcmp(lines[i].payload, min) < 0) {
+				strcpy(min, lines[i].payload);
 			}
 		}
 
@@ -82,14 +81,14 @@ int main(int argc, char** argv) {
 		/* Merge minimums and print it */
 		unsigned int w = 0, d = 0, l = 0;
 		for(i = 0; i < argc; ++i) {
-			int c = strcmp(min, lines[i].fen);
+			int c = strcmp(min, lines[i].payload);
 			assert(c <= 0);
 			if(c) continue;
 
 			w += lines[i].w;
 			d += lines[i].d;
 			l += lines[i].l;
-			lines[i].fen[0] = 0;
+			lines[i].payload[0] = 0;
 		}
 
 		if(w + d + l >= pthresh) {
