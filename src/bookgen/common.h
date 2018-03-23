@@ -1,5 +1,3 @@
-#!/usr/bin/env php
-<?php
 /* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +13,17 @@
  * limitations under the License.
  */
 
-if($argc !== 1) {
-	fprintf(STDERR, "Usage: %s < foo.pgn\n", $argv[0]);
-	die(1);
-}
+#pragma once
+#ifndef __ORMULOGUN_BOOKGEN_COMMON
+#define __ORMULOGUN_BOOKGEN_COMMON
 
-function encode_json_string(string $s): string {
-	return '"'.str_replace(
-		[ '\\', '"', "\b", "\f", "\n", "\r", "\t" ],
-		[ '\\\\', '\\"', '\\b', '\\f', '\\n', '\\r', '\\t' ],
-		$s
-	).'"';
-}
+#define TURN_LIMIT 30
 
-$buf = '';
+void gobble_whitespace(const char**);
+char read_hex_digit(char);
+int read_json_string(char**, size_t*, const char*, size_t);
+int find_pgn_tag(const char*, const char*, char*, size_t);
+const char* find_pgn_next_move(const char*, char*, size_t);
+void strip_last_fields(char*, char, unsigned char);
 
-while(!feof(STDIN)) {
-	$buf .= fread(STDIN, 32768);
-
-	while(($p = strpos($buf, "\n\n[")) !== false) {
-		$pgn = substr($buf, 0, $p + 2);
-		echo encode_json_string($pgn), "\n";
-		$buf = substr($buf, $p + 2);
-	}
-}
-
-if($buf !== '') echo encode_json_string($buf), "\n";
+#endif

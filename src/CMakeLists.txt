@@ -3,3 +3,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../ext/gumble/include ${CMAKE_CU
 
 add_subdirectory(bookgen)
 add_subdirectory(puzzlegen)
+
+add_executable(chunk-pgn chunk-pgn.c)

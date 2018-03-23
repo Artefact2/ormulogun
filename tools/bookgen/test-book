@@ -41,11 +41,11 @@ if($argc === 3) {
 	$bf = fopen($argv[2], 'rb');
 	assert($bf !== false);
 	while($l = fgets($bf)) {
-		list($json, $fen) = explode("\t", substr($l, 0, -1));
-		$eco[$fen] = json_decode($json, true);
+		list($code, $opening, $variation, $fen) = explode("\t", substr($l, 0, -1));
+		$eco[$fen] = [ $code, $opening, $variation ];
 	}
 	fclose($bf);
-	fprintf("Loaded %d positions from ECO code book.\n", count($eco));
+	printf("Loaded %d positions from ECO code book.\n", count($eco));
 }
 
 
@@ -77,11 +77,7 @@ while(true) {
 	echo $bfen, "\n";
 
 	if(isset($eco[$efen = orm_ecobookfen($fen)])) {
-		printf("%3s %s %s\n",
-			   $eco[$efen]['eco'] ?? '???',
-			   $eco[$efen]['opening'] ?? '',
-			   isset($eco[$efen]['variation']) ? '('.$eco[$efen]['variation'].')' : ''
-		);
+		printf("%3s %s %s\n", $eco[$efen][0], $eco[$efen][1], $eco[$efen][2]);
 	}
 
 	foreach($positions as $l => $wdl) {

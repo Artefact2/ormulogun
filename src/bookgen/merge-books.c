@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 		for(i = 0; i < argc; ++i) {
 			if(lines[i].fen[0] == 0) {
 				/* XXX: this is extremely fragile */
-				if(fscanf(in[i], "%u\t%u\t%u\t%" S(SAFE_FEN_LENGTH) "[KQRBNPkqrbnp12345678/abcdefghwb- ]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].fen) == EOF) {
+				if(fscanf(in[i], "%u\t%u\t%u\t%" S(SAFE_FEN_LENGTH) "[KQRBNPkqrbnp12345678/abcdefghwb09- ]", &lines[i].w, &lines[i].d, &lines[i].l, lines[i].fen) == EOF) {
 					fclose(in[i]);
 					in[i] = in[argc - 1];
 					lines[i] = lines[argc - 1];

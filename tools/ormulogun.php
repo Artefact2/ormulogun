@@ -37,7 +37,7 @@ function orm_do_san_move(?string $startfen, ?string $san): ?string {
 	static $pipes = null;
 
 	if($proc === null) {
-		$proc = proc_open(__DIR__.'/../puzzlegen/build/gumble/src/gumble', [
+		$proc = proc_open(__DIR__.'/../build/gumble/src/gumble', [
 			0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ],
 		], $pipes);
 	}
@@ -72,7 +72,7 @@ function orm_gumble(string $cmd, bool $expectresult = true): ?string {
 	static $pipes = null;
 
 	if($proc === null) {
-		$proc = proc_open(__DIR__.'/../puzzlegen/build/gumble/src/gumble', [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $pipes);
+		$proc = proc_open(__DIR__.'/../build/gumble/src/gumble', [ 0 => [ 'pipe', 'r' ], 1 => [ 'pipe', 'w' ] ], $pipes);
 		assert($proc !== false);
 	}
 
@@ -91,5 +91,5 @@ function orm_bookfen(string $fen): string {
 }
 
 function orm_ecobookfen(string $fen): string {
-	return implode(' ', array_slice(explode(' ', $fen, 6), 0, 5));
+	return implode(' ', array_slice(explode(' ', $fen, 3), 0, 2));
 }
