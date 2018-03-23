@@ -25,29 +25,30 @@ $bsize = (int)array_shift($argv);
 $thresh = (int)array_shift($argv);
 $out = array_shift($argv);
 
+$tmproot = 'tmp.'.getmypid().'.'.microtime(true).'.';
 $gen = 0;
 $tomerge = $argv;
 
 while(count($tomerge) > 1) {
-	$merged = [];
+	assert(mkdir($tmp = $tmproot.$gen));
 
-	$chunks = array_chunk($tomerge, $bsize);
-	foreach($chunks as $i => $chunk) {
-		$cmd = 'zstdize merge-books '.(count($chunks) === 1 ? $thresh : 0).' --';
-		foreach($chunk as $c) {
-			$cmd .= ' '.escapeshellarg($c);
-		}
-		$tempout = $out.'.'.$gen.'.'.$i;
-		$merged[] = $tempout;
-		$cmd .= ' | zstd - -qo '.escapeshellarg($tempout);
-		passthru($cmd, $ret);
-		if($ret !== 0) die($ret);
-		if($gen > 0) {
-			foreach($chunk as $c) unlink($c);
-		}
+	$cmd = 'zstdize merge-books '.(count($tomerge) > $bsize ? 0 : $thresh).' --';
+	if(count($tomerge) > $bsize) {
+		$cmd = 'parallel -N'.$bsize.' --files --compress --compress-program pzstd --tmpdir '.escapeshellarg($tmp).' '.$cmd.' :::';
 	}
 
-	$tomerge = $merged;
+	$inputs = '';
+	foreach($tomerge as $f) {
+		$inputs .= ' '.escapeshellarg($f);
+	}
+
+	passthru($cmd.$inputs.' >/dev/null', $ret);
+	if($ret !== 0) die($ret);
+
+	if($gen > 0) {
+		passthru('rm -f '.$inputs);
+	}
+	$tomerge = glob($tmp.'/par*.par');
 	++$gen;
 }
 
@@ -57,3 +58,5 @@ if($gen > 0) {
 } else {
 	copy($tomerge[0], $out);
 }
+
+passthru('find . -mindepth 1 -maxdepth 1 -type d -name '.escapeshellarg($tmproot.'*').' -exec rmdir {} +');
