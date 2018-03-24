@@ -30,10 +30,28 @@ $book = [];
 $bf = fopen($argv[1], 'rb');
 assert($bf !== false);
 while($l = fgets($bf)) {
-	list($w, $d, $l, $fen) = explode("\t", substr($l, 0, -1));
-	$book[$fen] = [ (int)$w, (int)$d, (int)$l ];
+	list($w, $d, $l, $fen, $lan) = explode("\t", substr($l, 0, -1));
+
+	if(!isset($book[$fen])) {
+		$book[$fen] = [ 0, 0, 0, [] ];
+	}
+
+	if($lan === '') {
+		$book[$fen][0] = (int)$w;
+		$book[$fen][1] = (int)$d;
+		$book[$fen][2] = (int)$l;
+	} else {
+		$book[$fen][3][$lan] = [ (int)$w, (int)$d, (int)$l ];
+	}
 }
 fclose($bf);
+foreach($book as &$a) {
+	assert($a[0] + $a[1] + $a[2] > 0);
+	assert(count($a[3]) > 0);
+	uasort($a[3], function(array $a, array $b): int {
+			return $b[0] + $b[1] + $b[2] - $a[0] - $a[1] - $a[2];
+	});
+}
 printf("Loaded %d positions from book.\n", count($book));
 
 $eco = [];
@@ -53,42 +71,27 @@ echo "Enter moves in short or long algebraic notation. Use '..' to undo the prev
 $lanmoves = '';
 while(true) {
 	orm_gumble('position startpos moves '.$lanmoves, false);
-
 	$bfen = orm_bookfen($fen = orm_gumble('fen'));
-	$lans = explode(' ', orm_gumble('moves'));
-
-	$sans = [];
-	foreach($lans as $l) {
-		$sans[$l] = orm_gumble('san '.$l);
-	}
-
-	$positions = [];
-	foreach($lans as $l) {
-		orm_gumble('position startpos moves '.$lanmoves.' '.$l, false);
-		$nf = orm_bookfen(orm_gumble('fen'));
-		if(!isset($book[$nf])) continue;
-		$positions[$l] = $book[$nf];
-	}
-
-	uasort($positions, function(array $a, array $b): int {
-			return $b[0] + $b[1] + $b[2] - $a[0] - $a[1] - $a[2];
-		});
 
 	echo $bfen, "\n";
-
 	if(isset($eco[$efen = orm_ecobookfen($fen)])) {
 		printf("%3s %s %s\n", $eco[$efen][0], $eco[$efen][1], $eco[$efen][2]);
 	}
 
-	foreach($positions as $l => $wdl) {
+	$sans = [];
+
+	foreach($book[$bfen][3] ?? [] as $lan => list($w, $d, $l)) {
+		$s = $w + $d + $l;
+		$san = orm_gumble('san '.$lan);
+		$sans[$lan] = $san;
 		printf(
 			"%10s %9d %6.2f %6.2f/%6.2f/%6.2f\n",
-			$sans[$l],
-			$wdl[0] + $wdl[1] + $wdl[2],
-			100. * ($wdl[0] + $wdl[1] + $wdl[2]) / ($book[$bfen][0] + $book[$bfen][1] + $book[$bfen][2]),
-			100. * $wdl[0] / ($wdl[0] + $wdl[1] + $wdl[2]),
-			100. * $wdl[1] / ($wdl[0] + $wdl[1] + $wdl[2]),
-			100. * $wdl[2] / ($wdl[0] + $wdl[1] + $wdl[2])
+			$san,
+			$w + $d + $l,
+			100. * $s / ($book[$bfen][0] + $book[$bfen][1] + $book[$bfen][2]),
+			100. * $w / $s,
+			100. * $d / $s,
+			100. * $l / $s
 		);
 	}
 
