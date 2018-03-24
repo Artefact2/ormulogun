@@ -83,7 +83,7 @@ function orm_gumble(string $cmd, bool $expectresult = true): ?string {
 	assert($line !== false);
 	$line = explode(' ', substr($line, 0, -1), 3);
 	assert($line[0] === 'info' && $line[1] === explode(' ', $cmd, 2)[0]);
-	return $line[2];
+	return $line[2] ?? '';
 }
 
 function orm_bookfen(string $fen): string {

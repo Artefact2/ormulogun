@@ -1,0 +1,174 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+ini_set('memory_limit', -1);
+
+const STARTPOS = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w';
+
+require __DIR__.'/../../tools/ormulogun.php';
+
+if($argc !== 3) {
+	fprintf(STDERR, "Usage: %s book.tsv eco.tsv\n", $argv[0]);
+	die(1);
+}
+
+
+
+$book = [];
+$bf = fopen($argv[1], 'rb');
+assert($bf !== false);
+while($l = fgets($bf)) {
+	list($w, $d, $l, $fen) = explode("\t", substr($l, 0, -1));
+	$book[$fen] = [ (int)$w, (int)$d, (int)$l ];
+}
+fclose($bf);
+fprintf(STDERR, "Loaded %d positions from book.\n", count($book));
+
+$eco = [ STARTPOS => [ '000', 'Start position', '' ] ];
+$bf = fopen($argv[2], 'rb');
+assert($bf !== false);
+while($l = fgets($bf)) {
+	list($code, $opening, $variation, $fen) = explode("\t", substr($l, 0, -1));
+	$eco[$fen] = [ $code, $opening, $variation ];
+}
+fclose($bf);
+fprintf(STDERR, "Loaded %d positions from ECO code book.\n", count($eco));
+
+
+$nodes = [];
+$edges = [];
+$traversed = [];
+traverse('', '', orm_gumble('fen'), $nodes, $edges, $traversed, $book, $eco);
+
+
+
+$tt = [];
+foreach($book as $f => list($w, $d, $l)) {
+	@$tt[orm_ecobookfen($f)] += $w + $d + $l;
+}
+
+
+
+echo "digraph \"\" {\n",
+	"rankdir=\"TB\"\n",
+	"graph [size=\"29.7,21\" ratio=fill ranksep=2 outputorder=edgesfirst]\n",
+	"node [style=filled width=0 height=0 margin=\"0,.05\"]\n",
+	"edge [weight=1]\n";
+uksort($nodes, function(string $k1, string $k2) use($tt) {
+	return $tt[$k1] - $tt[$k2];
+});
+foreach($nodes as $k => $i) {
+	if($i === 0) continue;
+
+	assert(isset($eco[$k]));
+	$n = $eco[$k];
+
+	$freq = $tt[$k] / $tt[STARTPOS];
+	$label = str_replace(': ', "\n", trim(implode(' ', $n)));
+
+	if($n[0] !== '000') {
+		$hue = (ord($n[0][0]) - ord('A')) / 5.0;
+		$hue += (ord($n[0][1]) - ord('0')) / 50.0;
+		$hue += (ord($n[0][2]) - ord('0')) / 500.0;
+		$sat = max(0.1, min(0.9, 1.2 + .15 * log($freq)));
+		$val = 1.0;
+		$fs = 12 + .6 * log($freq);
+	} else {
+		$hue = 0.0;
+		$sat = 0.0;
+		$val = 0.8;
+		$fs = 16;
+	}
+
+	if(!isset($edges[$k])) {
+		$shape = 'note';
+	} else {
+		$shape = 'folder';
+	}
+
+	printf(
+		"%d [fontsize=%f fillcolor=\"%f %f %f\" label=\"[%.2f%%] %s\" shape=%s href=\"%s\"]\n",
+		$i,
+		$fs,
+		$hue, $sat, $val,
+		100.0 * $freq,
+		$label,
+		$shape,
+		'https://lichess.org/analysis/'.strtr($k, ' ', '_')
+	);
+}
+foreach($edges as $start => $e) {
+	if($nodes[$start] === 0) continue;
+
+	foreach($e as $end => list($w, $t)) {
+		$freq = $w / $t;
+		if($freq > 1.0) continue; /* XXX */
+		$cd = 1.96 * sqrt($freq * (1.0 - $freq) / $t);
+		assert($freq <= 1.0);
+		$tooltip = sprintf(
+			"[%.2f±%.2f] %s -> %s",
+			100.0 * $freq,
+			100.0 * $cd,
+			trim(implode(' ', $eco[$start])),
+			trim(implode(' ', $eco[$end]))
+		);
+
+		printf(
+			"%d -> %d [weight=%f tooltip=\"%s\" color=\"0.0 0.0 %f\" fontcolor=\"0.0 0.0 %f\"]\n",
+			$nodes[$start],
+			$nodes[$end],
+			$freq,
+			$tooltip,
+			1.0 - max(.2, 2.0 * $freq),
+			1.0 - max(.2, 2.0 * $freq)
+		);
+	}
+}
+echo "}\n";
+
+
+
+function traverse(string $prevefen, string $prevbfen, string $fen, array &$nodes, array &$edges, array &$traversed, array $book, array $eco) {
+	$bfen = orm_bookfen($fen);
+	$efen = orm_ecobookfen($fen);
+
+	if(isset($eco[$efen]) && !isset($nodes[$efen])) {
+		$nodes[$efen] = count($nodes);
+		$prevefen = $efen;
+		$prevbfen = $bfen;
+	}
+
+	orm_gumble('position fen '.$fen, false);
+	foreach(explode(' ', orm_gumble('moves')) as $lan) {
+		orm_gumble('position fen '.$fen.' moves '.$lan, false);
+		$nextfen = orm_gumble('fen');
+		$nextbfen = orm_bookfen($nextfen);
+		$nextefen = orm_ecobookfen($nextfen);
+
+		if(!isset($book[$nextbfen])) continue;
+		if(!isset($traversed[$nextbfen])) {
+			$traversed[$nextbfen] = true;
+			traverse($prevefen, $prevbfen, $nextfen, $nodes, $edges, $traversed, $book, $eco);
+		}
+
+		if(isset($nodes[$nextefen])) {
+			/* XXX */
+			@$edges[$prevefen][$nextefen][0] += $book[$nextbfen][0] + $book[$nextbfen][1] + $book[$nextbfen][2];
+			@$edges[$prevefen][$nextefen][1] += $book[$prevbfen][0] + $book[$prevbfen][1] + $book[$prevbfen][2];
+		}
+	}
+}
