@@ -140,12 +140,43 @@ div#board div#puzzle-stuff p#puzzle-prompt {
 	}
 }
 
-div#board div#eco {
-	&:after { content: ' '; }
+div#board div#book-stuff {
+	&> div {
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+	}
 
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	overflow: hidden;
+	&> ul {
+		font-size: 80%;
+		list-style-type: none;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+
+		&> li {
+			margin: 0;
+			padding: 0;
+
+			border-bottom: .15em solid #e9ecef;
+
+			div.progress {
+				height: .8em;
+				position: relative;
+				bottom: -.4em;
+				border-radius: 0;
+
+				&> div.progress-bar {
+					&.ci { opacity: .3; }
+					&.white { background-color: #DDD; }
+					&.ci-wd { background-color: #BBB; }
+					&.draw { background-color: #888; }
+					&.ci-db { background-color: #444; }
+					&.black { background-color: #222; }
+				}
+			}
+		}
+	}
 }
 
 div#journal > div > ul {

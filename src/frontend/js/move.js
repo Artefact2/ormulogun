@@ -35,13 +35,13 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 
 		let bfen = endfen.split(' ', 3).slice(0, 2).join(' ');
 		if(bfen === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w') {
-			$("div#eco").empty().removeProp('title');
+			$("div#book-stuff > div").empty().removeProp('title');
 		} else if(bfen in orm_eco_book) {
-			$("div#eco").text(orm_eco_book[bfen]).prop('title', orm_eco_book[bfen]);
+			$("div#book-stuff > div").text(orm_eco_book[bfen]).prop('title', orm_eco_book[bfen]);
 		} else {
 			let cur = orm_movehist_current();
 			if(cur.data('eco')) {
-				$("div#eco").text(cur.data('eco')).prop('title', cur.data('eco'));
+				$("div#book-stuff > div").text(cur.data('eco')).prop('title', cur.data('eco'));
 			}
 		}
 
@@ -57,6 +57,9 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 
 		if(orm_analyse === true) {
 			orm_uci_go();
+		}
+		if(orm_book_open === true) {
+			orm_book_update();
 		}
 
 		/* King check check depends on gumble state, which orm_load_fen is obvlivious to */

@@ -58,6 +58,7 @@ const orm_load_puzzle = function(puz) {
 	$(".puzzle-cheat, .puzzle-after").hide();
 	orm_puzzle_next = puz[1][1];
 	orm_uci_stopall();
+	orm_book_close();
 };
 
 const orm_reset_main_board = function() {
@@ -66,6 +67,8 @@ const orm_reset_main_board = function() {
 	$("div#puzzle-stuff").hide();
 	$(".puzzle-cheat").show();
 	orm_movehist_reset();
+	orm_uci_stopall();
+	orm_book_close();
 	orm_get_board()
 		.data('candidate-move', null)
 		.removeClass('game-over flipped')

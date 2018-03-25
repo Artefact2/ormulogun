@@ -88,6 +88,7 @@
 					<div class="row ml-2 mr-2 mb-2">
 						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Start engine analysis</button>
 						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Practice against engine</button>
+						<button type="button" id="book-toggle" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Open book</button>
 						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm mr-2 mb-2">Flip board</button>
 					</div>
 					<div class="row m-2 puzzle-cheat" id="board-fen">
@@ -95,7 +96,10 @@
 							<input type="text" class="form-control form-control-sm w-100" title="Copy or paste board FEN" />
 						</form>
 					</div>
-					<div id="eco" class="m-2"></div>
+					<div class="row m-2" id="book-stuff">
+						<div class="container-fluid p-0"></div>
+						<ul></ul>
+					</div>
 					<div class="row m-2" id="analysis-stuff">
 						<div class="container-fluid p-0">
 							<div class="row justify-content-around">
