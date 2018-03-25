@@ -10,7 +10,7 @@ index.html: index.xhtml
 ormulogun.js: ../src/frontend/js/main.js $(shell find ../src/frontend/js -name "*.js" -not -name "main.js")
 	cat $^ > $@
 
-ormulogun.css: $(shell find ../src/frontend/scss -name "*.scss" -not -name "ormulogun.scss")
+ormulogun.css: ../src/frontend/scss/ormulogun.scss $(shell find ../src/frontend/scss -name "*.scss" -not -name "ormulogun.scss")
 	sassc -t compressed ../src/frontend/scss/ormulogun.scss $@
 
 deps:

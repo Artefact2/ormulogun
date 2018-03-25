@@ -140,6 +140,14 @@ div#board div#puzzle-stuff p#puzzle-prompt {
 	}
 }
 
+div#board div#eco {
+	&:after { content: ' '; }
+
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
 div#journal > div > ul {
 	list-style-type: none;
 

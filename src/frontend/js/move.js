@@ -33,6 +33,28 @@ const orm_do_legal_move = function(lan, animate, done, pushhist, reverse, b) {
 	let work = function() {
 		orm_load_fen(endfen, b);
 
+		let bfen = endfen.split(' ', 3).slice(0, 2).join(' ');
+		if(bfen === 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w') {
+			$("div#eco").empty().removeProp('title');
+		} else if(bfen in orm_eco_book) {
+			$("div#eco").text(orm_eco_book[bfen]).prop('title', orm_eco_book[bfen]);
+		} else {
+			let cur = orm_movehist_current();
+			if(cur.data('eco')) {
+				$("div#eco").text(cur.data('eco')).prop('title', cur.data('eco'));
+			}
+		}
+
+		if(pushhist) {
+			let cur = orm_movehist_current();
+			if(bfen in orm_eco_book) {
+				cur.data('eco', orm_eco_book[bfen]);
+			} else {
+				let prev = orm_movehist_prev(cur);
+				cur.data('eco', prev.data('eco'));
+			}
+		}
+
 		if(orm_analyse === true) {
 			orm_uci_go();
 		}
