@@ -65,7 +65,9 @@ const gumble_smoves = function() {
 	return Module.getValue(gumble_board + 188, 'i32');
 };
 
-orm_when_ready.push(function() {
+/* Should go first, before anything else relies on gumble for
+ * anything */
+orm_when_ready.unshift(function() {
 	gumble_board = Module._malloc(GUMBLE_BOARD_SIZE);
 	gumble_fen_str = Module._malloc(GUMBLE_SAFE_FEN_LENGTH);
 	gumble_move_str = Module._malloc(GUMBLE_SAFE_ALG_LENGTH);
