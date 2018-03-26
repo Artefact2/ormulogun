@@ -21,8 +21,9 @@ const orm_book_update = function() {
 	if(orm_book === null) return;
 
 	let ul = $("div#book-stuff > ul").empty();
-	let fen = orm_get_board().data('fen').split(' ');
-	let bfen = fen.slice(0, 4).join(' ');
+	let fen = orm_get_board().data('fen');
+	let sfen = fen.split(' ');
+	let bfen = sfen.slice(0, 4).join(' ');
 
 	if(!(bfen in orm_book)) {
 		let li = $(document.createElement('li'));
@@ -32,11 +33,9 @@ const orm_book_update = function() {
 	}
 
 	let n = orm_book[bfen][0] + orm_book[bfen][1] + orm_book[bfen][2];
-	let prefix = fen[5] + (fen[1] === 'b' ? '... ' : '. ');
+	let prefix = sfen[5] + (sfen[1] === 'b' ? '... ' : '. ');
 
-	let scale = function(p) {
-		return -100.0 * Math.log(p / 0.01) / Math.log(0.01);
-	};
+	gumble_load_fen(fen);
 
 	for(var i in orm_book[bfen][3]) {
 		let li = $(document.createElement('li'));
