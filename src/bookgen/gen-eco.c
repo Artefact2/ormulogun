@@ -31,6 +31,7 @@ int main(void) {
 	char fen[SAFE_FEN_LENGTH];
 	char san[SAFE_ALG_LENGTH];
 	char key[512];
+	size_t l;
 
 	bool no_eco, no_opening, no_variation;
 	char eco[4];
@@ -70,8 +71,10 @@ int main(void) {
 			r = cch_play_legal_move(&b, &m, 0);
 			assert(r == CCH_OK);
 
-			b.smoves = 0; /* XXX: for fen "canonicalization" */
 			r = cch_save_fen(&b, fen, SAFE_FEN_LENGTH);
+			strip_last_fields(fen, ' ', 4);
+			l = strlen(fen);
+			snprintf(&(fen[l]), SAFE_FEN_LENGTH - l, "\t%u", 2 * (b.turn - 1) + (1 - b.side));
 
 			JSLI(sub_array_value, *sub_array, fen);
 			++*sub_array_value;

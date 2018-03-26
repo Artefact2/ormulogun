@@ -28,9 +28,10 @@ while(true) {
 	$line = fgets(STDIN);
 
 	if($line !== false) {
-		list($count, , , $code, $opening, $variation, $fen) = explode("\t", substr($line, 0, -1));
+		list($count, , , $code, $opening, $variation, $position, $age) = explode("\t", substr($line, 0, -1));
 		$opening = sprintf("%s\t%s\t%s", $code, $opening, $variation);
-		$position = implode(' ', array_slice($fen = explode(' ', $fen), 0, 2));
+		$count = (int)$count;
+		$age = (int)$age;
 	}
 
 	/* EOF, or moving to another opening */
@@ -57,11 +58,11 @@ while(true) {
 		}
 
 		$curposition = $position;
-		$curcount = (int)$count;
-		$curage = 2 * (int)$fen[5] + (int)($fen[1] === 'b') - 2;
+		$curcount = $count;
+		$curage = $age;
 	} else {
 		/* Same opening, same position */
 		$curcount += $count;
-		$curage = min($curage, 2 * (int)$fen[5] + (int)($fen[1] === 'b') - 2);
+		$curage = min($curage, $age);
 	}
 }
