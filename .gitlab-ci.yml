@@ -10,7 +10,7 @@ pages:
     script:
     - make -C frontend
     - cp -R frontend public
-    - rm -R public/index.xhtml public/src public/Makefile public/tools public/puzzles/*.json
+    - rm -R public/index.xhtml public/Makefile public/puzzles/*.json
     - mv public/stockfish.wasm public/stockfish.wasm2.js
     - sed -i -e s/SF_VERSION/$(b2sum public/stockfish.wasm2.js | cut -d' ' -f1)/ -e s/\"stockfish.wasm\"/\"stockfish.wasm2.js\"/ public/stockfish.wasm.js
     - find public -type f -exec gzip --best --keep '{}' ';'
