@@ -235,12 +235,12 @@ const orm_generate_endgame = function(s, tries) {
 
 const orm_practice_fen = function(fen) {
 	let b = orm_get_board();
-	if(orm_practice !== false) $("button#engine-practice").click();
+	if(orm_practice !== false) $("a#engine-practice").click();
 
 	orm_load_tab("board", true, function() {
 		orm_load_fen(fen, b);
 		b.toggleClass('flipped', fen.split(' ', 3)[1] === 'b');
-		$("button#engine-practice").click();
+		$("a#engine-practice").click();
 	});
 };
 

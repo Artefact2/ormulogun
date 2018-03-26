@@ -112,9 +112,9 @@ const orm_uci_init = function() {
 	if(orm_engine === null) {
 		if(orm_engine_loaded_once === false) {
 			let p = $(document.createElement('p'));
-			p.attr('id', 'loading-engine').addClass('alert alert-primary')
+			p.attr('id', 'loading-engine').addClass('alert alert-primary m-2')
 				.text('Loading engine. If this is taking forever, enable Web Workers for the top domain and check the console.');
-			$("button#engine-analyse").parent().append(p);
+			$("div#analysis-stuff").before(p);
 			orm_engine_loaded_once = true;
 		}
 
@@ -181,8 +181,8 @@ const orm_uci_stop = function(then) {
 };
 
 const orm_uci_stopall = function() {
-	if(orm_analyse) $("button#engine-analyse").click();
-	if(orm_practice) $("button#engine-practice").click();
+	if(orm_analyse) $("a#engine-analyse").click();
+	if(orm_practice) $("a#engine-practice").click();
 	if(orm_engine) orm_uci_stop();
 };
 
@@ -211,48 +211,43 @@ const orm_uci_go_practice = function() {
 };
 
 orm_when_ready.push(function() {
-	$("button#engine-analyse, button#engine-practice").each(function() {
+	$("a#engine-analyse").click(function(e) {
+		e.preventDefault();
 		let t = $(this);
-		t.data('start-text', t.text());
-	});
+		if(orm_analyse === false && t.hasClass('disabled')) return;
 
-	$("button#engine-analyse").click(function() {
-		let t = $(this);
-
-		if(orm_practice !== false) $("button#engine-practice").click();
+		if(orm_practice !== false) $("a#engine-practice").click();
 		if(orm_analyse === true) {
 			orm_analyse = false;
 			orm_uci_stop();
-			t.text(t.data('start-text'));
-			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
+			t.removeClass('active');
 			$("div#analysis-stuff").hide();
 			return;
 		}
 
 		orm_analyse = true;
-		t.text('Stop analysis');
-		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
+		t.addClass('active');
 		$("div#analysis-stuff").show();
 		orm_uci_init();
 		orm_uci_go();
 	});
 
-	$("button#engine-practice").click(function() {
+	$("a#engine-practice").click(function(e) {
+		e.preventDefault();
 		let t = $(this);
+		if(orm_practice === false && t.hasClass('disabled')) return;
 		let b = orm_get_board();
 
-		if(orm_analyse === true) $("button#engine-analyse").click();
+		if(orm_analyse === true) $("a#engine-analyse").click();
 		if(orm_practice !== false) {
 			orm_practice = false;
 			orm_uci_stop();
-			t.text(t.data('start-text'));
-			t.removeClass('btn-secondary').addClass('btn-outline-secondary');
+			t.removeClass('active');
 			return;
 		}
 
 		orm_practice = b.hasClass('white') ? 'black' : 'white';
-		t.text('Stop practicing');
-		t.addClass('btn-secondary').removeClass('btn-outline-secondary');
+		t.addClass('active');
 		orm_uci_init(); /* XXX: race condition with go called from move.js? */
 	});
 

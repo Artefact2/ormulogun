@@ -86,10 +86,23 @@
 						<p id="puzzle-prompt" class="alert mt-3"></p>
 					</div>
 					<div class="row ml-2 mr-2 mb-2">
-						<button type="button" id="engine-analyse" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Start engine analysis</button>
-						<button type="button" id="engine-practice" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Practice against engine</button>
-						<button type="button" id="book-toggle" class="btn btn-sm btn-outline-secondary mr-2 mb-2 puzzle-cheat">Open book</button>
-						<button type="button" id="flip-board" class="btn btn-outline-secondary btn-sm mr-2 mb-2">Flip board</button>
+						<div class="btn-group btn-group-sm w-100 mb-1">
+							<button type="button" class="btn btn-light" id="movehist-first" title="Jump to first move"></button>
+							<button type="button" class="btn btn-light" id="movehist-prev" title="Jump to previous move"></button>
+							<button type="button" class="btn btn-light" id="movehist-next" title="Jump to next move in variation"></button>
+							<button type="button" class="btn btn-light" id="movehist-last" title="Jump to last move in variation"></button>
+							<div class="dropdown">
+								<button type="button" class="btn btn-sm btn-light dropdown-toggle" title="More tools" data-toggle="dropdown">🛠</button>
+								<div class="dropdown-menu">
+									<a href="#" class="dropdown-item puzzle-disable" id="engine-analyse">Start engine analysis</a>
+									<a href="#" class="dropdown-item puzzle-disable" id="engine-practice">Practice against engine</a>
+									<div class="dropdown-divider"></div>
+									<a href="#" class="dropdown-item puzzle-disable" id="book-toggle">Open book</a>
+									<div class="dropdown-divider"></div>
+									<a href="#" class="dropdown-item" id="flip-board">Flip board</a>
+								</div>
+							</div>
+						</div>
 					</div>
 					<div class="row m-2 puzzle-cheat" id="board-fen">
 						<form class="w-100">
@@ -115,12 +128,6 @@
 						<ul></ul>
 					</div>
 					<div class="row m-2">
-						<div class="btn-group btn-group-sm w-100 mb-1">
-							<button type="button" class="btn btn-light w-25" id="movehist-first" title="Jump to first move"></button>
-							<button type="button" class="btn btn-light w-25" id="movehist-prev" title="Jump to previous move"></button>
-							<button type="button" class="btn btn-light w-25" id="movehist-next" title="Jump to next move in variation"></button>
-							<button type="button" class="btn btn-light w-25" id="movehist-last" title="Jump to last move in variation"></button>
-						</div>
 						<ul id="movehist" class="row w-100"></ul>
 					</div>
 				</div>

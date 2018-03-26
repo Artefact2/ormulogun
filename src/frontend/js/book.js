@@ -24,7 +24,12 @@ const orm_book_update = function() {
 	let fen = orm_get_board().data('fen').split(' ');
 	let bfen = fen.slice(0, 4).join(' ');
 
-	if(!(bfen in orm_book)) return;
+	if(!(bfen in orm_book)) {
+		let li = $(document.createElement('li'));
+		li.text('Position not found in the book.');
+		ul.append(li);
+		return;
+	}
 
 	let n = orm_book[bfen][0] + orm_book[bfen][1] + orm_book[bfen][2];
 	let prefix = fen[5] + (fen[1] === 'b' ? '... ' : '. ');
@@ -75,7 +80,7 @@ const orm_book_update = function() {
 
 const orm_book_close = function() {
 	if(orm_book_open === false) return;
-	$("button#book-toggle").click();
+	$("a#book-toggle").click();
 };
 
 orm_when_ready.push(function() {
@@ -94,30 +99,31 @@ orm_when_ready.push(function() {
 		}
 	});
 
-	$("button#book-toggle").click(function() {
+	$("a#book-toggle").click(function(e) {
+		e.preventDefault();
 		let btn = $(this);
+		if(orm_book_open === false && btn.hasClass('disabled')) return;
+
 		let d = $("div#book-stuff");
 
 		if(orm_book_open === true) {
 			orm_book_open = false;
 			d.hide();
-			btn.text(btn.data('start-text'));
+			btn.removeClass('active');
 			return;
 		}
 
-		btn.data('start-text', btn.text());
-		btn.text('Close book');
-
 		let work = function() {
 			orm_book_open = true;
+			btn.addClass('active');
 			orm_book_update();
 			d.show();
 		};
 
 		if(orm_book === null) {
-			let p = $(document.createElement('p')).addClass('alert alert-primary container-fluid');
+			let p = $(document.createElement('p')).addClass('alert alert-primary m-2');
 			p.text('Loading the opening book…');
-			d.prepend(p);
+			d.before(p);
 
 			$.ajax({ url: './book.tsv.js', dataType: 'text' }).always(function() {
 			}).fail(function() {

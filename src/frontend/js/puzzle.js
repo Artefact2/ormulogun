@@ -56,6 +56,7 @@ const orm_load_puzzle = function(puz) {
 	$("nav#mainnav").removeClass("bg-success bg-danger");
 	$("div#puzzle-stuff, .puzzle-during").show();
 	$(".puzzle-cheat, .puzzle-after").hide();
+	$(".puzzle-disable").addClass('disabled').prop('disabled', true);
 	orm_puzzle_next = puz[1][1];
 	orm_uci_stopall();
 	orm_book_close();
@@ -66,6 +67,7 @@ const orm_reset_main_board = function() {
 	orm_puzzle_next = null;
 	$("div#puzzle-stuff").hide();
 	$(".puzzle-cheat").show();
+	$(".puzzle-disable").removeClass('disabled').prop('disabled', false);
 	orm_movehist_reset();
 	orm_uci_stopall();
 	orm_book_close();
@@ -134,6 +136,7 @@ const orm_load_next_puzzle = function() {
 const orm_puzzle_over = function() {
 	$(".puzzle-during").hide();
 	$(".puzzle-cheat, .puzzle-after").show();
+	$(".puzzle-disable").removeClass('disabled').prop('disabled', false);
 
 	let prompt = $("p#puzzle-prompt");
 	prompt.append($(document.createElement('br')));
@@ -175,7 +178,7 @@ const orm_puzzle_fail = function() {
 	if(!cur.parent().hasClass('puzzle-reply')) {
 		cur.parent().addClass('bad-move');
 		if(orm_pref("uci_start_after_fail") === "1") {
-			$("button#engine-analyse").click();
+			$("a#engine-analyse").click();
 		}
 	}
 	$("p#puzzle-prompt").toggleClass("alert-secondary alert-danger").text("Puzzle failed.");

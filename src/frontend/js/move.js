@@ -167,7 +167,8 @@ const orm_highlight_move_squares = function(sf, sr, b) {
 };
 
 orm_when_ready.push(function() {
-	$("button#flip-board").click(function() {
+	$("a#flip-board").click(function(e) {
+		e.preventDefault();
 		orm_get_board().toggleClass('flipped');
 	});
 
