@@ -282,9 +282,10 @@ orm_when_ready.push(function() {
 		$("div#promote-modal").modal('hide');
 	});
 
-	$("div#analysis-stuff > ul").on('mouseenter', '> li.pv', function() {
+	$("div#analysis-stuff > ul, div#book-stuff > ul").on('mouseenter', '> li.pv', function() {
 		let li = $(this);
 		let b = orm_get_board();
+		b.children('div.pv-move-source, div.pv-move-target').removeClass('pv-move-source pv-move-target');
 		let src = orm_piece_at(li.data('pv').substr(0, 2), 'back', b);
 		let dest = orm_piece_at(li.data('pv').substr(2, 2), 'back', b);
 		src.addClass('pv-move-source');

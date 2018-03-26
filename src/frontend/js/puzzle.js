@@ -69,6 +69,7 @@ const orm_reset_main_board = function() {
 	orm_movehist_reset();
 	orm_uci_stopall();
 	orm_book_close();
+	$("div#book-stuff > div").empty();
 	orm_get_board()
 		.data('candidate-move', null)
 		.removeClass('game-over flipped')

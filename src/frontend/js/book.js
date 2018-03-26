@@ -38,7 +38,8 @@ const orm_book_update = function() {
 		let entry = orm_book[bfen][3][i];
 
 		let san = gumble_lan_to_san(entry[3]);
-		li.addClass('row');
+		li.addClass('row pv');
+		li.data('pv', entry[3]);
 		li.append($(document.createElement('div')).addClass('col-3 p-0').append($(document.createElement('strong')).text(prefix + san)));
 
 		let t = entry[0] + entry[1] + entry[2];
@@ -114,7 +115,7 @@ orm_when_ready.push(function() {
 		};
 
 		if(orm_book === null) {
-			let p = $(document.createElement('p')).addClass('alert alert-primary');
+			let p = $(document.createElement('p')).addClass('alert alert-primary container-fluid');
 			p.text('Loading the opening book…');
 			d.prepend(p);
 

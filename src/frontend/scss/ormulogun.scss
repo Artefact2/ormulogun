@@ -125,10 +125,14 @@ div#board div#analysis-stuff {
 			text-align: center;
 			width: 3em;
 		}
+	}
+}
 
-		&.pv.active {
+div#board {
+	div#analysis-stuff, div#book-stuff {
+		&> ul > li.pv {
 			cursor: pointer;
-			background-color: #e9ecef;
+			&.active { background-color: #e9ecef; }
 		}
 	}
 }
