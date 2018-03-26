@@ -85,8 +85,10 @@ div#endgames span.piece {
 	height: 4em;
 }
 
-div#board div#puzzle-stuff, div#board div#analysis-stuff {
-	display: none;
+div#board {
+	div#puzzle-stuff, div#analysis-stuff, div#book-stuff {
+		display: none;
+	}
 }
 
 div#board div#analysis-stuff {
