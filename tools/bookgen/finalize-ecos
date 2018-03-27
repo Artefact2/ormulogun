@@ -22,6 +22,12 @@ while($line = fgets(STDIN)) {
 
 	$a = [ $eco, $opening, $variation, (int)$age, (int)$count ];
 
+	if($count < 10) {
+		fprintf(STDERR, "Not enough data on opening: %s\n", json_encode($a));
+		continue;
+	}
+
+
 	if(!isset($rows[$pos])) {
 		$rows[$pos] = $a;
 		continue;

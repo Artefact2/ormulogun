@@ -43,14 +43,15 @@ while(true) {
 		if($line === false) break;
 
 		$curopening = $opening;
-		$bestposition = null;
-		$bestcount = 0;
+		$curposition = $bestposition = null;
+		$curcount = $bestcount = 0;
 		$bestage = 0;
+		$curage = PHP_INT_MAX;
 	}
 
 	/* Same opening, moving to another position */
 	if($curposition !== $position) {
-		if($curcount > $bestcount || ($curcount === $bestcount && $curage > $bestage)) {
+		if($curcount > 0 && ($curcount > $bestcount || ($curcount === $bestcount && $curage > $bestage))) {
 			/* New best */
 			$bestcount = $curcount;
 			$bestage = $curage;
