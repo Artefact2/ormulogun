@@ -16,8 +16,9 @@ Dependencies
 * zstd
 * CMake
 * clang/llvm
-* sassc (frontend only)
-* Judy (book generation only)
+* sassc
+* Judy (only for opening book generation)
+* Inkscape (only for EPUB generation)
 
 Getting started
 ===============

@@ -1,0 +1,246 @@
+#!/usr/bin/env php
+<?php
+/* Copyright 2018 Romain "Artefact2" Dal Maso <artefact2@gmail.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+require __DIR__.'/easydom.php';
+require __DIR__.'/../ormulogun.php';
+assert_options(ASSERT_BAIL, true);
+
+if($argc !== 2) {
+	fprintf(STDERR, "Usage: %s out.epub < in.jl\n", $argv[0]);
+	die(1);
+}
+
+/* http://www.idpf.org/epub/31/spec/epub-spec.html */
+
+/* http://www.idpf.org/epub/31/spec/epub-ocf.html#sec-zip-container-mime */
+$zip = new \ZipArchive();
+assert($zip->open($argv[1], \ZipArchive::CREATE | \ZipArchive::EXCL) === true);
+assert($zip->addFromString('mimetype', 'application/epub+zip') === true);
+assert($zip->setCompressionName('mimetype', \ZipArchive::CM_STORE) === true);
+
+
+
+/* http://www.idpf.org/epub/31/spec/epub-ocf.html#sec-container-metainf-container.xml */
+$c = new \EasyDOM\Document();
+$c->appendChild($croot = $c->element('container', [
+	'version' => '1.0',
+	'xmlns' => 'urn:oasis:names:tc:opendocument:xmlns:container',
+]));
+$croot->appendCreate('rootfiles')->appendCreate('rootfile', [
+	'full-path' => 'main.opf',
+	'media-type' =>'application/oebps-package+xml',
+]);
+assert($zip->addFromString('META-INF/container.xml', $c->saveXML()) === true);
+
+
+
+/* http://www.idpf.org/epub/31/spec/epub-packages.html#sec-package-def */
+$package = new \EasyDOM\Document();
+$package->appendChild($packageroot = $package->element('package', [
+	'xmlns' => 'http://www.idpf.org/2007/opf',
+	'version' => '3.1',
+	'unique-identifier' => 'uuid',
+]));
+
+/* http://www.idpf.org/epub/31/spec/epub-packages.html#sec-metadata-elem */
+$metadata = $packageroot->appendCreate('metadata', [
+	'xmlns:dc' => 'http://purl.org/dc/elements/1.1/',
+]);
+$metadata->appendCreate('dc:identifier', [ 'id' => 'uuid', 'tag:artefact2.com,2018,ormulogun,XXX' ]); /* XXX */
+$metadata->appendCreate('dc:title', [ 'Chess Puzzles' ]); /* XXX */
+$metadata->appendCreate('dc:language', [ 'en' ]);
+$metadata->appendCreate('meta', [ 'property' => 'dcterms:modified', gmdate('Y-m-d\TH:i:s\Z') ]);
+
+/* http://www.idpf.org/epub/31/spec/epub-packages.html#elemdef-opf-manifest */
+$manifest = $packageroot->appendCreate('manifest');
+
+/* http://www.idpf.org/epub/31/spec/epub-packages.html#elemdef-opf-spine */
+$spine = $packageroot->appendCreate('spine');
+
+
+
+for($i = 1; ($puz = fgets(STDIN)) !== false; ++$i) {
+	$puz = json_decode($puz, true);
+	assert(is_array($puz));
+
+	$rfen = explode(' ', $puz[0]);
+	orm_gumble('position fen '.$puz[0], false);
+	$rsan = orm_gumble('san '.$puz[1][0]);
+	orm_gumble('position fen '.$puz[0].' moves '.$puz[1][0], false);
+	$fen = explode(' ', orm_gumble('fen'));
+
+	$d = new \EasyDOM\Document();
+	$d->appendChild($html = $d->element('html', [ 'xmlns' => 'http://www.w3.org/1999/xhtml' ]));
+	$head = $html->appendCreate('head');
+	$head->appendCreate('meta', [ 'charset' => 'utf-8' ]);
+	$head->appendCreate('link', [ 'rel' => 'stylesheet', 'href' => 'main.css' ]);
+	$head->appendCreate('title', [ 'Puzzle #'.$i ]);
+	$body = $html->appendCreate('body');
+	$body->appendCreate('div', [
+		'#'.$i.' — '
+		.($fen[1] === 'w' ? 'White' : 'Black')
+		.' to play after '
+		.$rfen[5].($rfen[1] === 'w' ? '.' : '...').' '.$rsan.'.'
+	]);
+
+	$board = $body->appendCreate('table.board')->appendCreate('tbody');
+	$tr = $board->appendCreate('tr');
+	$rank = 7; $file = 0; $l = strlen($fen[0]);
+	for($j = 0; $j < $l; ++$j) {
+		switch($c = $fen[0][$j]) {
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+			for($k = 0; $k < (int)$c; ++$k) {
+				$tr->appendCreate('td.'.(($rank + $file) % 2 ? 'light' : 'dark'))->appendCreate('div.fill');
+				++$file;
+			}
+			continue 2;
+
+		case '/':
+			assert($file === 8);
+			$file = 0;
+			--$rank;
+			$tr = $board->appendCreate('tr');
+			continue 2;
+		}
+
+		assert($rank >= 0 && $rank < 8);
+		assert($file >= 0 && $file < 8);
+		$tr->appendCreate('td.'.(($rank + $file) % 2 ? 'light' : 'dark'))->appendCreate('img', [ 'src' => $c.'.png' ]);
+		++$file;
+	}
+
+	$body->append(make_solution($d, $puz[1], $puz[0]));
+
+	assert($zip->addFromString($dfile = $i.'.xhtml', $d->saveXML()) === true);
+	$manifest->appendCreate('item', [
+		'href' => $dfile,
+		'media-type' => 'application/xhtml+xml',
+		'id' => $id = 'puzzle-'.$i,
+	]);
+	$spine->appendCreate('itemref', [
+		'idref' => $id,
+	]);
+}
+
+
+
+preg_match_all('%div\.piece\.(?<color>white|black)\.(?<piece>king|queen|rook|bishop|knight|pawn)(,[^{]+)?\{\s*background-image:\s*url\(data:image\/svg\+xml;base64,(?<b64>[^)]+)\);\s*\}%', shell_exec('sassc '.escapeshellarg(__DIR__.'/../../src/frontend/scss/pieces.scss')), $pieces, PREG_SET_ORDER);
+assert(count($pieces) === 12);
+foreach($pieces as $p) {
+	if($p['piece'] === 'knight') $pn = 'n';
+	else $pn = $p['piece'][0];
+	if($p['color'] === 'white') $pn = strtoupper($pn);
+	$pn .= '.png';
+
+	$cmd = 'inkscape <(echo '.escapeshellarg($p['b64']).' | base64 -d) --export-png >(cat >&1) -w256 >/dev/null';
+	$png = shell_exec('bash -c '.escapeshellarg($cmd));
+	assert($png !== null);
+	assert($zip->addFromString($pn, $png) === true);
+	$manifest->appendCreate('item', [ 'href' => $pn, 'media-type' => 'image/png', 'id' => $p['color'].'-'.$p['piece'].'-png' ]);
+}
+
+assert($zip->addFromString('main.css',
+<<<'CSS'
+table.board { border-collapse: collapse; border-spacing: 0; width: 100%; border: .25em solid black; }
+table.board > tbody > tr > td { width: 12.5%; padding: 0; border: 0; }
+table.board > tbody > tr > td > div.fill { padding-bottom: 100%; }
+table.board > tbody > tr > td > img { width: 100%; }
+table.board > tbody > tr > td.dark { background-color: #BBB; }
+div.solution { page-break-before: always; }
+span.variation { display: block; margin-left: 2em; }
+CSS
+) === true);
+$manifest->appendCreate('item', [ 'href' => 'main.css', 'media-type' => 'text/css', 'id' => 'main-css' ]);
+
+assert($zip->addFromString('main.opf', $package->saveXML()) === true);
+assert($zip->close() === true);
+
+function make_solution(\EasyDOM\Document $d, array $root, string $fen, int $depth = 0) {
+	$e = $d->element('div.solution');
+
+	$sfen = explode(' ', $fen);
+	orm_gumble('position fen '.$fen, false);
+	$san = orm_gumble('san '.$root[0]);
+
+	if($depth === 0 || $sfen[1] === 'w') {
+		$e->append($sfen[5].($sfen[1] === 'w' ? '.' : '...').' ');
+	}
+	$e->append($san.' ');
+
+	$main = null;
+	foreach($root[1] as $lan => $sub) {
+		$e->append(' ');
+
+		if($main === null) {
+			$var = $e;
+			$closeparen = false;
+		} else {
+			$var = $d->element('span.variation');
+			$main->after($var);
+			$var->append('( ');
+			$closeparen = true;
+			$main = $var; /* Keep variations in same order */
+		}
+
+		orm_gumble('position fen '.$fen.' moves '.$root[0], false);
+		if($sfen[1] === 'b' || $closeparen === true) {
+			if($sfen[1] === 'b') {
+				$var->append(((int)$sfen[5] + 1).'. ');
+			} else {
+				$var->append($sfen[5].'... ');
+			}
+		}
+		$strong = $var->appendCreate('strong', [ orm_gumble('san '.$lan) ]);
+		if($main === null) $main = $strong;
+
+		if(is_array($sub)) {
+			$var->append(' ');
+			orm_gumble('position fen '.$fen.' moves '.$root[0].' '.$lan, false);
+			$f = make_solution($d, $sub, orm_gumble('fen'), $depth + 1);
+			while($f->firstChild !== null) $var->append($f->firstChild);
+		} else {
+			$var->append('.');
+		}
+
+		if($closeparen) {
+			if($var->lastChild->nodeName === 'span') {
+				for($node = $var->lastChild; $node->previousSibling !== null && $node->previousSibling->nodeName === 'span'; $node = $node->previousSibling);
+				$var->insertBefore($d->createTextNode(' )'), $node);
+			} else {
+				$var->append(' )');
+			}
+		}
+	}
+
+	$toappend = [];
+	for($node = $e->lastChild; $node !== null; $node = $node->previousSibling) {
+		if($node->nodeName === 'span') {
+			$toappend[] = $node;
+		}
+		if($node->nodeName === 'strong') break;
+	}
+	for($i = count($toappend) - 1; $i >= 0; --$i) $e->appendChild($toappend[$i]);
+
+	return $e;
+}
