@@ -62,17 +62,47 @@ $traversed = [];
 traverse('', 0, 0, orm_gumble('fen'), $nodes, $edges, $traversed, $book, $eco);
 
 
-
 $tt = [];
 foreach($book as $f => list($w, $d, $l)) {
 	@$tt[orm_ecobookfen($f)] += $w + $d + $l;
 }
 
+/* Perform the pruning; prune based on frequency and also remove
+ * sources that aren't the start position */
+do {
+	$removed = 0;
+
+	foreach($nodes as $k => $i) {
+		if($tt[$k] / $tt[STARTPOS] < $freqcutoff) {
+			unset($nodes[$k], $edges[$k]);
+			++$removed;
+			continue;
+		}
+
+		if($i === 0) continue; /* Start position */
+
+		/* Do we have any parents? */
+		foreach($edges as $src => $a) {
+			foreach($a as $dest => $v) {
+				/* Being your own parent doesn't count */
+				if($src === $dest) continue;
+
+				/* Yes! */
+				if($dest === $k) continue 3;
+			}
+		}
+
+		/* No. */
+		unset($nodes[$k], $edges[$k]);
+		++$removed;
+	}
+
+} while($removed > 0);
+
 
 
 echo "digraph \"\" {\n",
-	"rankdir=\"TB\"\n",
-	"graph [ranksep=2 outputorder=edgesfirst]\n",
+	"graph [outputorder=edgesfirst ranksep=3]\n",
 	"node [style=filled width=0 height=0 margin=\"0,.05\"]\n";
 uksort($nodes, function(string $k1, string $k2) use($tt) {
 	return $tt[$k1] - $tt[$k2];
@@ -82,10 +112,6 @@ foreach($nodes as $k => $i) {
 	$n = $eco[$k];
 
 	$freq = $tt[$k] / $tt[STARTPOS];
-	if($freq < $freqcutoff) {
-		unset($nodes[$k]);
-		continue;
-	}
 	$label = str_replace(': ', "\n", trim(implode(' ', $n)));
 
 	if($n[0] !== '000') {
@@ -123,6 +149,7 @@ $oldedges = $edges;
 $edges = [];
 foreach($oldedges as $start => $e) {
 	foreach($e as $end => list($w, $t)) {
+		if($start === $end) continue;
 		$edges[] = [ $start, $end, $w, $t ];
 	}
 }
@@ -148,7 +175,7 @@ foreach($edges as list($start, $end, $w, $t)) {
 		"%d -> %d [weight=%f tooltip=\"%s\" color=\"#000000%02x\"]\n",
 		$nodes[$start],
 		$nodes[$end],
-		$freq,
+		$freq < .1 ? 0 : (1000.0 * $freq),
 		$tooltip,
 		round(255 * max(.1, min(1, 5 * $freq)))
 	);
