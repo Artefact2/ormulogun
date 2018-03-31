@@ -182,14 +182,14 @@ const orm_puzzle_fail = function() {
 	let cur = $("ul#movehist li.new > button");
 	if(!cur.parent().hasClass('puzzle-reply')) {
 		cur.parent().addClass('bad-move');
-		if(orm_pref("uci_start_after_fail") === "1") {
-			$("a#engine-analyse").click();
-		}
 	}
 	$("p#puzzle-prompt").toggleClass("alert-secondary alert-danger").text("Puzzle failed.");
 	$("nav#mainnav").addClass("bg-danger");
 	if(orm_puzzle_idx !== null) orm_commit_puzzle_loss(orm_manifest[orm_puzzle_midx].id, orm_puzzle_idx);
 	orm_puzzle_over();
+	if(orm_pref("uci_start_after_fail") === "1") {
+		$("a#engine-analyse").click();
+	}
 };
 
 const orm_puzzle_try = function(lan) {
