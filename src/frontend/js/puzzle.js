@@ -112,11 +112,6 @@ const orm_puzzle_filtered = function(puz) {
 		console.log(puz);
 	}
 
-	for(let j in orm_tag_whitelist) {
-		/* XXX */
-		if($.inArray(orm_tag_whitelist[j], puz[2]) === -1) return true;
-	}
-
 	return false;
 };
 
