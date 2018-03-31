@@ -35,11 +35,15 @@ void tags_print(const puzzle_t* p) {
 	putchar('[');
 
 	if(p->min_depth == p->max_depth) {
-		printf("\"Depth %d\"", p->min_depth);
+		if(p->num_variations == 1) {
+			printf("\"Linear\",\"Linear (Depth %d)\"", p->min_depth);
+		} else {
+			printf("\"Nonlinear\",\"Nonlinear (Depth %d)\"", p->min_depth);
+		}
 	} else {
-		printf("\"Min depth %d\",\"Max depth %d\"", p->min_depth, p->max_depth);
+		assert(p->num_variations >= 2);
+		printf("\"Nonlinear\",\"Nonlinear (Depth %d-%d)\"", p->min_depth, p->max_depth);
 	}
-	MAYBE_PRINT_TAG(p->num_variations == 1, "Linear");
 
 	MAYBE_PRINT_TAG(p->tags.endgame, "Endgame");
 	MAYBE_PRINT_TAG(p->tags.endgame_q, "Endgame (Queen ending)");

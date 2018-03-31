@@ -55,9 +55,6 @@ const orm_tag_priority = function(t) {
 	/* General puzzle categories, usually mutually exclusive */
 	if(t.match(/^(Checkmate|Draw|Winning position|Drawing position|Material (gain|loss)|Trade|Quiet)$/)) return 1;
 
-	/* Depth stuff, very spammy as there's lots of them */
-	if(t.match(/^(Depth|Min depth|Max depth) /)) return 3;
-
 	/* Tactical motifs */
 	if(t.match(/^(Pin|Fork|Skewer|Discovered (attack|check)|Double check|Undermining|(Overloaded|Trapped) piece)|Deflection$/)) return 0;
 

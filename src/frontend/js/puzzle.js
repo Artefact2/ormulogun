@@ -87,11 +87,13 @@ const orm_puzzle_filtered = function(puz) {
 
 	for(let j in puz[2]) {
 		let t = puz[2][j], m;
-		if(m = t.match(/^(Min depth|Max depth|Depth) ([1-9][0-9]*)$/)) {
-			if(m[1] === "Min depth") mindepth = parseInt(m[2], 10);
-			else if(m[1] === "Max depth") maxdepth = parseInt(m[2], 10);
-			else depth = parseInt(m[2], 10);
-			continue;
+		if(m = t.match(/^(Nonl|L)inear \(Depth ([1-9][0-9]*)(-([1-9][0-9]*))?\)$/)) {
+			if(typeof(m[4]) === "undefined") {
+				depth = parseInt(m[2], 10);
+			} else {
+				mindepth = parseInt(m[2], 10);
+				maxdepth = parseInt(m[4], 10);
+			}
 		}
 
 		/* XXX: probably slow and inefficient, maybe use bitmasks?
@@ -104,7 +106,8 @@ const orm_puzzle_filtered = function(puz) {
 	} else if(depth !== null && mindepth === null && maxdepth === null) {
 		if(depth < mind || depth > maxd) return true;
 	} else {
-		orm_error("Puzzle #" + i + " has invalid depth tagging.");
+		orm_error("Puzzle has invalid depth tagging (see console).");
+		console.log(puz);
 	}
 
 	for(let j in orm_tag_whitelist) {

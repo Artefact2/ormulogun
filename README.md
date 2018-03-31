@@ -49,6 +49,7 @@ To-Do
 =====
 
 * More automatic tagging (sacrifices, Zugzwang, Zwischenzug, checkmate patterns, avoid stalemate...)
+* More subtags (Fork (Knight), Pin (Queen) etc. or just add tags per involved piece)
 * Better automatic tagging (not a trivial task)
 * Local puzzle blacklist (ignore list)
 * Better activity log, activity streak
