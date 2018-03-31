@@ -13,6 +13,9 @@
  * limitations under the License.
  */
 
+/* XXX: this shouldn't be a global var */
+let orm_journal_categories = null;
+
 const orm_journal_push = function(payload) {
 	let j = orm_state_get("journal", []);
 	let je = [ Date.now(), payload ];
@@ -46,7 +49,7 @@ const orm_journal_merge = function(j1, j2) {
 };
 
 const orm_generate_journal_page = function() {
-	let d = $("div#journal");
+	let d = $("div#journal > div#journal-categories");
 
 	d.children('h2, ul').remove();
 
@@ -63,10 +66,46 @@ const orm_generate_journal_page = function() {
 };
 
 const orm_prepend_journal_entry = function(je) {
-	let ul = $("div#journal > ul");
-	if(ul.length === 0) {
-		ul = $(document.createElement('ul'));
-		$('div#journal').append(ul);
+	if(orm_journal_categories === null) {
+		orm_journal_categories = [];
+
+		/* XXX: probably a much better way to do this */
+		let d = new Date();
+		d.setHours(0, 0, 0, 0);
+
+		orm_journal_categories.push([ 'Today', d.getTime() ]);
+
+		d.setTime(d.getTime() - 1);
+		d.setHours(0, 0, 0, 0);
+		orm_journal_categories.push([ 'Yesterday', d.getTime() ]);
+
+		d = new Date();
+		d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+		d.setHours(0, 0, 0, 0);
+		orm_journal_categories.push([ 'Earlier this week', d.getTime() ]);
+
+		d.setDate(1);
+		orm_journal_categories.push([ 'Earlier this month', d.getTime() ]);
+
+		d.setTime(d.getTime() - 86400000 * 2);
+		d.setDate(1);
+		orm_journal_categories.push([ 'Previous month', d.getTime() ]);
+
+		orm_journal_categories.push([ 'Older', 0 ]);
+	}
+
+	let ul;
+	for(let i in orm_journal_categories) {
+		if(je[0] >= orm_journal_categories[i][1]) {
+			ul = $('div#journal > div#journal-categories > ul#journal-cat-' + i);
+			if(ul.length === 0) {
+				$('div#journal > div#journal-categories').prepend(
+					$(document.createElement('h2')).text(orm_journal_categories[i][0]),
+					ul = $(document.createElement('ul')).prop('id', 'journal-cat-' + i)
+				);
+			}
+			break;
+		}
 	}
 
 	let li = $(document.createElement('li'));
@@ -78,7 +117,7 @@ const orm_prepend_journal_entry = function(je) {
 		if(orm_manifest[i].id === je[1][0]) {
 			btn.removeClass('disabled').prop('disabled', false);
 			btn.data('midx', i);
-			pset = orm_manifest[i].id;
+			pset = orm_manifest[i];
 			break;
 		}
 	}
@@ -87,13 +126,7 @@ const orm_prepend_journal_entry = function(je) {
 	btn.data('date', je[0]);
 	btn.text('#' + je[1][2].toString());
 	btn.addClass(je[1][1] === 0 ? 'btn-danger' : 'btn-success');
-
-	if(pset === null) {
-		btn.prop('title', 'Unknown puzzle set: ' + je[1][0]);
-	} else {
-		btn.prop('title', '[' + pset.name + '] ' + (new Date(je[0])).toString());
-	}
-
+	btn.prop('title', '[' + (pset === null ? (je[1][0] + '?') : pset.name) + '] ' + (new Date(je[0])).toString());
 	btn.prop('type', 'button');
 	li.append(btn);
 
