@@ -76,14 +76,14 @@ const orm_init = function() {
 			orm_upgrade_state(rs);
 
 			for(let k in rs) {
-				if(k.match(/^journal_/)) {
-					orm_state_set(k, orm_journal_merge(orm_state_get(k, []), JSON.parse(rs[k])));
+				if(k === 'journal') {
+					orm_state_set(k, orm_journal_merge(orm_state_get(k, []), orm_state_get(k, [], rs)));
+					orm_generate_journal_page();
 				} else if(k.match(/^leitner_/)) {
-					orm_state_set(k, orm_merge_leitner_boxes(orm_state_get(k, {}), JSON.parse(rs[k])));
+					orm_state_set(k, orm_merge_leitner_boxes(orm_state_get(k, {}), orm_state_get(k, {}, rs)));
 				} else if(typeof(orm_state_get(k, undefined)) === "undefined") {
-					orm_state_set(k, JSON.parse(rs[k]));
+					orm_state_set(k, orm_state_get(k, undefined, rs));
 				}
-				orm_generate_journal_page(); /* XXX: inefficient */
 			}
 		};
 		for(let i = 0; i < this.files.length; ++i) {
