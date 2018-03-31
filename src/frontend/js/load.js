@@ -48,7 +48,7 @@ const orm_restore_tab = function() {
 				}
 			}
 			if(manifest_idx === null) return;
-			orm_load_puzzle_set($("div#puzzlesets > div#puzzle-set-" + manifest_idx), null, null, function() {
+			orm_load_puzzle_set(manifest_idx, null, null, function() {
 				orm_load_tab("board", false, function() {
 					orm_load_puzzle(parseInt(h[2], 10));
 				});

@@ -13,28 +13,20 @@
  * limitations under the License.
  */
 
-const orm_journal_push = function(setid, payload) {
-	let j = orm_state_get("journal_" + setid, []);
-	let je;
+const orm_journal_push = function(payload) {
+	let j = orm_state_get("journal", []);
+	let je = [ Date.now(), payload ];
 
-	j.push(je = [ Date.now(), payload ]);
+	j.unshift(je);
 
 	let maxl = parseInt(orm_pref("journal_max_length"), 10);
 	let overflow = j.length - maxl;
 	for(let i = 0; i < overflow; ++i) {
-		j.shift();
+		j.pop();
 	}
 
-	orm_state_set("journal_" + setid, j);
-
-	let d = $("div#journal > div").filter(function() { return $(this).data('setid') === setid; });
-	if(d.length > 0) {
-		orm_prepend_journal_entry(d.data('midx'), je, d.children('ul'));
-		d.parent().children('h1').after(d);
-	} else {
-		/* XXX */
-		orm_generate_journal_page();
-	}
+	orm_state_set("journal", j);
+	orm_prepend_journal_entry(je);
 };
 
 const orm_journal_merge = function(j1, j2) {
@@ -55,64 +47,55 @@ const orm_journal_merge = function(j1, j2) {
 
 const orm_generate_journal_page = function() {
 	let d = $("div#journal");
-	d.children("div").remove();
 
-	for(var i in orm_manifest) {
-		let child = orm_generate_journal_section(i);
-		if(child.length === 0) continue;
-		d.append(child);
-	}
+	d.children('h2, ul').remove();
 
-	if(d.children("div").length === 0) {
+	let j = orm_state_get('journal', []);
+	let jl = j.length;
+	for(let i = jl - 1; i >= 0; --i) orm_prepend_journal_entry(j[i]);
+
+	if(d.children('ul').length === 0) {
 		d.append($(document.createElement('div')).append(
 			$(document.createElement('p')).addClass('alert alert-secondary')
 				.text('No recorded activity yet. Come back after solving a few puzzles.')
 		));
-		return;
 	}
-
-	/* Sort by reverse chronological order */
-	d.children("div").sort(function(a, b) {
-		return $(b).data('date') - $(a).data('date');
-	}).appendTo(d);
 };
 
-const orm_generate_journal_section = function(midx) {
-	let pm = orm_manifest[midx];
-	let journal = orm_state_get("journal_" + pm.id, []);
-	if(journal.length === 0) return $();
-
-	let d = $(document.createElement('div'));
-	d.data('setid', pm.id);
-	d.data('midx', midx);
-	d.append($(document.createElement('h4')).text(pm.name));
-	let ul = $(document.createElement('ul')); /* XXX: categorize by date perhaps? ie "today", "this week", etc */
-	d.append(ul);
-	let jl = journal.length;
-	for(let i = 0; i < jl; ++i) {
-		orm_prepend_journal_entry(midx, journal[i], ul);
+const orm_prepend_journal_entry = function(je) {
+	let ul = $("div#journal > ul");
+	if(ul.length === 0) {
+		ul = $(document.createElement('ul'));
+		$('div#journal').append(ul);
 	}
-	d.data('date', journal[jl - 1][0]);
-	return d;
-};
 
-const orm_prepend_journal_entry = function(midx, je, ul) {
 	let li = $(document.createElement('li'));
 	let btn = $(document.createElement('button'));
-	btn.addClass('btn btn-sm');
-	btn.data('midx', midx);
-	btn.data('puzidx', je[1][1]);
+	let pset = null;
+
+	btn.addClass('btn btn-sm disabled').prop('disabled', true);
+	for(let i in orm_manifest) { /* XXX: make orm_manifest an object? */
+		if(orm_manifest[i].id === je[1][0]) {
+			btn.removeClass('disabled').prop('disabled', false);
+			btn.data('midx', i);
+			pset = orm_manifest[i].id;
+			break;
+		}
+	}
+
+	btn.data('puzidx', je[1][2]);
 	btn.data('date', je[0]);
-	btn.text('#' + je[1][1].toString());
-	btn.addClass(je[1][0] === 0 ? 'btn-danger' : 'btn-success');
-	btn.prop('title', (new Date(je[0])).toString());
+	btn.text('#' + je[1][2].toString());
+	btn.addClass(je[1][1] === 0 ? 'btn-danger' : 'btn-success');
+
+	if(pset === null) {
+		btn.prop('title', 'Unknown puzzle set: ' + je[1][0]);
+	} else {
+		btn.prop('title', '[' + pset.name + '] ' + (new Date(je[0])).toString());
+	}
+
 	btn.prop('type', 'button');
 	li.append(btn);
-
-	let pdate = ul.find('> li:first-child > button').data('date');
-	if(pdate && je[0] - pdate > 1800000) { /* Make this a pref maybe? */
-		ul.prepend($(document.createElement('li')).addClass('spacer'));
-	}
 
 	ul.prepend(li);
 };
@@ -120,7 +103,7 @@ const orm_prepend_journal_entry = function(midx, je, ul) {
 orm_when_puzzle_manifest_ready.push(function() {
 	orm_generate_journal_page();
 
-	$("div#journal").on('click', ' > div > ul > li > button', function() {
+	$("div#journal").on('click', '> ul > li > button', function() {
 		/* XXX: refactor with load.js */
 		let b = $(this);
 		orm_load_puzzle_set(b.data('midx'), null, null, function() {

@@ -18,9 +18,9 @@ let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
 let orm_temp_filter = false;
 
-const orm_load_puzzle_set = function(div, always, fail, done) {
+const orm_load_puzzle_set = function(m_idx, always, fail, done) {
 	let alert = $(document.createElement('p'));
-	let m_idx = div.data('midx');
+	let div = $('div#puzzlesets > div#puzzle-set-' + m_idx);
 	let btn = div.find('button');
 	div.children('h4').first().after(alert);
 	alert.addClass("alert alert-primary").text("Loading puzzle set…");
@@ -263,7 +263,7 @@ orm_when_puzzle_manifest_ready.push(function() {
 	}
 
 	md.on('click', 'button.load-puzzleset', function() {
-		orm_load_puzzle_set($(this).closest('div.puzzle-set'));
+		orm_load_puzzle_set($(this).closest('div.puzzle-set').data('midx'));
 		$(this).blur();
 	}).on('click', 'button.reload-puzzleset', function() {
 		let t = $(this);

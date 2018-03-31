@@ -30,7 +30,24 @@ const orm_upgrade_state = function(storage) {
 	if(ver === -1) {
 		ver = 1;
 
-		/* XXX: merge all journal entries into one */
+		/* Merge all journal entries into one */
+		let journal = [];
+		for(let k in storage) {
+			if(!k.match(/^journal_/)) continue;
+			let j = orm_state_get(k, [], storage);
+			let setid = k.substring(8);
+			for(let i in j) {
+				journal.push([
+					j[i][0],
+					[ setid, j[i][1][0], j[i][1][1] ]
+				]);
+			}
+			orm_state_unset(k, storage);
+		}
+		journal.sort(function(a, b) { return b[0] - a[0]; }); /* XXX: more efficient to use orm_journal_merge? */
+		if(journal !== []) {
+			orm_state_set('journal', journal);
+		}
 	}
 
 	orm_state_set('__orm_version__', orm_state_version, storage);
