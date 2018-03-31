@@ -84,6 +84,7 @@ const orm_puzzle_filtered = function(puz) {
 	let mind = parseInt(orm_pref("puzzle_depth_min"), 10);
 	let maxd = parseInt(orm_pref("puzzle_depth_max"), 10);
 	let mindepth = null, maxdepth = null, depth = null;
+	let wltags = 0;
 
 	for(let j in puz[2]) {
 		let t = puz[2][j], m;
@@ -96,10 +97,11 @@ const orm_puzzle_filtered = function(puz) {
 			}
 		}
 
-		/* XXX: probably slow and inefficient, maybe use bitmasks?
-		 * but it doesn't work for >32 tags */
-		if($.inArray(t, orm_tag_blacklist) !== -1) return true;
+		if(t in orm_tag_blacklist) return true;
+		if(t in orm_tag_whitelist) ++wltags;
 	}
+
+	if(wltags !== orm_tag_whitelist_length) return true;
 
 	if(mindepth !== null && maxdepth !== null && depth === null) {
 		if(mindepth < mind || maxdepth > maxd) return true;

@@ -42,8 +42,9 @@ const ORM_PREFS_DEFAULTS = {
 let orm_prefs = null;
 let orm_prefs_prev = null;
 
-let orm_tag_whitelist = [];
-let orm_tag_blacklist = [];
+let orm_tag_whitelist = {};
+let orm_tag_whitelist_length = 0;
+let orm_tag_blacklist = {};
 
 const orm_pref = function(k) {
 	return (k in orm_prefs) ? orm_prefs[k] : ORM_PREFS_DEFAULTS[k];
@@ -231,15 +232,19 @@ const orm_prefs_css_update = function() {
 const orm_prefs_apply = function() {
 	orm_prefs_css_update();
 
-	orm_temp_filter = false;
-	orm_tag_whitelist = [];
-	orm_tag_blacklist = [];
+	orm_temp_filter = null;
+	orm_tag_whitelist = {};
+	orm_tag_whitelist_length = 0;
+	orm_tag_blacklist = {};
 	for(let k in orm_prefs) {
 		if(orm_prefs[k] !== "0" && orm_prefs[k] !== "2") continue;
 		if(!k.match(/^puzzletag:/)) continue;
 		let t = k.split(':', 2)[1];
-		if(orm_prefs[k] === "0") orm_tag_blacklist.push(t);
-		else orm_tag_whitelist.push(t);
+		if(orm_prefs[k] === "0") orm_tag_blacklist[t] = true;
+		else {
+			orm_tag_whitelist[t] = true;
+			++orm_tag_whitelist_length;
+		}
 	}
 
 	let ul = $("div#analysis-stuff > ul").empty();

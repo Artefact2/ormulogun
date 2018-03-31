@@ -16,7 +16,7 @@
 let orm_puzzle_sets = {};
 let orm_puzzle_set = null;
 let orm_puzzle_midx = null;
-let orm_temp_filter = false;
+let orm_temp_filter = null;
 
 const orm_load_puzzle_set = function(m_idx, always, fail, done) {
 	let alert = $(document.createElement('p'));
@@ -275,13 +275,16 @@ orm_when_puzzle_manifest_ready.push(function() {
 		let d = t.closest('div.puzzle-set');
 		orm_puzzle_midx = d.data('midx');
 		orm_puzzle_set = orm_puzzle_sets[orm_puzzle_midx];
-		if(orm_temp_filter !== false) {
-			orm_tag_whitelist.pop();
-			orm_temp_filter = false;
+		if(orm_temp_filter !== null) {
+			delete orm_tag_whitelist[orm_temp_filter];
+			orm_temp_filter = null;
+			--orm_tag_whitelist_length;
 		}
 		if(t.hasClass('tag-filter')) {
-			orm_tag_whitelist.push(t.data('tag'));
-			orm_temp_filter = true;
+			if(!(t.data('tag') in orm_tag_whitelist)) {
+				orm_tag_whitelist[orm_temp_filter = t.data('tag')] = true;
+				++orm_tag_whitelist_length;
+			}
 		}
 		orm_load_tab("board", true, function() {
 			orm_load_next_puzzle();
