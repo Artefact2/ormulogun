@@ -60,6 +60,7 @@ const orm_init = function() {
 		e.preventDefault();
 		if(prompt("Do you really want to reset all your progress? Type uppercase 'reset' to confirm.") === "RESET") {
 			for(let k in localStorage) orm_state_unset(k);
+			orm_upgrade_state();
 			orm_generate_journal_page();
 		}
 	});
@@ -72,6 +73,8 @@ const orm_init = function() {
 	$("input#progress-load-file").change(function() {
 		let merge = function(rs) {
 			rs = JSON.parse(rs);
+			orm_upgrade_state(rs);
+
 			for(let k in rs) {
 				if(k.match(/^journal_/)) {
 					orm_state_set(k, orm_journal_merge(orm_state_get(k, []), JSON.parse(rs[k])));

@@ -13,21 +13,27 @@
  * limitations under the License.
  */
 
-const orm_state_get = function(k, def, storage) {
+const orm_state_version = 1;
+
+const orm_upgrade_state = function(storage) {
 	if(typeof(storage) === 'undefined') storage = localStorage;
-	if(k in storage) {
-		return JSON.parse(storage[k]);
-	} else {
-		return def;
+
+	let ver = orm_state_get('__orm_version__', -1, storage);
+
+	if(ver > orm_state_version) {
+		orm_error('Broken internal state, please reset your progress and refresh the page.');
+		return;
+	} else if(ver === orm_state_version) {
+		return;
 	}
+
+	if(ver === -1) {
+		ver = 1;
+
+		/* XXX: merge all journal entries into one */
+	}
+
+	orm_state_set('__orm_version__', orm_state_version, storage);
 };
 
-const orm_state_set = function(k, v, storage) {
-	if(typeof(storage) === 'undefined') storage = localStorage;
-	return storage[k] = JSON.stringify(v);
-};
-
-const orm_state_unset = function(k, storage) {
-	if(typeof(storage) === 'undefined') storage = localStorage;
-	return delete storage[k];
-};
+orm_when_ready.unshift(orm_upgrade_state);
