@@ -83,6 +83,7 @@ typedef struct {
 		bool checkmate_back_rank:1;
 		bool checkmate_bodens:1;
 		bool checkmate_grecos:1;
+		bool checkmate_anastasias:1;
 		bool stalemate:1;
 		bool threefold:1;
 		bool perpetual:1;
