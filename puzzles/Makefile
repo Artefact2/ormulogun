@@ -44,7 +44,7 @@ regen:
 regen-all:
 	+make inplace-op-all COMMAND=regen-puzzles
 
-json-all: $(patsubst %.jpz, out/%.json, $(shell find . -name "*.jpz"))
+json-all: $(patsubst %.jpz, out/%.json, $(shell find . -maxdepth 1 -name "*.jpz"))
 	make out/manifest.json
 
 .PHONY: default clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all

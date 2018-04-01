@@ -14,6 +14,7 @@
  */
 
 #include "ormulogun.h"
+#include <moves.h>
 
 #define DEBUG_LAN(str, move) do {						\
 		char lan[SAFE_ALG_LENGTH];						\
@@ -56,6 +57,8 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.endgame_Mm, "Endgame (Mixed piece ending)");
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
+	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
+
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
 
@@ -550,6 +553,26 @@ static void tags_endgame(puzzle_t* p, const cch_board_t* b) {
 	p->tags.endgame = true;
 }
 
+static void tags_smothered_mate(puzzle_t* p, const puzzle_step_t* leaf, const cch_board_t* b) {
+	/* King is surrounded by friendly pieces */
+
+	cch_square_t k = CCH_OWN_KING(b);
+	cch_square_t sq;
+
+#define SMOTHERED_CHECK_DIR(DIR) do { sq = DIR(k); if(CCH_IS_SQUARE_VALID(sq) && !CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, sq))) return; } while(0)
+
+	SMOTHERED_CHECK_DIR(CCH_NORTH);
+	SMOTHERED_CHECK_DIR(CCH_SOUTH);
+	SMOTHERED_CHECK_DIR(CCH_WEST);
+	SMOTHERED_CHECK_DIR(CCH_EAST);
+	SMOTHERED_CHECK_DIR(CCH_NORTHEAST);
+	SMOTHERED_CHECK_DIR(CCH_NORTHWEST);
+	SMOTHERED_CHECK_DIR(CCH_SOUTHEAST);
+	SMOTHERED_CHECK_DIR(CCH_SOUTHWEST);
+
+	p->tags.checkmate_smothered = true;
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -565,7 +588,15 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 	}
 
 	if(depth > 0) {
-		if(st->reply.start == 255) return;
+		if(st->reply.start == 255) {
+			cch_play_legal_move(b, &st->move, &um);
+			if(CCH_IS_OWN_KING_CHECKED(b)) {
+				/* Checkmate leaf */
+				tags_smothered_mate(p, st, b);
+			}
+			cch_undo_move(b, &st->move, &um);
+			return;
+		}
 
 		tags_undermining(p, st, b);
 
