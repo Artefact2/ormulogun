@@ -79,14 +79,14 @@ unsigned char cche_enemy_takers_of_square(cch_board_t* b, cch_square_t sq, cch_m
 	return r;
 }
 
-bool cche_could_take(cch_board_t* b, cch_square_t src, cch_square_t dest) {
+bool cche_could_take(cch_board_t* b, cch_square_t src, cch_square_t dest, cch_move_legality_t l) {
 	if(CCH_IS_ENEMY_PIECE(b, CCH_GET_SQUARE(b, src))) {
 		cch_move_t m;
 		cch_undo_move_state_t u;
 		bool r;
 
 		cche_play_null_move(b, &m, &u);
-		r = cche_could_take(b, src, dest);
+		r = cche_could_take(b, src, dest, l);
 		cch_undo_move(b, &m, &u);
 		return r;
 	}
@@ -96,7 +96,7 @@ bool cche_could_take(cch_board_t* b, cch_square_t src, cch_square_t dest) {
 	unsigned char stop, i;
 
 	CCH_SET_SQUARE(b, dest, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN));
-	stop = cch_generate_moves(b, ml, CCH_LEGAL, src, src + 1);
+	stop = cch_generate_moves(b, ml, l, src, src + 1);
 	CCH_SET_SQUARE(b, dest, p);
 
 	for(i = 0; i < stop; ++i) {

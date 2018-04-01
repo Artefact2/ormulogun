@@ -82,6 +82,7 @@ typedef struct {
 		bool checkmate_suffocation:1;
 		bool checkmate_back_rank:1;
 		bool checkmate_bodens:1;
+		bool checkmate_grecos:1;
 		bool stalemate:1;
 		bool threefold:1;
 		bool perpetual:1;
@@ -147,6 +148,6 @@ void cche_play_null_move(cch_board_t*, cch_move_t*, cch_undo_move_state_t*);
 bool cche_moves_through_square(const cch_move_t*, cch_square_t);
 unsigned char cche_own_takers_of_square(cch_board_t*, cch_square_t, cch_movelist_t, cch_move_legality_t);
 unsigned char cche_enemy_takers_of_square(cch_board_t*, cch_square_t, cch_movelist_t, cch_move_legality_t);
-bool cche_could_take(cch_board_t*, cch_square_t, cch_square_t);
+bool cche_could_take(cch_board_t*, cch_square_t, cch_square_t, cch_move_legality_t);
 
 #endif

@@ -84,6 +84,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate (Back-rank mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_bodens, "Checkmate (Boden's mate)");
+	MAYBE_PRINT_TAG(p->tags.checkmate_grecos, "Checkmate (Greco's mate)");
 
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
@@ -345,7 +346,7 @@ static void tags_undermining(puzzle_t* p, const puzzle_step_t* st, cch_board_t* 
 		if(!CCH_GET_SQUARE(b, st->next[i].move.end)) continue;
 		if(st->next[i].move.end == st->move.start || st->next[i].move.end == st->move.end || st->next[i].move.end == st->reply.start) continue;
 
-		if(cche_could_take(b, st->move.end, st->next[i].move.end)) {
+		if(cche_could_take(b, st->move.end, st->next[i].move.end, CCH_LEGAL)) {
 			p->tags.undermining = true;
 			return;
 		}
@@ -360,7 +361,7 @@ static void tags_deflection(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b
 	 * where it can no longer defend piece C. I capture piece C and
 	 * gain material. */
 
-	if(!cche_could_take(b, st->move.end, st->reply.start)) return;
+	if(!cche_could_take(b, st->move.end, st->reply.start, CCH_LEGAL)) return;
 
 	char ev, qev;
 	eval_material(b, false, 0, &ev);
@@ -373,13 +374,13 @@ static void tags_deflection(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b
 		bool can_defend;
 
 		cch_play_legal_move(b, &st->next[i].move, &u);
-		can_defend = cche_could_take(b, st->reply.start, st->next[i].move.end);
+		can_defend = cche_could_take(b, st->reply.start, st->next[i].move.end, CCH_LEGAL);
 		cch_undo_move(b, &st->next[i].move, &u);
 
 		if(!can_defend) continue;
 
 		cch_play_legal_move(b, &st->reply, &u);
-		can_defend = cche_could_take(b, st->reply.end, st->next[i].move.end);
+		can_defend = cche_could_take(b, st->reply.end, st->next[i].move.end, CCH_LEGAL);
 		qev = eval_quiet_material(b, -127, 127);
 		cch_undo_move(b, &st->reply, &u);
 
@@ -518,7 +519,7 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 			/* Move/take/take back, not really a case of overloading */
 			return;
 		}
-		if(!cche_could_take(b, st->reply.start, st->next[i].move.end)) {
+		if(!cche_could_take(b, st->reply.start, st->next[i].move.end, CCH_LEGAL)) {
 			/* Piece that took back wasn't a defender of Q */
 			return;
 		}
@@ -526,7 +527,7 @@ static void tags_overloaded_piece(puzzle_t* p, const puzzle_step_t* st, cch_boar
 		cch_undo_move_state_t u;
 		bool can_still_defend;
 		cch_play_legal_move(b, &st->reply, &u);
-		can_still_defend = cche_could_take(b, st->reply.end, st->next[i].move.end);
+		can_still_defend = cche_could_take(b, st->reply.end, st->next[i].move.end, CCH_LEGAL);
 		cch_undo_move(b, &st->reply, &u);
 
 		if(can_still_defend) {
@@ -599,7 +600,7 @@ static void tags_suffocation_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_bo
 	if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end)) != CCH_KNIGHT) return;
 
 	cch_square_t k = CCH_OWN_KING(b);
-	if(!cche_could_take(b, leaf->move.end, k)) return;
+	if(!cche_could_take(b, leaf->move.end, k, CCH_PSEUDO_LEGAL)) return;
 
 	cch_square_t neighbors[8];
 	SQUARE_NEIGHBORS(neighbors, k);
@@ -717,6 +718,57 @@ static void tags_bodens_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t
 	p->tags.checkmate_bodens = true;
 }
 
+static void tags_grecos_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t* b) {
+	/* A queen or rook delivers checkmate on a cornered king, blocked
+	 * diagonally by a friendly piece. The other flight square is
+	 * covered by a bishop. */
+
+	cch_pure_piece_t piece = CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end));
+	if(piece != CCH_QUEEN && piece != CCH_ROOK) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	/* Queen delivers checkmate diagonally- not a Greco's mate */
+	if(CCH_RANK(k) != CCH_RANK(leaf->move.end) && CCH_FILE(k) != CCH_FILE(leaf->move.end)) return;
+
+	bool same_rank = (CCH_RANK(k) == CCH_RANK(leaf->move.end));
+
+	/* Discovered checkmate, probably not a Greco's mate */
+	if(!cche_could_take(b, leaf->move.end, k, CCH_PSEUDO_LEGAL)) return;
+
+	cch_square_t dsq, bsq;
+	switch(k) {
+	case 0:
+		dsq = CCH_NORTHEAST(k);
+		bsq = same_rank ? CCH_NORTH(k) : CCH_EAST(k);
+		break;
+
+	case 7:
+		dsq = CCH_SOUTHEAST(k);
+		bsq = same_rank ? CCH_SOUTH(k) : CCH_EAST(k);
+		break;
+
+	case 56:
+		dsq = CCH_NORTHWEST(k);
+		bsq = same_rank ? CCH_NORTH(k) : CCH_WEST(k);
+		break;
+
+	case 63:
+		dsq = CCH_SOUTHWEST(k);
+		bsq = same_rank ? CCH_SOUTH(k) : CCH_WEST(k);
+		break;
+
+	default: return; /* King is not in a corner */
+	}
+
+	if(!CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, dsq))) return;
+
+	cch_movelist_t ml;
+	unsigned char stop = cche_enemy_takers_of_square(b, bsq, ml, CCH_PSEUDO_LEGAL);
+	if(stop != 1 || CCH_PURE_PIECE(CCH_GET_SQUARE(b, ml[0].start)) != CCH_BISHOP) return;
+
+	p->tags.checkmate_grecos = true;
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -741,6 +793,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 				tags_suffocation_mate(p, st, b);
 				tags_back_rank_mate(p, st, b);
 				tags_bodens_mate(p, st, b);
+				tags_grecos_mate(p, st, b);
 			}
 			cch_undo_move(b, &st->move, &um);
 			return;
