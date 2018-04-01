@@ -79,6 +79,7 @@ typedef struct {
 		bool checkmate:1;
 		bool checkmate_smothered:1;
 		bool checkmate_suffocation:1;
+		bool checkmate_back_rank:1;
 		bool stalemate:1;
 		bool threefold:1;
 		bool perpetual:1;

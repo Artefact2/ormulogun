@@ -72,6 +72,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
+	MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate (Back-rank mate)");
 
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
@@ -628,6 +629,38 @@ static void tags_suffocation_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_bo
 	p->tags.checkmate_suffocation = true;
 }
 
+static void tags_back_rank_mate(puzzle_t* p, const puzzle_step_t* leaf, const cch_board_t* b) {
+	/* King is in the back rank, front rank is blocked by friendly
+	 * pieces, queen or rook delivers checkmate */
+
+	cch_pure_piece_t piece = CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end));
+	if(piece != CCH_QUEEN && piece != CCH_ROOK) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	cch_square_t front[3];
+	switch(CCH_RANK(k)) {
+	case 0:
+		front[0] = CCH_NORTHEAST(k);
+		front[1] = CCH_NORTH(k);
+		front[2] = CCH_NORTHWEST(k);
+		break;
+
+	case 7:
+		front[0] = CCH_SOUTHEAST(k);
+		front[1] = CCH_SOUTH(k);
+		front[2] = CCH_SOUTHWEST(k);
+		break;
+
+	default: return;
+	}
+
+	for(unsigned char i = 0; i < 3; ++i) {
+		if(!CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, front[i]))) return;
+	}
+
+	p->tags.checkmate_back_rank = true;
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -649,6 +682,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 				/* Checkmate leaf */
 				tags_smothered_mate(p, st, b);
 				tags_suffocation_mate(p, st, b);
+				tags_back_rank_mate(p, st, b);
 			}
 			cch_undo_move(b, &st->move, &um);
 			return;
