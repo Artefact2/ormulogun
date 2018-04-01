@@ -32,6 +32,19 @@
 		}										\
 	} while(0)
 
+#define SQUARE_NEIGHBORS(n, sq) do {			\
+		n[0] = CCH_NORTH(sq);					\
+		n[1] = CCH_SOUTH(sq);					\
+		n[2] = CCH_WEST(sq);					\
+		n[3] = CCH_EAST(sq);					\
+		n[4] = CCH_NORTHEAST(sq);				\
+		n[5] = CCH_NORTHWEST(sq);				\
+		n[6] = CCH_SOUTHEAST(sq);				\
+		n[7] = CCH_SOUTHWEST(sq);				\
+	} while(0)
+
+
+
 void tags_print(const puzzle_t* p) {
 	putchar('[');
 
@@ -58,6 +71,7 @@ void tags_print(const puzzle_t* p) {
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
+	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
 
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
@@ -557,20 +571,61 @@ static void tags_smothered_mate(puzzle_t* p, const puzzle_step_t* leaf, const cc
 	/* King is surrounded by friendly pieces */
 
 	cch_square_t k = CCH_OWN_KING(b);
-	cch_square_t sq;
+	cch_square_t neighbors[8];
+	SQUARE_NEIGHBORS(neighbors, k);
 
-#define SMOTHERED_CHECK_DIR(DIR) do { sq = DIR(k); if(CCH_IS_SQUARE_VALID(sq) && !CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, sq))) return; } while(0)
-
-	SMOTHERED_CHECK_DIR(CCH_NORTH);
-	SMOTHERED_CHECK_DIR(CCH_SOUTH);
-	SMOTHERED_CHECK_DIR(CCH_WEST);
-	SMOTHERED_CHECK_DIR(CCH_EAST);
-	SMOTHERED_CHECK_DIR(CCH_NORTHEAST);
-	SMOTHERED_CHECK_DIR(CCH_NORTHWEST);
-	SMOTHERED_CHECK_DIR(CCH_SOUTHEAST);
-	SMOTHERED_CHECK_DIR(CCH_SOUTHWEST);
+	for(unsigned char i = 0; i < 8; ++i) {
+		if(CCH_IS_SQUARE_VALID(neighbors[i]) && !CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, neighbors[i]))) return;
+	}
 
 	p->tags.checkmate_smothered = true;
+}
+
+static void tags_suffocation_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t* b) {
+	/* King is attacked by a knight, all escape squares are defended by a bishop */
+
+	if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end)) != CCH_KNIGHT) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	if(!cche_could_take(b, leaf->move.end, k)) return;
+
+	cch_square_t neighbors[8];
+	SQUARE_NEIGHBORS(neighbors, k);
+
+	cch_square_t attacker = 255;
+	cch_movelist_t ml;
+	unsigned char stop;
+	cch_move_t m;
+	cch_undo_move_state_t u;
+
+	m.start = k;
+	m.promote = 0;
+
+	for(unsigned char i = 0; i < 8; ++i) {
+		cch_square_t sq = neighbors[i];
+		if(!CCH_IS_SQUARE_VALID(sq)) continue;
+		if(CCH_IS_ENEMY_PIECE(b, CCH_GET_SQUARE(b, sq))) return;
+		if(CCH_GET_SQUARE(b, sq)) continue;
+
+		m.end = sq;
+		cch_play_legal_move(b, &m, &u);
+		stop = cche_own_takers_of_square(b, sq, ml, CCH_PSEUDO_LEGAL);
+		cch_undo_move(b, &m, &u);
+
+		assert(stop >= 1); /* King has escape squares? How are we being checkmated?! */
+		if(stop > 1) return; /* Square defended more than once */
+		assert(ml[0].end == sq);
+		if(attacker == 255) {
+			attacker = ml[0].start;
+		} else if(attacker != ml[0].start) {
+			/* Different escape squares are protected by different pieces */
+			return;
+		}
+	}
+
+	if(attacker == 255 || CCH_PURE_PIECE(CCH_GET_SQUARE(b, attacker)) != CCH_BISHOP) return;
+
+	p->tags.checkmate_suffocation = true;
 }
 
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
@@ -593,6 +648,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 			if(CCH_IS_OWN_KING_CHECKED(b)) {
 				/* Checkmate leaf */
 				tags_smothered_mate(p, st, b);
+				tags_suffocation_mate(p, st, b);
 			}
 			cch_undo_move(b, &st->move, &um);
 			return;

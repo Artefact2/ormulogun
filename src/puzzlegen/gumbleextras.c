@@ -42,24 +42,11 @@ bool cche_moves_through_square(const cch_move_t* m, cch_square_t sq) {
 	return true;
 }
 
-/* XXX: untested */
-unsigned char cche_defenders_of_square(cch_board_t* b, cch_square_t sq, cch_movelist_t ml) {
-	cch_piece_t p = CCH_GET_SQUARE(b, sq);
-	if(CCH_IS_ENEMY_PIECE(b, p)) {
-		cch_move_t m;
-		cch_undo_move_state_t u;
-		unsigned char r;
-
-		cche_play_null_move(b, &m, &u);
-		r = cche_defenders_of_square(b, sq, ml);
-		cch_undo_move(b, &m, &u);
-		return r;
-	}
-
+unsigned char cche_own_takers_of_square(cch_board_t* b, cch_square_t sq, cch_movelist_t ml, cch_move_legality_t l) {
 	unsigned char stop, i;
-
+	cch_piece_t p = CCH_GET_SQUARE(b, sq);
 	CCH_SET_SQUARE(b, sq, CCH_MAKE_ENEMY_PIECE(b, CCH_PAWN));
-	stop = cch_generate_moves(b, &(ml[1]), CCH_LEGAL, 0, 64);
+	stop = cch_generate_moves(b, &(ml[1]), l, 0, 64);
 	CCH_SET_SQUARE(b, sq, p);
 
 	for(i = 1; i <= stop; ++i) {
@@ -71,13 +58,25 @@ unsigned char cche_defenders_of_square(cch_board_t* b, cch_square_t sq, cch_move
 		ml[0] = ml[i];
 		cch_play_legal_move(b, ml, &u);
 		cche_play_null_move(b, &m, &un);
-		r = cche_defenders_of_square(b, sq, &(ml[1]));
+		r = cche_own_takers_of_square(b, sq, &(ml[1]), l);
 		cch_undo_move(b, &m, &un);
 		cch_undo_move(b, ml, &u);
 		return r + 1;
 	}
 
 	return 0;
+}
+
+unsigned char cche_enemy_takers_of_square(cch_board_t* b, cch_square_t sq, cch_movelist_t ml, cch_move_legality_t l) {
+	unsigned char r;
+	cch_move_t m;
+	cch_undo_move_state_t u;
+
+	cche_play_null_move(b, &m, &u);
+	r = cche_own_takers_of_square(b, sq, ml, l);
+	cch_undo_move(b, &m, &u);
+
+	return r;
 }
 
 bool cche_could_take(cch_board_t* b, cch_square_t src, cch_square_t dest) {
