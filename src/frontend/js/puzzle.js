@@ -143,9 +143,18 @@ const orm_puzzle_over = function() {
 	orm_puzzle[2].sort(function(a, b) {
 		return orm_tag_priority(a) - orm_tag_priority(b);
 	});
-	for(let i in orm_puzzle[2]) {
+	let tl = orm_puzzle[2].length;
+	for(let i = 0; i < tl; ++i) {
+		let tag = orm_puzzle[2][i];
+		if(i < orm_puzzle[2].length - 1
+		   && orm_puzzle[2][i+1].substr(0, tag.length) === tag
+		   && orm_puzzle[2][i+1].substr(tag.length, 2) === ' (') {
+			/* Subtag immediately next, don't print the parent tag */
+			continue;
+		}
+
 		let span = $(document.createElement('span'));
-		span.addClass('d-inline-block mr-1 badge text-dark tag-prio-' + orm_tag_priority(orm_puzzle[2][i]));
+		span.addClass('d-inline-block mr-1 badge text-dark tag-prio-' + orm_tag_priority(tag));
 		span.text(orm_puzzle[2][i]);
 		prompt.append(span);
 	}
