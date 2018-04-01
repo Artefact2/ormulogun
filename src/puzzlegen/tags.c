@@ -83,6 +83,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate (Back-rank mate)");
+	MAYBE_PRINT_TAG(p->tags.checkmate_bodens, "Checkmate (Boden's mate)");
 
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
@@ -671,6 +672,51 @@ static void tags_back_rank_mate(puzzle_t* p, const puzzle_step_t* leaf, const cc
 	p->tags.checkmate_back_rank = true;
 }
 
+static void tags_bodens_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t* b) {
+	/* Two bishop deliver checkmate on criss-crossing diagonals. */
+
+	if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end)) != CCH_BISHOP) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	cch_square_t n[8];
+	SQUARE_NEIGHBORS(n, k);
+
+	cch_movelist_t ml;
+	unsigned char stop;
+	cch_move_t m;
+	cch_undo_move_state_t u;
+
+	bool crossing_diagonals = false;
+	char x1 = CCH_FILE(k) - CCH_FILE(leaf->move.end);
+	char y1 = CCH_RANK(k) - CCH_RANK(leaf->move.end);
+	char x2, y2;
+
+	m.start = k;
+	m.promote = 0;
+
+	for(unsigned char i = 0; i < 8; ++i) {
+		if(!CCH_IS_SQUARE_VALID(n[i])) continue;
+		if(CCH_IS_ENEMY_PIECE(b, CCH_GET_SQUARE(b, n[i]))) return;
+		if(CCH_GET_SQUARE(b, n[i])) continue;
+
+		m.end = n[i];
+		cch_play_legal_move(b, &m, &u);
+		stop = cche_own_takers_of_square(b, n[i], ml, CCH_PSEUDO_LEGAL);
+		cch_undo_move(b, &m, &u);
+
+		assert(stop >= 1);
+		if(stop > 1) return;
+		if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, ml[0].start)) != CCH_BISHOP) return;
+
+		x2 = CCH_FILE(ml[0].end) - CCH_FILE(ml[0].start);
+		y2 = CCH_RANK(ml[0].end) - CCH_RANK(ml[0].start);
+		if(x1 * y2 != x2 * y1) crossing_diagonals = true;
+	}
+
+	if(!crossing_diagonals) return;
+	p->tags.checkmate_bodens = true;
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -694,6 +740,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 				tags_smothered_mate(p, st, b);
 				tags_suffocation_mate(p, st, b);
 				tags_back_rank_mate(p, st, b);
+				tags_bodens_mate(p, st, b);
 			}
 			cch_undo_move(b, &st->move, &um);
 			return;
