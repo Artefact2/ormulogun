@@ -32,6 +32,15 @@
 		}										\
 	} while(0)
 
+#define PRINT_PIECE_TAG(flags, fmt) do {								\
+		if((flags >> (CCH_PAWN - 1)) & 1) printf(",\"" fmt "\"", "Pawn"); \
+		if((flags >> (CCH_BISHOP - 1)) & 1) printf(",\"" fmt "\"", "Bishop"); \
+		if((flags >> (CCH_KNIGHT - 1)) & 1) printf(",\"" fmt "\"", "Knight"); \
+		if((flags >> (CCH_ROOK - 1)) & 1) printf(",\"" fmt "\"", "Rook"); \
+		if((flags >> (CCH_QUEEN - 1)) & 1) printf(",\"" fmt "\"", "Queen"); \
+		if((flags >> (CCH_KING - 1)) & 1) printf(",\"" fmt "\"", "King"); \
+	} while(0)
+
 #define SQUARE_NEIGHBORS(n, sq) do {			\
 		n[0] = CCH_NORTH(sq);					\
 		n[1] = CCH_SOUTH(sq);					\
@@ -70,6 +79,7 @@ void tags_print(const puzzle_t* p) {
 	MAYBE_PRINT_TAG(p->tags.endgame_Mm, "Endgame (Mixed piece ending)");
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
+	PRINT_PIECE_TAG(p->tags.checkmate_piece, "Checkmate (%s)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
 	MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate (Back-rank mate)");
@@ -680,6 +690,7 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 			cch_play_legal_move(b, &st->move, &um);
 			if(CCH_IS_OWN_KING_CHECKED(b)) {
 				/* Checkmate leaf */
+				p->tags.checkmate_piece |= (1 << (CCH_PURE_PIECE(CCH_GET_SQUARE(b, st->move.end)) - 1));
 				tags_smothered_mate(p, st, b);
 				tags_suffocation_mate(p, st, b);
 				tags_back_rank_mate(p, st, b);
