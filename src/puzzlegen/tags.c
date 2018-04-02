@@ -328,6 +328,7 @@ static void tags_skewer(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b) {
 		if(st->next[j].move.start != st->move.end) continue;
 		if(!CCH_GET_SQUARE(b, st->next[j].move.end)) continue;
 		if(!cche_moves_through_square(&(st->next[j].move), st->reply.start)) continue;
+		if(st->next[j].move.end == st->reply.end) continue;
 
 		p->tags.skewer = true;
 		return;
