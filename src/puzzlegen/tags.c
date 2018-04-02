@@ -80,14 +80,26 @@ void tags_print(const puzzle_t* p) {
 
 	MAYBE_PRINT_TAG(p->tags.checkmate, "Checkmate");
 	PRINT_PIECE_TAG(p->tags.checkmate_piece, "Checkmate (%s)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate (Smothered mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate (Suffocation mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate (Back-rank mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_bodens, "Checkmate (Boden's mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_grecos, "Checkmate (Greco's mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_anastasias, "Checkmate (Anastasia's mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_arabian, "Checkmate (Arabian mate)");
-	MAYBE_PRINT_TAG(p->tags.checkmate_corner, "Checkmate (Corner mate)");
+
+	if(p->tags.checkmate_smothered || p->tags.checkmate_suffocation
+	|| p->tags.checkmate_back_rank || p->tags.checkmate_bodens
+	|| p->tags.checkmate_grecos || p->tags.checkmate_anastasias
+	|| p->tags.checkmate_arabian || p->tags.checkmate_corner
+	|| p->tags.checkmate_dovetail || p->tags.checkmate_swallows_tail
+	|| p->tags.checkmate_epaulette) {
+		PRINT_TAG("Checkmate pattern");
+		MAYBE_PRINT_TAG(p->tags.checkmate_smothered, "Checkmate pattern (Smothered mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_suffocation, "Checkmate pattern (Suffocation mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_back_rank, "Checkmate pattern (Back-rank mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_bodens, "Checkmate pattern (Boden's mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_grecos, "Checkmate pattern (Greco's mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_anastasias, "Checkmate pattern (Anastasia's mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_arabian, "Checkmate pattern (Arabian mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_corner, "Checkmate pattern (Corner mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_dovetail, "Checkmate pattern (Dovetail/Cozio's mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_swallows_tail, "Checkmate pattern (Swallow's tail/Guéridon mate)");
+		MAYBE_PRINT_TAG(p->tags.checkmate_epaulette, "Checkmate pattern (Epaulette mate)");
+	}
 
 	MAYBE_PRINT_TAG(p->tags.winning_position, "Winning position");
 	MAYBE_PRINT_TAG(p->tags.drawing_position, "Drawing position");
@@ -957,6 +969,97 @@ static void tags_corner_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t
 	}
 }
 
+static void tags_tail_mate(puzzle_t* p, const puzzle_step_t* leaf, const cch_board_t* b) {
+	/* Dovetail mate: king is checkmated by a diagonally adjacent queen. The two
+	 * escape squares (knight's distance from the queen) are covered
+	 * by friendly pieces. */
+
+	/* Swallow's tail mate: king is mated by an orthogonally adjacent
+	 * queen. The two escape squares are blocked by friendly
+	 * pieces. */
+
+	if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end)) != CCH_QUEEN) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	cch_square_t dsq[2];
+	bool dove;
+
+	if(CCH_NORTHEAST(k) == leaf->move.end) {
+		dsq[0] = CCH_SOUTH(k);
+		dsq[1] = CCH_WEST(k);
+		dove = true;
+	} else if(CCH_NORTHWEST(k) == leaf->move.end) {
+		dsq[0] = CCH_SOUTH(k);
+		dsq[1] = CCH_EAST(k);
+		dove = true;
+	} else if(CCH_SOUTHEAST(k) == leaf->move.end) {
+		dsq[0] = CCH_NORTH(k);
+		dsq[1] = CCH_WEST(k);
+		dove = true;
+	} else if(CCH_SOUTHWEST(k) == leaf->move.end) {
+		dsq[0] = CCH_NORTH(k);
+		dsq[1] = CCH_EAST(k);
+		dove = true;
+	} else if(CCH_NORTH(k) == leaf->move.end) {
+		dsq[0] = CCH_SOUTHEAST(k);
+		dsq[1] = CCH_SOUTHWEST(k);
+		dove = false;
+	} else if(CCH_SOUTH(k) == leaf->move.end) {
+		dsq[0] = CCH_NORTHEAST(k);
+		dsq[1] = CCH_NORTHWEST(k);
+		dove = false;
+	} else if(CCH_EAST(k) == leaf->move.end) {
+		dsq[0] = CCH_NORTHWEST(k);
+		dsq[1] = CCH_SOUTHWEST(k);
+		dove = false;
+	} else if(CCH_WEST(k) == leaf->move.end) {
+		dsq[0] = CCH_NORTHEAST(k);
+		dsq[1] = CCH_SOUTHEAST(k);
+		dove = false;
+	} else return;
+
+	if(!CCH_IS_SQUARE_VALID(dsq[0]) || !CCH_IS_SQUARE_VALID(dsq[1])) return;
+	if(!CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, dsq[0])) || !CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, dsq[1]))) return;
+
+	/* Using a pointer would be cleverer, but that's not possible with
+	 * bitfields */
+	if(dove) {
+		p->tags.checkmate_dovetail = true;
+	} else {
+		p->tags.checkmate_swallows_tail = true;
+	}
+}
+
+static void tags_epaulette_mate(puzzle_t* p, const puzzle_step_t* leaf, cch_board_t* b) {
+	/* XXX: very ambiguous */
+	/* Two parallel retreat squares are blocked by own pieces */
+
+	if(CCH_PURE_PIECE(CCH_GET_SQUARE(b, leaf->move.end)) == CCH_KNIGHT) return;
+
+	cch_square_t k = CCH_OWN_KING(b);
+	cch_square_t pairs[4][2] = {
+		{ CCH_NORTH(k), CCH_SOUTH(k) },
+		{ CCH_EAST(k), CCH_WEST(k) },
+		{ CCH_NORTHWEST(k), CCH_SOUTHEAST(k) },
+		{ CCH_NORTHEAST(k), CCH_SOUTHWEST(k) },
+	};
+
+	for(unsigned char i = 0; i < 4; ++i) {
+		if(!CCH_IS_SQUARE_VALID(pairs[i][0]) || !CCH_IS_SQUARE_VALID(pairs[i][1])) continue;
+		if(!CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, pairs[i][0])) || !CCH_IS_OWN_PIECE(b, CCH_GET_SQUARE(b, pairs[i][1]))) continue;
+
+		/* Both squares should be retreat squares, ie not under check */
+		cch_movelist_t ml;
+		unsigned char stop = cche_enemy_takers_of_square(b, pairs[i][0], ml, CCH_PSEUDO_LEGAL);
+		if(stop > 0) continue;
+		stop = cche_enemy_takers_of_square(b, pairs[i][1], ml, CCH_PSEUDO_LEGAL);
+		if(stop > 0) continue;
+
+		p->tags.checkmate_epaulette = true;
+		return;
+	}
+}
+
 static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsigned char depth) {
 	cch_undo_move_state_t um, ur;
 	unsigned char i;
@@ -985,6 +1088,8 @@ static void tags_step(puzzle_t* p, const puzzle_step_t* st, cch_board_t* b, unsi
 				tags_anastasias_mate(p, st, b);
 				tags_arabian_mate(p, st, b);
 				tags_corner_mate(p, st, b);
+				tags_tail_mate(p, st, b);
+				tags_epaulette_mate(p, st, b);
 			}
 			cch_undo_move(b, &st->move, &um);
 			return;

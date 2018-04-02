@@ -86,6 +86,9 @@ typedef struct {
 		bool checkmate_anastasias:1;
 		bool checkmate_arabian:1;
 		bool checkmate_corner:1;
+		bool checkmate_dovetail:1;
+		bool checkmate_swallows_tail:1;
+		bool checkmate_epaulette:1;
 		bool stalemate:1;
 		bool threefold:1;
 		bool perpetual:1;
