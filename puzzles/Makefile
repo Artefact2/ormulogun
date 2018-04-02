@@ -47,4 +47,7 @@ regen-all:
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -maxdepth 1 -name "*.jpz"))
 	make out/manifest.json
 
-.PHONY: default clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all
+test:
+	parallel -N10 --lb --pipe --round-robin test-tags < tags.jpl | pv -ls $$(wc -l < tags.jpl) | (grep -v '^Test OK'; exit 0)
+
+.PHONY: default clean import-pgn puzzles puzzles-all inplace-op inplace-op-all retag retag-all regen regen-all json-all test
