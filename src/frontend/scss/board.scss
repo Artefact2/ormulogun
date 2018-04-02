@@ -3,6 +3,11 @@ div.board {
 	position: relative;
 	max-width: 90vmin;
 
+	-moz-user-select: none;
+	-webkit-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+
 	&.board-main {
 		display: inline-block;
 	}
