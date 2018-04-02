@@ -15,7 +15,7 @@
 
 const GUMBLE_BOARD_SIZE = 256; /* >= sizeof(cch_board_t) */
 const GUMBLE_MOVE_SIZE = 4; /* == sizeof(cch_move_t) */
-const GUMBLE_MOVELIST_LENGTH = 80; /* >= CCH_MOVELIST_LENGTH */
+const GUMBLE_MOVELIST_LENGTH = 256; /* >= CCH_MOVELIST_LENGTH */
 const GUMBLE_SAFE_FEN_LENGTH = 90; /* >= SAFE_FEN_LENGTH */
 const GUMBLE_SAFE_ALG_LENGTH = 10; /* >= SAFE_ALG_LENGTH */
 
