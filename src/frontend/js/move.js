@@ -188,29 +188,47 @@ orm_when_ready.push(function() {
 		p.data("origy", e.pageY);
 		p.data("origtop", p.position().top);
 		p.data("origleft", p.position().left);
-		p.addClass("dragging");
+		p.data("boardwidth", p.parent().width());
+		p.data("boardheight", p.parent().height());
+		p.addClass("dragging").attr('id', 'dragged-piece');
 		orm_highlight_move_squares(p.data('ofile'), p.data('orank'), b);
-	}).on("mousemove touchmove", function(e) {
-		let b = $(this);
-		let p = b.children("div.piece.dragging");
-		if(p.length === 0) return;
 
-		p.addClass("dragged");
-		if(e.type === "touchmove") {
-			/* XXX */
-			e.pageX = e.originalEvent.targetTouches[0].pageX;
-			e.pageY = e.originalEvent.targetTouches[0].pageY;
-			if(p.width() < 96) {
-				p.css('transform', 'scale(' + (96 / p.width()).toString() + ')');
+		$("body").on('mousemove touchmove', function(e) {
+			e.preventDefault();
+
+			let p = $('div#dragged-piece');
+			let b = p.parent();
+			if(p.length === 0) return;
+
+			p.addClass("dragged");
+			if(e.type === "touchmove") {
+				/* XXX */
+				e.pageX = e.originalEvent.targetTouches[0].pageX;
+				e.pageY = e.originalEvent.targetTouches[0].pageY;
+				if(p.width() < 96) {
+					p.css('transform', 'scale(' + (96 / p.width()).toString() + ')');
+				}
 			}
-		}
-		p.css("left", p.data("origleft") + e.pageX - p.data("origx"));
-		p.css("top", p.data("origtop") + e.pageY - p.data("origy"));
-		e.preventDefault();
+
+			let left = p.data("origleft") + e.pageX - p.data("origx");
+			let top = p.data("origtop") + e.pageY - p.data("origy");
+
+			if(left < -p.width() || top < -p.height() || left > p.data('boardwidth') || top > p.data('boardheight')) {
+				/* Moving a piece outside the board */
+				p.trigger('mouseup');
+				return;
+			}
+
+			p.css("left", left);
+			p.css("top", top);
+		});
 	}).on("mouseup touchend", "> div.piece.dragging", function(e) {
 		let p = $(this);
+		p.off('mousemove touchmove');
+
 		if(!p.hasClass('dragged')) {
 			p.removeClass('dragging');
+			p.removeAttr('id');
 			return;
 		}
 
@@ -225,6 +243,7 @@ orm_when_ready.push(function() {
 			rank = 9 - rank;
 		}
 		p.removeAttr('style');
+		p.removeAttr('id');
 		p.removeClass('dragging');
 
 		b.children("div.back").removeClass("move-source move-target");
