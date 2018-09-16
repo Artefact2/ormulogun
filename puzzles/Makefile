@@ -44,6 +44,12 @@ regen:
 regen-all:
 	+make inplace-op-all COMMAND=regen-puzzles
 
+unstrip:
+	+make inplace-op COMMAND=unstrip-jl
+
+unstrip-all:
+	+make inplace-op-all COMMAND=unstrip-jl
+
 json-all: $(patsubst %.jpz, out/%.json, $(shell find . -maxdepth 1 -name "*.jpz"))
 	make out/manifest.json
 

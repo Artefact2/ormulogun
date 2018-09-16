@@ -9,3 +9,6 @@ target_link_libraries(retag-puzzles ormpuzzlegencore)
 
 add_executable(regen-puzzles regen-puzzles.c)
 target_link_libraries(regen-puzzles ormpuzzlegencore)
+
+add_executable(unstrip-jl unstrip-jl.c)
+target_link_libraries(unstrip-jl ormpuzzlegencore)
