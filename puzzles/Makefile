@@ -22,7 +22,7 @@ out/manifest.json: $(shell find out/ -name "*.json" -not -name "manifest.json")
 	update-manifest $@
 
 out/%.json: %.jpz
-	zstdcat $< | jl_to_json > $@
+	zstdcat $< | strip-jl | jl_to_json > $@
 
 inplace-op:
 	zstdcat $(INPUT) | parallel -N100 --keep-order --pipe $(COMMAND) | pv -ls $$(zstdcat $(INPUT) | wc -l) | zstd -19 - -o $(TMP)

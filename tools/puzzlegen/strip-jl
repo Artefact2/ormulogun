@@ -20,13 +20,18 @@ if($argc !== 1) {
 	die(1);
 }
 
-echo '[';
-$first = true;
-
-while(($line = fgets(STDIN)) !== false) {
-	if(!$first) echo ',';
-	$first = false;
-	echo substr($line, 0, -1);
+function trim_puzzle(&$step) {
+	if(is_array($step)) {
+		foreach($step[1] as &$s) trim_puzzle($s);
+	} else {
+		/* Leaf node */
+		assert(is_string($step));
+		$step = '';
+	}
 }
 
-echo "]\n";
+while(($line = fgets(STDIN)) !== false) {
+	$puz = json_decode($line, true);
+	trim_puzzle($puz[1]);
+	echo json_encode($puz, JSON_UNESCAPED_SLASHES), "\n";
+}
